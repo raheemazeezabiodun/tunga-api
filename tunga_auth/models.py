@@ -36,6 +36,8 @@ class TungaUser(AbstractUser):
     last_set_password_email_at = models.DateTimeField(blank=True, null=True)
     agree_version = models.FloatField(blank=True, null=True, default=0)
     agreed_at = models.DateTimeField(blank=True, null=True)
+    disagree_version = models.FloatField(blank=True, null=True, default=0)
+    disagreed_at = models.DateTimeField(blank=True, null=True)
 
     class Meta(AbstractUser.Meta):
         unique_together = ('email',)
