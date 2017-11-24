@@ -4,10 +4,11 @@ from django.contrib.auth import get_user_model
 from django_rq.decorators import job
 
 from tunga.settings import TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS, TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, \
-    SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED
+    SLACK_ATTACHMENT_COLOR_GREEN, SLACK_ATTACHMENT_COLOR_RED, SLACK_STAFF_PROFILES_CHANNEL
 from tunga_profiles.models import DeveloperApplication, Skill, DeveloperInvitation, UserProfile
 from tunga_tasks.models import Task
 from tunga_utils import slack_utils
+from tunga_utils.constants import USER_TYPE_DEVELOPER
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
 
@@ -118,8 +119,11 @@ def send_developer_invitation_accepted_email(instance):
 
 
 @job
-def notify_user_profile_updated_slack(instance):
+def notify_user_profile_updated_slack(instance, edited=None):
     instance = clean_instance(instance, UserProfile)
+
+    if instance.user.type != USER_TYPE_DEVELOPER:
+        return
 
     profile_url = '{}/developer/{}'.format(TUNGA_URL, instance.user.username)
     slack_msg = "{}'s profile has been updated | <{}|Review on Tunga>".format(
@@ -131,9 +135,13 @@ def notify_user_profile_updated_slack(instance):
         {
             slack_utils.KEY_TITLE: instance.user.display_name,
             slack_utils.KEY_TITLE_LINK: profile_url,
-            slack_utils.KEY_TEXT: '*Name:* {}\n*Location:* {}\n*Verified:* {}'.format(
+            slack_utils.KEY_TEXT: '*Name:* {}\n'
+                                  '*Location:* {}\n'
+                                  '*Skills*: {}\n'
+                                  '*Verified:* {}'.format(
                 instance.user.display_name,
                 instance.location,
+                str(instance.skills),
                 instance.user.verified and 'True' or 'False'
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
@@ -146,6 +154,6 @@ def notify_user_profile_updated_slack(instance):
         {
             slack_utils.KEY_TEXT: slack_msg,
             slack_utils.KEY_ATTACHMENTS: attachments,
-            slack_utils.KEY_CHANNEL: SLACK_STAFF_UPDATES_CHANNEL
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_PROFILES_CHANNEL
         }
     )
