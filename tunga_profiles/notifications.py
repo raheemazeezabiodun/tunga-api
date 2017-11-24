@@ -3,9 +3,11 @@ import datetime
 from django.contrib.auth import get_user_model
 from django_rq.decorators import job
 
-from tunga.settings import TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS, TUNGA_URL
-from tunga_profiles.models import DeveloperApplication, Skill, DeveloperInvitation
+from tunga.settings import TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS, TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, \
+    SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED
+from tunga_profiles.models import DeveloperApplication, Skill, DeveloperInvitation, UserProfile
 from tunga_tasks.models import Task
+from tunga_utils import slack_utils
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
 
@@ -113,3 +115,37 @@ def send_developer_invitation_accepted_email(instance):
         'invite': instance
     }
     send_mail(subject, 'tunga/email/user_invitation_accepted', to, ctx)
+
+
+@job
+def notify_user_profile_updated_slack(instance):
+    instance = clean_instance(instance, UserProfile)
+
+    profile_url = '{}/developer/{}'.format(TUNGA_URL, instance.user.username)
+    slack_msg = "{}'s profile has been updated | <{}|Review on Tunga>".format(
+        instance.user.display_name,
+        profile_url
+    )
+
+    attachments = [
+        {
+            slack_utils.KEY_TITLE: instance.user.display_name,
+            slack_utils.KEY_TITLE_LINK: profile_url,
+            slack_utils.KEY_TEXT: '*Name:* {}\n*Location:* {}\n*Verified:* {}'.format(
+                instance.user.display_name,
+                instance.location,
+                instance.user.verified and 'True' or 'False'
+            ),
+            slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+            slack_utils.KEY_COLOR: instance.user.verified and SLACK_ATTACHMENT_COLOR_GREEN or SLACK_ATTACHMENT_COLOR_RED
+        }
+    ]
+
+    slack_utils.send_incoming_webhook(
+        SLACK_STAFF_INCOMING_WEBHOOK,
+        {
+            slack_utils.KEY_TEXT: slack_msg,
+            slack_utils.KEY_ATTACHMENTS: attachments,
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_UPDATES_CHANNEL
+        }
+    )

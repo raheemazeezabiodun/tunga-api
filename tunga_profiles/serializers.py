@@ -1,4 +1,3 @@
-from django.core.validators import validate_email
 from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -6,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation, \
     Skill
 from tunga_profiles.notifications import send_developer_invited_email
+from tunga_profiles.signals import user_profile_updated
 from tunga_utils.constants import PAYMENT_METHOD_MOBILE_MONEY, PAYMENT_METHOD_BTC_ADDRESS, SKILL_TYPE_OTHER
 from tunga_utils.serializers import SimpleProfileSerializer, CreateOnlyCurrentUserDefault, SimpleUserSerializer, AbstractExperienceSerializer, \
     DetailAnnotatedModelSerializer, SimpleBTCWalletSerializer, SkillsDetailsSerializer
@@ -63,7 +63,15 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
         if 'skill_categories' in validated_data:
             skill_categories = validated_data.pop('skill_categories')
 
+        initial_bio = None
+        initial_location = None
+        initial_skills = None
+
         if instance:
+            initial_bio = instance.bio
+            initial_location = instance.location
+            initial_skills = [skill.name for skill in instance.skills.all()]
+            list.sort(initial_skills)
             instance = super(ProfileSerializer, self).update(instance, validated_data)
         else:
             instance = super(ProfileSerializer, self).create(validated_data)
@@ -71,6 +79,11 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
         self.save_skills(instance, skills)
         self.save_city(instance, city)
         self.save_skill_categories(skill_categories)
+
+        final_skills = [skill.name for skill in instance.skills.all()]
+        list.sort(final_skills)
+        if not instance or initial_bio != instance.bio or initial_location != instance.location or initial_skills != final_skills:
+            user_profile_updated.send(sender=UserProfile, profile=instance)
         return instance
 
     def create(self, validated_data):
@@ -108,13 +121,11 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
 
     def save_skill_categories(self, skill_categories):
         if skill_categories is not None:
-            print('skill_categories', skill_categories)
             for category in skill_categories:
-                print('category', category, skill_categories[category])
                 if category is not SKILL_TYPE_OTHER:
                     for skill in skill_categories[category]:
                         try:
-                            print(Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category))
+                            Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
                         except:
                             pass
 
