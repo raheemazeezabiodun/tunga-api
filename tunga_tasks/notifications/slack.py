@@ -9,7 +9,7 @@ from tunga.settings import TUNGA_URL, SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACH
     SLACK_ATTACHMENT_COLOR_BLUE, SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_RED, \
     SLACK_STAFF_UPDATES_CHANNEL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_DEVELOPER_UPDATES_CHANNEL, \
     SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_PMS_UPDATES_CHANNEL, SLACK_STAFF_LEADS_CHANNEL, \
-    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL
+    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL, SLACK_STAFF_MISSED_UPDATES_CHANNEL
 from tunga_tasks import slugs
 from tunga_tasks.models import Task, Participation, Application, ProgressEvent, ProgressReport, TaskInvoice
 from tunga_tasks.utils import get_task_integration
@@ -644,7 +644,7 @@ def notify_missed_progress_event_slack(instance):
         {
             slack_utils.KEY_TEXT: slack_msg,
             slack_utils.KEY_ATTACHMENTS: attachments,
-            slack_utils.KEY_CHANNEL: SLACK_STAFF_UPDATES_CHANNEL
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_MISSED_UPDATES_CHANNEL
         }
     )
 
