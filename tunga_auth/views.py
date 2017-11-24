@@ -15,7 +15,7 @@ from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from dry_rest_permissions.generics import DRYPermissions
-from rest_framework import views, status, generics, viewsets
+from rest_framework import views, status, generics, viewsets, mixins
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -86,7 +86,7 @@ class AccountInfoView(generics.RetrieveUpdateAPIView):
             return None
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """
     User Resource
     """

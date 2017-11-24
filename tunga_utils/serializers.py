@@ -98,6 +98,7 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True)
     country = CountryField()
     country_name = serializers.CharField()
+    location = serializers.CharField()
     btc_wallet = SimpleBTCWalletSerializer()
     skills_details = SkillsDetailsSerializer()
 
