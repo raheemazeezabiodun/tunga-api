@@ -10,6 +10,7 @@ from allauth.socialaccount.providers.github.provider import GitHubProvider
 from allauth.socialaccount.providers.google.provider import GoogleProvider
 from allauth.socialaccount.providers.slack.provider import SlackProvider
 from django.contrib.auth import get_user_model
+from django.contrib.sitemaps import Sitemap
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
@@ -29,7 +30,7 @@ from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SE
     HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
-from tunga_auth.models import EmailVisitor
+from tunga_auth.models import EmailVisitor, TungaUser
 from tunga_auth.permissions import IsAuthenticatedOrEmailVisitorReadOnly
 from tunga_auth.serializers import UserSerializer, AccountInfoSerializer, EmailVisitorSerializer
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
@@ -364,3 +365,14 @@ def harvest_connect_callback(request):
             save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_HARVEST, token_info)
 
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_HARVEST))
+
+
+class DevelopersSitemap(Sitemap):
+    changefreq = "daily"
+    priority = 0.5
+
+    def items(self):
+        return TungaUser.objects.filter(type=USER_TYPE_DEVELOPER, verified=True)
+
+    def lastmod(self, obj):
+        return obj.date_joined

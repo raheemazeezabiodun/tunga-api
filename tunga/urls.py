@@ -25,7 +25,7 @@ from rest_framework_swagger.views import get_swagger_view
 
 from tunga_activity.views import ActionViewSet
 from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, social_login_view, coinbase_connect_callback, \
-    slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback
+    slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap
@@ -75,7 +75,8 @@ router.register(r'skill-approval', SkillsApprovalViewSet)
 
 # Dictionary containing your sitemap classes
 sitemaps = {
-   'skills': SkillPagesSitemap(),
+    'skills': SkillPagesSitemap(),
+    'developers': DevelopersSitemap(),
 }
 
 urlpatterns = [

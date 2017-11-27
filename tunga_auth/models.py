@@ -50,6 +50,9 @@ class TungaUser(AbstractUser):
     def __str__(self):
         return '{} ({})'.format(self.display_name, self.get_username())
 
+    def get_absolute_url(self):
+        return '/developer/{}/'.format(self.username)
+
     @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
