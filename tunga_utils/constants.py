@@ -55,6 +55,7 @@ TASK_PAYMENT_METHOD_BITONIC = 'bitonic'
 TASK_PAYMENT_METHOD_BITCOIN = 'bitcoin'
 TASK_PAYMENT_METHOD_BANK = 'bank'
 TASK_PAYMENT_METHOD_STRIPE = 'stripe'
+TASK_PAYMENT_METHOD_AYDEN = 'ayden'
 
 # Transaction and Action Statuses
 STATUS_INITIAL = 'initial'
