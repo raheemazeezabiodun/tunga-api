@@ -447,7 +447,12 @@ def complete_bitpesa_payment(transaction):
                         payment.status = STATUS_PROCESSING
                         payment.extra = json.dumps(dict(bitpesa=bp_transaction_id))
                         payment.sent_at = datetime.datetime.utcnow()
-                        payment.btc_price = coinbase_utils.get_btc_price(payment.source.task.currency)
+                        payment.save()  # Save immediately incase next step fails
+
+                        payment.btc_price = coinbase_utils.get_btc_price(
+                            payment.source.task and payment.source.task.currency or
+                            payment.source.multi_pay_key.currency
+                        )
                         payment.save()
                         return True
             elif transaction_state == bitpesa.VALUE_CANCELED:
