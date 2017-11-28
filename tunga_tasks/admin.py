@@ -54,7 +54,7 @@ class TaskAdmin(admin.ModelAdmin):
         'type', 'scope', 'source', 'apply', 'closed', 'paid', 'pay_distributed', 'archived',
         'created_at', 'schedule_call_start', 'paid_at'
     )
-    search_fields = ('title', 'analytics_id')
+    search_fields = ('title', 'analytics_id', 'btc_address', 'multi_pay_key', 'multi_pay_distribute_key')
     inlines = (TaskAccessInline, ParticipationInline)
 
     def save_formset(self, request, form, formset, change):
