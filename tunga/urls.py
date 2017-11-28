@@ -26,6 +26,8 @@ from rest_framework_swagger.views import get_swagger_view
 from tunga_activity.views import ActionViewSet
 from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, social_login_view, coinbase_connect_callback, \
     slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap
+from tunga_auth import views as tunga_auth_views
+
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap
@@ -117,6 +119,10 @@ urlpatterns = [
     url(r'^api/contact-request/', ContactRequestView.as_view(), name='contact-request'),
     url(r'^api/medium/', get_medium_posts, name='medium-posts'),
     url(r'^api/docs/', api_schema_view),
+    
+    # payoneer api
+    url(r'^api/payoneer/', tunga_auth_views.GeneratePayoneerSignupURL.as_view(), name="payoneer"),
+    url(r'^api/payoneer/response/ipcn/', tunga_auth_views.PayoneerIPCNAStatuses.as_view(), name="payoneer_ipc_status"),
     url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, name='password_reset_confirm'),
     url(r'^$', router.get_api_root_view(), name='backend-root'),

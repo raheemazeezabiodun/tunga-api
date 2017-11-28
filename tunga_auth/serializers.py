@@ -48,7 +48,7 @@ class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixi
         model = get_user_model()
         exclude = ('password', 'is_superuser', 'groups', 'user_permissions', 'is_active')
         read_only_fields = (
-            'username', 'email', 'date_joined', 'last_login', 'is_staff'
+            'username', 'email', 'date_joined', 'last_login', 'is_staff', 'payoneer_signup_url', 'payoneer_status'
         )
 
     def get_can_connect(self, obj):

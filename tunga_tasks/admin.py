@@ -52,9 +52,9 @@ class TaskAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'type', 'scope', 'source', 'apply', 'closed', 'paid', 'pay_distributed', 'archived',
-        'created_at', 'schedule_call_start', 'paid_at'
+        'created_at', 'schedule_call_start', 'paid_at', 'multi_pay_key', 'multi_pay_distribute_key'
     )
-    search_fields = ('title', 'analytics_id')
+    search_fields = ('title', 'analytics_id', 'btc_address')
     inlines = (TaskAccessInline, ParticipationInline)
 
     def save_formset(self, request, form, formset, change):
