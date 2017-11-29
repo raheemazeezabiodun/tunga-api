@@ -12,7 +12,7 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 from tunga_utils import bitcoin_utils, coinbase_utils
 from tunga_utils.constants import PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_BTC_WALLET, BTC_WALLET_PROVIDER_COINBASE, \
     USER_TYPE_DEVELOPER, USER_TYPE_PROJECT_OWNER, USER_TYPE_PROJECT_MANAGER, USER_SOURCE_DEFAULT, \
-    USER_SOURCE_TASK_WIZARD
+    USER_SOURCE_TASK_WIZARD, STATUS_INITIAL, STATUS_APPROVED, STATUS_DECLINED
 
 USER_TYPE_CHOICES = (
     (USER_TYPE_DEVELOPER, 'Developer'),
@@ -23,6 +23,12 @@ USER_TYPE_CHOICES = (
 USER_SOURCE_CHOICES = (
     (USER_SOURCE_DEFAULT, 'Default'),
     (USER_SOURCE_TASK_WIZARD, 'Task Wizard')
+)
+
+PAYONEER_STATUS_CHOICES = (
+    (STATUS_INITIAL, 'Initial'),
+    (STATUS_APPROVED, 'Approved'),
+    (STATUS_DECLINED, 'Decline')
 )
 
 
@@ -38,6 +44,12 @@ class TungaUser(AbstractUser):
     agreed_at = models.DateTimeField(blank=True, null=True)
     disagree_version = models.FloatField(blank=True, null=True, default=0)
     disagreed_at = models.DateTimeField(blank=True, null=True)
+    payoneer_signup_url = models.URLField(blank=True, null=False)
+    payoneer_status = models.CharField(
+        max_length=20, choices=PAYONEER_STATUS_CHOICES,
+        help_text=', '.join(['{} - {}'.format(item[0], item[1]) for item in PAYONEER_STATUS_CHOICES]),
+        default=STATUS_INITIAL
+    )
 
     class Meta(AbstractUser.Meta):
         unique_together = ('email',)
