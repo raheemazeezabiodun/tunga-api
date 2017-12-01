@@ -73,3 +73,29 @@ class SkillPageProfile(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return self.has_object_write_permission(request)
+
+
+@python_2_unicode_compatible
+class BlogPost(models.Model):
+    slug = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=100)
+    body = models.TextField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} Page'.format(self.keyword)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def get_absolute_url(self):
+        return '/blog/{}/'.format(self.keyword)
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.user
