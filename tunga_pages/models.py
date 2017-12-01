@@ -84,13 +84,13 @@ class BlogPost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '{} Page'.format(self.keyword)
+        return '{} Blog Post'.format(self.title)
 
     class Meta:
         ordering = ['-created_at']
 
     def get_absolute_url(self):
-        return '/blog/{}/'.format(self.keyword)
+        return '/blog/{}/'.format(self.slug)
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
@@ -98,4 +98,4 @@ class BlogPost(models.Model):
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
-        return request.user == self.user
+        return request.user == self.created_by

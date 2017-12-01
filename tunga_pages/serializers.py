@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
-from tunga_pages.models import SkillPage, SkillPageProfile
-from tunga_utils.serializers import SimpleUserSkillsProfileSerializer, SkillSerializer
+from tunga_pages.models import SkillPage, SkillPageProfile, BlogPost
+from tunga_utils.serializers import SimpleUserSkillsProfileSerializer, SkillSerializer, SimpleUserSerializer, \
+    CreateOnlyCurrentUserDefault
 
 
 class SkillPageProfileSerializer(serializers.ModelSerializer):
@@ -20,3 +21,11 @@ class SkillPageSerializer(serializers.ModelSerializer):
     class Meta:
         model = SkillPage
         exclude = ('created_by',)
+
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    created_by = SimpleUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+
+    class Meta:
+        model = BlogPost
+        fields = '__all__'
