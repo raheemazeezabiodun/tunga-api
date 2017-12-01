@@ -26,7 +26,8 @@ from tunga_tasks.tasks import update_multi_tasks
 from tunga_utils import coinbase_utils, bitcoin_utils
 from tunga_utils.constants import PROGRESS_EVENT_TYPE_MILESTONE, USER_TYPE_PROJECT_OWNER, USER_SOURCE_TASK_WIZARD, \
     TASK_SCOPE_ONGOING, VISIBILITY_CUSTOM, TASK_SCOPE_TASK, TASK_SCOPE_PROJECT, TASK_SOURCE_NEW_USER, STATUS_INITIAL, \
-    STATUS_ACCEPTED, STATUS_APPROVED, STATUS_DECLINED, STATUS_REJECTED, STATUS_SUBMITTED
+    STATUS_ACCEPTED, STATUS_APPROVED, STATUS_DECLINED, STATUS_REJECTED, STATUS_SUBMITTED, \
+    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.helpers import clean_meta_value
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
@@ -590,8 +591,11 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
     def save_milestones(self, task, milestones):
         if milestones:
             for item in milestones:
-                event_type = item.get('type', PROGRESS_EVENT_TYPE_MILESTONE)
-                if event_type != PROGRESS_EVENT_TYPE_MILESTONE:
+                event_internal = item.get('internal', False)
+                event_type = item.get(
+                    'type', event_internal and PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL or PROGRESS_EVENT_TYPE_MILESTONE
+                )
+                if event_type not in [PROGRESS_EVENT_TYPE_MILESTONE, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]:
                     continue
                 defaults = {'created_by': self.get_current_user() or task.user}
                 defaults.update(item)
