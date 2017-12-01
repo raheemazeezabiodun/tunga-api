@@ -2,14 +2,12 @@ import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
-from django.db.models.query_utils import Q
 
-from tunga_tasks.notifications.generic import remind_progress_event, notify_missed_progress_event, \
-    send_survey_summary_report
-from tunga_tasks.models import Task, ProgressEvent, ProgressReport
-from tunga_tasks.tasks import initialize_task_progress_events
+from tunga_tasks.notifications.generic import send_survey_summary_report
+from tunga_tasks.models import ProgressEvent, ProgressReport
 from tunga_utils.constants import PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_PERIODIC, \
-    PROGRESS_EVENT_TYPE_DEFAULT, PROGRESS_EVENT_TYPE_COMPLETE, PROGRESS_EVENT_TYPE_SUBMIT
+    PROGRESS_EVENT_TYPE_DEFAULT, PROGRESS_EVENT_TYPE_COMPLETE, PROGRESS_EVENT_TYPE_SUBMIT, \
+    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 
 
 class Command(BaseCommand):
@@ -47,7 +45,9 @@ class Command(BaseCommand):
 
             try:
                 pm_report = ProgressReport.objects.filter(
-                    event__task=event.task, event__type=PROGRESS_EVENT_TYPE_PM,
+                    event__task=event.task, event__type__in=[
+                        PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
+                    ],
                     event__due_at__range=[last_thursday, right_now]
                 ).latest('event__due_at')
             except:

@@ -28,7 +28,7 @@ from tunga_tasks.notifications.slack import notify_new_task_admin_slack, remind_
     notify_progress_report_wont_meet_deadline_slack_admin, send_survey_summary_report_slack, \
     notify_new_task_invoice_admin_slack
 from tunga_utils.constants import PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_REPORT_STATUS_STUCK, \
-    PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
+    PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.helpers import clean_instance
 
 
@@ -126,7 +126,7 @@ def notify_new_progress_report(instance):
 def trigger_progress_report_actionable_events(instance):
     # Trigger actionable event notifications
     instance = clean_instance(instance, ProgressReport)
-    is_pm_report = instance.event.type == PROGRESS_EVENT_TYPE_PM
+    is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
     is_client_report = instance.event.type == PROGRESS_EVENT_TYPE_CLIENT
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report

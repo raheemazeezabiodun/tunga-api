@@ -16,7 +16,7 @@ from tunga_utils import mandrill_utils, slack_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, USER_TYPE_DEVELOPER, VISIBILITY_MY_TEAM, \
     STATUS_ACCEPTED, VISIBILITY_DEVELOPER, USER_TYPE_PROJECT_MANAGER, STATUS_SUBMITTED, STATUS_APPROVED, \
     STATUS_DECLINED, STATUS_REJECTED, STATUS_INITIAL, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, \
-    TASK_PAYMENT_METHOD_BANK
+    TASK_PAYMENT_METHOD_BANK, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
 
@@ -472,7 +472,7 @@ def send_task_application_not_selected_email(instance):
 def remind_progress_event_email(instance):
     instance = clean_instance(instance, ProgressEvent)
 
-    is_pm_report = instance.type == PROGRESS_EVENT_TYPE_PM
+    is_pm_report = instance.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
     is_client_report = instance.type == PROGRESS_EVENT_TYPE_CLIENT
     is_pm_or_client_report = is_pm_report or is_client_report
 
@@ -533,7 +533,7 @@ def remind_progress_event_email(instance):
 @job
 def notify_new_progress_report_email(instance):
     instance = clean_instance(instance, ProgressReport)
-    is_pm_report = instance.event.type == PROGRESS_EVENT_TYPE_PM
+    is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
     is_client_report = instance.event.type == PROGRESS_EVENT_TYPE_CLIENT
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
@@ -918,7 +918,7 @@ def notify_progress_report_wont_meet_deadline_email_admin(instance):
     instance = clean_instance(instance, ProgressReport)
 
     subject = "`Alert (!):` {} doesn't expect to meet the deadline".format(
-        instance.event.type == PROGRESS_EVENT_TYPE_PM and 'PM' or 'Developer'
+        instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer'
     )
 
     to = TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS
@@ -944,7 +944,7 @@ def notify_progress_report_wont_meet_deadline_email_pm(instance):
     instance = clean_instance(instance, ProgressReport)
 
     subject = "`Alert (!):` {} doesn't expect to meet the deadline".format(
-        instance.event.type == PROGRESS_EVENT_TYPE_PM and 'PM' or 'Developer'
+        instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer'
     )
 
     pm = instance.event.task.pm
@@ -973,7 +973,7 @@ def notify_progress_report_wont_meet_deadline_email_dev(instance):
     instance = clean_instance(instance, ProgressReport)
 
     subject = "`Alert (!):` {} doesn't expect to meet the deadline".format(
-        instance.event.type == PROGRESS_EVENT_TYPE_PM and 'PM' or 'Developer'
+        instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer'
     )
 
     to = [instance.user.email]

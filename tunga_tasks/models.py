@@ -47,7 +47,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     TASK_PAYMENT_METHOD_STRIPE, PROGRESS_REPORT_STATUS_BEHIND_BUT_PROGRESSING, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, \
     PROGRESS_REPORT_STUCK_REASON_ERROR, PROGRESS_REPORT_STUCK_REASON_POOR_DOC, PROGRESS_REPORT_STUCK_REASON_HARDWARE, \
     PROGRESS_REPORT_STUCK_REASON_UNCLEAR_SPEC, PROGRESS_REPORT_STUCK_REASON_PERSONAL, PROGRESS_REPORT_STUCK_REASON_OTHER, \
-    STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN
+    STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
 from tunga_utils.models import Upload, Rating
 from tunga_utils.validators import validate_btc_address
@@ -713,7 +713,11 @@ class Task(models.Model):
 
     @property
     def milestones(self):
-        return self.progressevent_set.filter(type__in=[PROGRESS_EVENT_TYPE_MILESTONE, PROGRESS_EVENT_TYPE_SUBMIT])
+        return self.progressevent_set.filter(
+            type__in=[
+                PROGRESS_EVENT_TYPE_MILESTONE, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_EVENT_TYPE_SUBMIT
+            ]
+        )
 
     @property
     def progress_events(self):
@@ -1238,8 +1242,9 @@ PROGRESS_EVENT_TYPE_CHOICES = (
     (PROGRESS_EVENT_TYPE_MILESTONE, 'Milestone'),
     (PROGRESS_EVENT_TYPE_SUBMIT, 'Final Draft'),
     (PROGRESS_EVENT_TYPE_COMPLETE, 'Submission'),
-    (PROGRESS_EVENT_TYPE_PM, 'PM Update'),
-    (PROGRESS_EVENT_TYPE_CLIENT, 'Client Survey')
+    (PROGRESS_EVENT_TYPE_PM, 'PM Report'),
+    (PROGRESS_EVENT_TYPE_CLIENT, 'Client Survey'),
+    (PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, 'Internal Milestone'),
 )
 
 
