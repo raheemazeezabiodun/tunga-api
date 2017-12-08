@@ -20,8 +20,8 @@ SECRET_KEY = '!8g-9plb-5pa795jxv4@f18fu-+j^h2cyk_-?p%4s31eudmmr+'
 
 ALLOWED_HOSTS = ['tunga.io', 'web.tunga.io', 'www.tunga.io']
 
-DEBUG = False
-
+DEBUG = True
+    
 # Application definition
 
 INSTALLED_APPS = [
@@ -430,6 +430,13 @@ MAILCHIMP_NEW_USER_AUTOMATION_EMAIL_ID = None
 MANDRILL_API_KEY = None
 MANDRILL_VAR_SUBJECT = 'subject'
 MANDRILL_VAR_FIRST_NAME = 'first_name'
+
+
+PAYONEER_USERNAME = None
+PAYONEER_PASSWORD = None
+PAYONEER_PARTNER_ID = None
+PAYONEER_PAYEE_ID = None
+PAYONEER_API_URL = None
 
 RAVEN_CONFIG = {
     'dsn': '',  # Raven URL here

@@ -25,7 +25,8 @@ from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 from weasyprint import HTML
 
-from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
+from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
+    SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
     SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, HARVEST_CLIENT_ID, \
     HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
 from tunga_auth.filterbackends import UserFilterBackend
@@ -40,9 +41,12 @@ from tunga_utils import coinbase_utils, slack_utils, harvest_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
-from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, get_session_next_url
+from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, \
+    get_session_next_url
 from tunga_utils.helpers import get_social_token
 from tunga_utils.serializers import SimpleUserSerializer
+from tunga_auth.api import payoneer, api_util
+from tunga import settings
 
 
 class VerifyUserView(views.APIView):
@@ -85,6 +89,112 @@ class AccountInfoView(generics.RetrieveUpdateAPIView):
             return user
         else:
             return None
+
+
+class GeneratePayoneerSignupURL(views.APIView):
+    """
+    View handles and processes request to generate
+    payoneer signup url
+    
+    * It runs a counter request using python requests
+    """
+
+    def post(self, request, format=None):
+        """
+        @return: Returns generated url from payoneer systems
+        """
+        try:
+            user = request.user
+            if user.is_authenticated():
+
+                # Update the user 
+                auth = payoneer.TungaPayoneer(
+                    settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
+                    settings.PAYONEER_PARTNER_ID, settings.PAYONEER_PAYEE_ID
+                )
+
+                phonenumber = user.profile.phone_number
+                firstname = user.first_name
+                lastname = user.last_name
+                country = user.profile.country
+
+                # Create XML payload
+                xml_payload = api_util.parse_default_xml_args(
+                    settings.PAYONEER_PAYEE_ID, firstname, lastname, phonenumber
+                )
+                response = auth.initiate_auto_populate(None, None, xml_payload)
+
+                try:
+                    if response.get("payoneer_url"):
+                        user.payoneer_signup_url = response.get("payoneer_url")
+                        user.save()
+                        return Response(response)
+                    else:
+                        return Response({"Error": "No payoneer_url returned from query"})
+
+                except Exception as e:
+                    error = {"error": e}
+                    return Response(error)
+            else:
+                return Response({"authenticated": "Failed"})
+
+        except Exception as e:
+            error = {"error": e}
+            return Response(error)
+
+
+class PayoneerIPCNAStatuses(views.APIView):
+    """
+    View handles callback request from payoneer when
+    signup is approved
+    payoneer signup url
+    
+    """
+
+    def get(self, request, format=None):
+        """
+        Update the payoneer status.
+        """
+        try:
+            user = request.user
+            if (user.is_authenticated()):
+
+                status = request.GET.get("APPROVED", "")  # True of False default is True
+                apuid = request.GET.get("apuid", "")  # apuid --> Payee ID
+                sessionid = request.GET.get("sessionid", "")  # sessionid
+                payoneerid = request.GET.get("payoneerid", "")  # Payoneer ID
+
+                if (apuid and sessionid and payoneerid):
+
+                    # If the user does not have payoneer_signup_url
+                    # Then he or she has not yet attempted a signup yet.
+                    if (user.payoneer_signup_url):
+                        user.payoneer_status = "approved" if int(status) == 1 else "declined"
+
+                        response_dict = {}
+                        response_dict["approved"] = True if int(status) == 1 else False
+                        response_dict["payee_id"] = apuid
+                        response_dict["session_id"] = sessionid
+                        response_dict["payoneer_id"] = payoneerid
+                        response_dict["user"] = user.username
+
+                        return Response(response_dict)
+                    else:
+                        response_dict = {}
+                        response_dict["error":"No payoneer signup url for for user"]
+                        return Response(response_dict)
+                else:
+                    response_dict = {}
+                    response_dict["error":"Unexpected return status"]
+                    return Response(response_dict)
+            else:
+                response_dict = {}
+                response_dict["error":"403"]
+                return Response(response_dict)
+
+        except Exception as e:
+            error = {"error": e}
+            return Response(error)
 
 
 class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
@@ -175,7 +285,8 @@ class EmailVisitorView(generics.CreateAPIView, generics.RetrieveAPIView):
         if email:
             try:
                 # Visitor email logins will be valid for an hour
-                return EmailVisitor.objects.get(email=email, last_login_at__gte=(datetime.datetime.utcnow() - datetime.timedelta(hours=1)))
+                return EmailVisitor.objects.get(email=email, last_login_at__gte=(
+                    datetime.datetime.utcnow() - datetime.timedelta(hours=1)))
             except:
                 pass
         return None

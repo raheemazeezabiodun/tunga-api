@@ -147,7 +147,7 @@ TASK_PAYMENT_METHOD_CHOICES = (
     (TASK_PAYMENT_METHOD_STRIPE, 'Pay with Stripe'),
     (TASK_PAYMENT_METHOD_BITONIC, 'Pay with iDeal / mister cash'),
     (TASK_PAYMENT_METHOD_BITCOIN, 'Pay with BitCoin'),
-    (TASK_PAYMENT_METHOD_BANK, 'Pay by bank transfer'),
+    (TASK_PAYMENT_METHOD_BANK, 'Pay by bank transfer')
 )
 
 TASK_SOURCE_CHOICES = (
