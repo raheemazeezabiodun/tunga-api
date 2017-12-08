@@ -243,6 +243,7 @@ def update_task_client_surveys(task):
 
 @job
 def distribute_task_payment(task):
+    return
     task = clean_instance(task, Task)
     if not task.paid:
         return
