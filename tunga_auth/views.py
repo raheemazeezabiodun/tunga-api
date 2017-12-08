@@ -324,9 +324,7 @@ def payoneer_notification(request):
     Receive Payoneer IPCN
     """
     try:
-        reg = request.GET.get("REG", None)
-        approved = request.GET.get("APPROVED", None)
-        declined = request.GET.get("DECLINE", None)
+        reg_status = request.GET.get("status", "initial")
 
         apuid = request.GET.get("apuid", None)  # apuid --> Payee ID
         sessionid = request.GET.get("sessionid", None)  # sessionid
@@ -338,8 +336,8 @@ def payoneer_notification(request):
             except:
                 return Response({"message": "Payee not found"}, status=HTTP_400_BAD_REQUEST)
 
-            if user.payoneer_signup_url and (reg or approved or declined):
-                user.payoneer_status = (reg and STATUS_PENDING) or (approved and STATUS_APPROVED or STATUS_DECLINED)
+            if user.payoneer_signup_url and reg_status in [STATUS_PENDING, STATUS_APPROVED, STATUS_DECLINED]:
+                user.payoneer_status = reg_status
                 user.save()
 
                 return Response({"message": "Notification received"})
