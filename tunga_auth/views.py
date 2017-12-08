@@ -22,7 +22,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_401_UNAUTHORIZED
 from weasyprint import HTML
 
 from tunga import settings
@@ -118,7 +118,6 @@ class GeneratePayoneerSignupURL(views.APIView):
                 lastname = user.last_name
                 country = user.profile.country
 
-                # Create XML payload
                 xml_payload = api_util.parse_default_xml_args(
                     user.id, firstname, lastname, phonenumber
                 )
@@ -130,13 +129,12 @@ class GeneratePayoneerSignupURL(views.APIView):
                         user.save()
                         return Response(response)
                     else:
-                        return Response({"Error": "No payoneer_url returned from query"})
+                        return Response({"message": "No payoneer_url returned from query"}, status=HTTP_400_BAD_REQUEST)
 
                 except Exception as e:
-                    error = {"error": e}
-                    return Response(error)
+                    return Response({"message": ""}, status=HTTP_500_INTERNAL_SERVER_ERROR)
             else:
-                return Response({"authenticated": "Failed"})
+                return Response({"message": "Unauthorized"}, status=HTTP_401_UNAUTHORIZED)
 
         except Exception as e:
             error = {"error": e}
