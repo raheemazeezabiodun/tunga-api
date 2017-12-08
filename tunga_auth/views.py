@@ -1,7 +1,6 @@
+import datetime
 import json
 import re
-
-import datetime
 from urllib import quote_plus, urlencode
 
 import requests
@@ -23,30 +22,31 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from weasyprint import HTML
 
+from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
     SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, HARVEST_CLIENT_ID, \
     HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
+from tunga_auth.api import payoneer, api_util
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
 from tunga_auth.models import EmailVisitor, TungaUser
-from tunga_auth.permissions import IsAuthenticatedOrEmailVisitorReadOnly
 from tunga_auth.serializers import UserSerializer, AccountInfoSerializer, EmailVisitorSerializer
+from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, \
+    get_session_next_url
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
 from tunga_utils import coinbase_utils, slack_utils, harvest_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
-    USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST
+    USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
+    STATUS_DECLINED
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
-from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, \
-    get_session_next_url
 from tunga_utils.helpers import get_social_token
 from tunga_utils.serializers import SimpleUserSerializer
-from tunga_auth.api import payoneer, api_util
-from tunga import settings
 
 
 class VerifyUserView(views.APIView):
@@ -120,7 +120,7 @@ class GeneratePayoneerSignupURL(views.APIView):
 
                 # Create XML payload
                 xml_payload = api_util.parse_default_xml_args(
-                    settings.PAYONEER_PAYEE_ID, firstname, lastname, phonenumber
+                    user.id, firstname, lastname, phonenumber
                 )
                 response = auth.initiate_auto_populate(None, None, xml_payload)
 
@@ -156,45 +156,33 @@ class PayoneerIPCNAStatuses(views.APIView):
         Update the payoneer status.
         """
         try:
-            user = request.user
-            if (user.is_authenticated()):
+            approved = request.GET.get("APPROVED", None)
+            declined = request.GET.get("DECLINE", None)
 
-                status = request.GET.get("APPROVED", "")  # True of False default is True
-                apuid = request.GET.get("apuid", "")  # apuid --> Payee ID
-                sessionid = request.GET.get("sessionid", "")  # sessionid
-                payoneerid = request.GET.get("payoneerid", "")  # Payoneer ID
+            apuid = request.GET.get("apuid", "")  # apuid --> Payee ID
+            #sessionid = request.GET.get("sessionid", "")  # sessionid
+            payoneerid = request.GET.get("Payoneerid", "")  # Payoneer ID
 
-                if (apuid and sessionid and payoneerid):
+            if apuid and payoneerid:
 
-                    # If the user does not have payoneer_signup_url
-                    # Then he or she has not yet attempted a signup yet.
-                    if (user.payoneer_signup_url):
-                        user.payoneer_status = "approved" if int(status) == 1 else "declined"
+                try:
+                    user = TungaUser.objects.get(id=apuid)
+                except:
+                    return Response({"message": "Payee not found"}, status=HTTP_400_BAD_REQUEST)
 
-                        response_dict = {}
-                        response_dict["approved"] = True if int(status) == 1 else False
-                        response_dict["payee_id"] = apuid
-                        response_dict["session_id"] = sessionid
-                        response_dict["payoneer_id"] = payoneerid
-                        response_dict["user"] = user.username
+                if user.payoneer_signup_url and (approved or declined):
+                    user.payoneer_status = approved and STATUS_APPROVED or STATUS_DECLINED
+                    user.save()
 
-                        return Response(response_dict)
-                    else:
-                        response_dict = {}
-                        response_dict["error":"No payoneer signup url for for user"]
-                        return Response(response_dict)
+                    return Response({"message": "Notification received"})
                 else:
-                    response_dict = {}
-                    response_dict["error":"Unexpected return status"]
-                    return Response(response_dict)
+                    return Response({"message": "No payoneer signup url for for user"}, status=HTTP_400_BAD_REQUEST)
             else:
-                response_dict = {}
-                response_dict["error":"403"]
+                response_dict = {"message": "Unexpected return status"}
                 return Response(response_dict)
 
         except Exception as e:
-            error = {"error": e}
-            return Response(error)
+            return Response({"error": e}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):

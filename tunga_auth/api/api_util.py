@@ -1,4 +1,7 @@
-def parse_default_xml_args(client_payee_id, firstname, lastname, phonenumber, p_type=1):
+from tunga.settings import TUNGA_URL
+
+
+def parse_default_xml_args(client_payee_id, firstname, lastname, phonenumber, p_type=1, redirect_url=None):
     """
     Constructs default args for the xml args to be 
     passed to requests.
@@ -11,7 +14,7 @@ def parse_default_xml_args(client_payee_id, firstname, lastname, phonenumber, p_
                 <prid></prid>
                 <apuid>{}</apuid>
                 <sessionid></sessionid>
-                <redirect></redirect>
+                <redirect>{}</redirect>
                 <PayeeType>{}</PayeeType>
                 <redirectTime></redirectTime>
                 <PayoutMethodList></PayoutMethodList>
@@ -35,6 +38,6 @@ def parse_default_xml_args(client_payee_id, firstname, lastname, phonenumber, p_
     ).encode('utf-8')
 
     try:
-        return xml.format(client_payee_id, p_type, firstname, lastname, phonenumber)
+        return xml.format(client_payee_id, redirect_url or '{}/profile/payment/payoneer'.format(TUNGA_URL), p_type, firstname, lastname, phonenumber)
     except Exception as e:
         return ''
