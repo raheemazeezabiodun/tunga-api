@@ -43,7 +43,7 @@ from tunga_tasks.utils import save_task_integration_meta
 from tunga_utils import coinbase_utils, slack_utils, harvest_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
-    STATUS_DECLINED
+    STATUS_DECLINED, STATUS_PENDING
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.helpers import get_social_token
 from tunga_utils.serializers import SimpleUserSerializer
@@ -154,12 +154,13 @@ class PayoneerIPCNAStatuses(views.APIView):
         Update the payoneer status.
         """
         try:
+            reg = request.GET.get("REG", None)
             approved = request.GET.get("APPROVED", None)
             declined = request.GET.get("DECLINE", None)
 
-            apuid = request.GET.get("apuid", "")  # apuid --> Payee ID
-            #sessionid = request.GET.get("sessionid", "")  # sessionid
-            payoneerid = request.GET.get("Payoneerid", "")  # Payoneer ID
+            apuid = request.GET.get("apuid", None)  # apuid --> Payee ID
+            sessionid = request.GET.get("sessionid", None)  # sessionid
+            payoneerid = request.GET.get("Payoneerid", None)  # Payoneer ID
 
             if apuid and payoneerid:
 
@@ -168,8 +169,8 @@ class PayoneerIPCNAStatuses(views.APIView):
                 except:
                     return Response({"message": "Payee not found"}, status=HTTP_400_BAD_REQUEST)
 
-                if user.payoneer_signup_url and (approved or declined):
-                    user.payoneer_status = approved and STATUS_APPROVED or STATUS_DECLINED
+                if user.payoneer_signup_url and (reg or approved or declined):
+                    user.payoneer_status = (reg and STATUS_PENDING) or (approved and STATUS_APPROVED or STATUS_DECLINED)
                     user.save()
 
                     return Response({"message": "Notification received"})
