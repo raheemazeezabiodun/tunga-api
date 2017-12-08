@@ -14,9 +14,10 @@ from django.core.urlresolvers import reverse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
 from dry_rest_permissions.generics import DRYPermissions
 from rest_framework import views, status, generics, viewsets, mixins
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, permission_classes, api_view
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -29,7 +30,7 @@ from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
     SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, HARVEST_CLIENT_ID, \
-    HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
+    HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK, TUNGA_URL
 from tunga_auth.api import payoneer, api_util
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
@@ -89,99 +90,6 @@ class AccountInfoView(generics.RetrieveUpdateAPIView):
             return user
         else:
             return None
-
-
-class GeneratePayoneerSignupURL(views.APIView):
-    """
-    View handles and processes request to generate
-    payoneer signup url
-    
-    * It runs a counter request using python requests
-    """
-
-    def post(self, request, format=None):
-        """
-        @return: Returns generated url from payoneer systems
-        """
-        try:
-            user = request.user
-            if user.is_authenticated():
-
-                # Update the user 
-                auth = payoneer.TungaPayoneer(
-                    settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
-                    settings.PAYONEER_PARTNER_ID, settings.PAYONEER_PAYEE_ID
-                )
-
-                phonenumber = user.profile.phone_number
-                firstname = user.first_name
-                lastname = user.last_name
-                country = user.profile.country
-
-                xml_payload = api_util.parse_default_xml_args(
-                    user.id, firstname, lastname, phonenumber
-                )
-                response = auth.initiate_auto_populate(None, None, xml_payload)
-
-                try:
-                    if response.get("payoneer_url"):
-                        user.payoneer_signup_url = response.get("payoneer_url")
-                        user.save()
-                        return Response(response)
-                    else:
-                        return Response({"message": "No payoneer_url returned from query"}, status=HTTP_400_BAD_REQUEST)
-
-                except Exception as e:
-                    return Response({"message": ""}, status=HTTP_500_INTERNAL_SERVER_ERROR)
-            else:
-                return Response({"message": "Unauthorized"}, status=HTTP_401_UNAUTHORIZED)
-
-        except Exception as e:
-            error = {"error": e}
-            return Response(error)
-
-
-class PayoneerIPCNAStatuses(views.APIView):
-    """
-    View handles callback request from payoneer when
-    signup is approved
-    payoneer signup url
-    
-    """
-
-    def get(self, request, format=None):
-        """
-        Update the payoneer status.
-        """
-        try:
-            reg = request.GET.get("REG", None)
-            approved = request.GET.get("APPROVED", None)
-            declined = request.GET.get("DECLINE", None)
-
-            apuid = request.GET.get("apuid", None)  # apuid --> Payee ID
-            sessionid = request.GET.get("sessionid", None)  # sessionid
-            payoneerid = request.GET.get("Payoneerid", None)  # Payoneer ID
-
-            if apuid and payoneerid:
-
-                try:
-                    user = TungaUser.objects.get(id=apuid)
-                except:
-                    return Response({"message": "Payee not found"}, status=HTTP_400_BAD_REQUEST)
-
-                if user.payoneer_signup_url and (reg or approved or declined):
-                    user.payoneer_status = (reg and STATUS_PENDING) or (approved and STATUS_APPROVED or STATUS_DECLINED)
-                    user.save()
-
-                    return Response({"message": "Notification received"})
-                else:
-                    return Response({"message": "No payoneer signup url for for user"}, status=HTTP_400_BAD_REQUEST)
-            else:
-                response_dict = {"message": "Unexpected return status"}
-                return Response(response_dict)
-
-        except Exception as e:
-            return Response({"error": e}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
@@ -350,6 +258,99 @@ def social_login_view(request, provider=None):
     else:
         authorize_url = '/'
     return redirect(authorize_url)
+
+
+def payoneer_sign_up(request):
+    """
+    View handles and processes request to generate payoneer signup url
+
+    * It runs a counter request using python requests
+
+    @return: Returns generated url from payoneer systems
+    """
+    error_url = '{}/profile/payment/payoneer?error=true&message={}&status_code={}'
+    user = request.user
+    if user and user.is_authenticated() and user.is_developer:
+        auth = payoneer.TungaPayoneer(
+            settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
+            settings.PAYONEER_PARTNER_ID, settings.PAYONEER_PAYEE_ID
+        )
+
+        try:
+            xml_payload = api_util.parse_default_xml_args(
+                user.id, user.first_name, user.last_name, user.phone_number, user.email
+            )
+            print(xml_payload)
+            response = auth.initiate_auto_populate(None, None, xml_payload)
+        except:
+            return redirect(
+                error_url.format(
+                    TUNGA_URL, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            )
+
+        try:
+            payoneer_url = response.get("payoneer_url")
+            if payoneer_url:
+                user.payoneer_signup_url = payoneer_url
+                user.save()
+                print (response)
+                return redirect(payoneer_url)
+            else:
+                return redirect(
+                    error_url.format(
+                        TUNGA_URL, "No payoneer_url returned from query", HTTP_400_BAD_REQUEST
+                    )
+                )
+        except:
+            return redirect(
+                error_url.format(
+                    TUNGA_URL, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            )
+    else:
+        return redirect(
+            error_url.format(
+                TUNGA_URL, "Unauthorized", HTTP_401_UNAUTHORIZED
+            )
+        )
+
+
+@csrf_exempt
+@api_view(http_method_names=['GET'])
+@permission_classes([AllowAny])
+def payoneer_notification(request):
+    """
+    Receive Payoneer IPCN
+    """
+    try:
+        reg = request.GET.get("REG", None)
+        approved = request.GET.get("APPROVED", None)
+        declined = request.GET.get("DECLINE", None)
+
+        apuid = request.GET.get("apuid", None)  # apuid --> Payee ID
+        sessionid = request.GET.get("sessionid", None)  # sessionid
+        payoneerid = request.GET.get("Payoneerid", None)  # Payoneer ID
+
+        if apuid and payoneerid:
+            try:
+                user = TungaUser.objects.get(id=apuid)
+            except:
+                return Response({"message": "Payee not found"}, status=HTTP_400_BAD_REQUEST)
+
+            if user.payoneer_signup_url and (reg or approved or declined):
+                user.payoneer_status = (reg and STATUS_PENDING) or (approved and STATUS_APPROVED or STATUS_DECLINED)
+                user.save()
+
+                return Response({"message": "Notification received"})
+            else:
+                return Response({"message": "No payoneer signup url for for user"}, status=HTTP_400_BAD_REQUEST)
+        else:
+            response_dict = {"message": "Unexpected return status"}
+            return Response(response_dict)
+
+    except Exception as e:
+        return Response({"error": e}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def coinbase_connect_callback(request):

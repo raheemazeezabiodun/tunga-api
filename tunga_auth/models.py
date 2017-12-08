@@ -145,6 +145,12 @@ class TungaUser(AbstractUser):
         return self.profile.mobile_money_cc
 
     @property
+    def phone_number(self):
+        if not self.profile:
+            return None
+        return self.profile.phone_number
+
+    @property
     def mobile_money_number(self):
         if not self.profile:
             return None
