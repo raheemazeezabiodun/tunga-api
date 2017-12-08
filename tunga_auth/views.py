@@ -268,7 +268,7 @@ def payoneer_sign_up(request):
 
     @return: Returns generated url from payoneer systems
     """
-    error_url = '{}/profile/payment/payoneer?error=true&message={}&status_code={}'
+    error_url = '{}/profile/payment/payoneer?status=error&message=Something went wrong! please reload the page and try again.&status_code={}'
     user = request.user
     if user and user.is_authenticated() and user.is_developer:
         auth = payoneer.TungaPayoneer(
@@ -285,7 +285,7 @@ def payoneer_sign_up(request):
         except:
             return redirect(
                 error_url.format(
-                    TUNGA_URL, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR
+                    TUNGA_URL, HTTP_500_INTERNAL_SERVER_ERROR
                 )
             )
 
@@ -299,19 +299,19 @@ def payoneer_sign_up(request):
             else:
                 return redirect(
                     error_url.format(
-                        TUNGA_URL, "No payoneer_url returned from query", HTTP_400_BAD_REQUEST
+                        TUNGA_URL, HTTP_400_BAD_REQUEST
                     )
                 )
         except:
             return redirect(
                 error_url.format(
-                    TUNGA_URL, "Something went wrong", HTTP_500_INTERNAL_SERVER_ERROR
+                    TUNGA_URL, HTTP_500_INTERNAL_SERVER_ERROR
                 )
             )
     else:
         return redirect(
             error_url.format(
-                TUNGA_URL, "Unauthorized", HTTP_401_UNAUTHORIZED
+                TUNGA_URL, HTTP_401_UNAUTHORIZED
             )
         )
 

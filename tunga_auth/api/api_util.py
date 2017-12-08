@@ -38,6 +38,6 @@ def parse_default_xml_args(client_payee_id, firstname, lastname, phonenumber, em
     ).encode('utf-8')
 
     try:
-        return xml.format(client_payee_id, redirect_url or '{}/profile/payment/payoneer'.format(TUNGA_URL), p_type, firstname, lastname, phonenumber, email)
+        return xml.format(client_payee_id, redirect_url or '{}/profile/payment/?status=pending'.format(TUNGA_URL), p_type, firstname, lastname, phonenumber, email)
     except Exception as e:
         return ''
