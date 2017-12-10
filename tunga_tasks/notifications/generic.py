@@ -26,7 +26,7 @@ from tunga_tasks.notifications.slack import notify_new_task_admin_slack, remind_
     notify_progress_report_deadline_missed_slack_admin, notify_progress_report_behind_schedule_by_algo_slack_admin, \
     notify_progress_report_client_not_satisfied_slack_admin, notify_progress_report_stuck_slack_admin, \
     notify_progress_report_wont_meet_deadline_slack_admin, send_survey_summary_report_slack, \
-    notify_new_task_invoice_admin_slack
+    notify_new_task_invoice_admin_slack, notify_hubspot_change_slack
 from tunga_utils.constants import PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_REPORT_STATUS_STUCK, \
     PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.helpers import clean_instance
@@ -289,3 +289,8 @@ def notify_new_task_invoice(instance):
     notify_new_task_invoice_client_email.delay(instance)
     notify_new_task_invoice_admin_slack.delay(instance)
     notify_new_task_invoice_admin_email.delay(instance)
+
+
+@job
+def notify_hubspot_change(payload):
+    notify_hubspot_change_slack(payload)
