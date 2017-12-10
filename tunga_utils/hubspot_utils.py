@@ -11,6 +11,7 @@ HUBSPOT_ENDPOINT_CREATE_DEAL_PROPERTY = '/properties/v1/deals/properties/'
 HUBSPOT_ENDPOINT_CREATE_TAG_PROPERTY = '/contacts/v1/properties/tag'
 HUBSPOT_ENDPOINT_CREATE_ENGAGEMENT = '/engagements/v1/engagements'
 HUBSPOT_ENDPOINT_GET_OWNER = '/owners/v2/owners'
+HUBSPOT_ENDPOINT_GET_DEAL = '/deals/v1/deal/{deal_id}'
 
 KEY_VID = 'vid'
 KEY_NAME = 'name'
@@ -39,6 +40,24 @@ KEY_VALUE_DECISION_MAKER_BOUGHTIN = 'decisionmakerboughtin'
 KEY_VALUE_CONTRACT_SENT = 'contractsent'
 KEY_VALUE_CLOSED_WON = 'closedwon'
 KEY_VALUE_CLOSED_LOST = 'closedlost'
+
+KEY_EVENT_ID = 'eventId'
+KEY_SUBSCRIPTION_ID = 'subscriptionId'
+KEY_PORTAL_ID = 'portalId'
+KEY_OBJECT_ID = 'objectId'
+KEY_APP_ID = 'appId'
+KEY_SUBSCRIPTION_TYPE = 'subscriptionType'
+KEY_CHANGE_SOURCE = 'changeSource'
+KEY_CHANGE_FLAG = 'changeFlag'
+KEY_OCCURRED_AT = 'occurredAt'
+KEY_PROPERTY_NAME = 'propertyName'
+KEY_PROPERTY_VALUE = 'propertyValue'
+
+KEY_VALUE_DEAL_CREATED = 'deal.creation'
+KEY_VALUE_DEAL_DELETION = 'deal.deletion'
+KEY_VALUE_DEAL_PROPERTY_CHANGE = 'deal.propertyChange'
+
+HEADER_SIGNATURE = 'HTTP_X_HUBSPOT_SIGNATURE'
 
 
 def get_hubspot_endpoint_url(endpoint):
@@ -267,6 +286,19 @@ def create_hubspot_engagement(from_email, to_emails, subject, body, **kwargs):
         get_authed_hubspot_endpoint_url(
             HUBSPOT_ENDPOINT_CREATE_ENGAGEMENT, HUBSPOT_API_KEY
         ), json=payload, verify=False
+    )
+
+    if r.status_code in [200, 201]:
+        response = r.json()
+        return response
+    return
+
+
+def get_deal(deal_id):
+    r = requests.get(
+        get_authed_hubspot_endpoint_url(
+            HUBSPOT_ENDPOINT_GET_DEAL.format(deal_id=deal_id), HUBSPOT_API_KEY
+        ), verify=False
     )
 
     if r.status_code in [200, 201]:

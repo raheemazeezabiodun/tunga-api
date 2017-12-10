@@ -30,7 +30,7 @@ from stripe.error import InvalidRequestError
 from weasyprint import HTML
 
 from tunga.settings import BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET, \
-    BITONIC_URL, BITONIC_PAYMENT_COST_PERCENTAGE, TUNGA_URL
+    BITONIC_URL, BITONIC_PAYMENT_COST_PERCENTAGE, TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_HUBSPOT_CHANNEL
 from tunga_activity.filters import ActionFilter
 from tunga_activity.models import ActivityReadLog
 from tunga_activity.serializers import SimpleActivitySerializer, LastReadActivitySerializer
@@ -45,7 +45,7 @@ from tunga_tasks.filters import TaskFilter, ApplicationFilter, ParticipationFilt
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, Project, ProgressReport, ProgressEvent, \
     Integration, IntegrationMeta, IntegrationActivity, TaskPayment, TaskInvoice, Estimate, Quote, \
     MultiTaskPaymentKey, ParticipantPayment, SkillsApproval, Sprint
-from tunga_tasks.notifications.generic import notify_new_task_invoice
+from tunga_tasks.notifications.generic import notify_new_task_invoice, notify_hubspot_change
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, ParticipationSerializer, \
     TimeEntrySerializer, ProjectSerializer, ProgressReportSerializer, ProgressEventSerializer, \
@@ -56,7 +56,7 @@ from tunga_utils.serializers import TaskInvoiceSerializer
 from tunga_tasks.tasks import distribute_task_payment, generate_invoice_number, complete_bitpesa_payment, \
     update_multi_tasks
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
-from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
+from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils, slack_utils, hubspot_utils
 from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
     TASK_PAYMENT_METHOD_STRIPE, CURRENCY_EUR, TASK_PAYMENT_METHOD_BITCOIN
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
@@ -1171,4 +1171,17 @@ def bitpesa_notification(request):
         if transaction and payload.get(bitpesa.KEY_EVENT, None) == bitpesa.EVENT_TRANSACTION_APPROVED:
             if complete_bitpesa_payment(transaction):
                 return Response('Received')
+    return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(http_method_names=['POST'])
+@permission_classes([AllowAny])
+def hubspot_notification(request):
+    hs_signature = request.META.get('HTTP_X_HUBSPOT_SIGNATURE', None)
+
+    payload = request.data
+    if payload:
+        notify_hubspot_change.delay(payload)
+        return Response('Received')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)

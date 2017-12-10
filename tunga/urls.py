@@ -38,7 +38,7 @@ from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, ProjectViewSet, \
     ProgressReportViewSet, ProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
-    TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet
+    TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts
 
 api_schema_view = get_swagger_view(title='Tunga API')
@@ -113,6 +113,7 @@ urlpatterns = [
     url(r'^api/hook/coinbase/$', coinbase_notification, name="coinbase-notification"),
     url(r'^api/hook/bitpesa/$', bitpesa_notification, name="bitpesa-notification"),
     url(r'^api/hook/slack/customer/$', slack_customer_notification, name="slack-customer-notification"),
+    url(r'^api/hook/hubspot/$', hubspot_notification, name="hubspot-notification"),
     url(r'^api/auth/', include('rest_auth.urls')),
     url(r'api/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api/countries/', CountryListView.as_view(), name='countries'),

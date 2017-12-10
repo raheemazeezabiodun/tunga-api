@@ -9,11 +9,12 @@ from tunga.settings import TUNGA_URL, SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACH
     SLACK_ATTACHMENT_COLOR_BLUE, SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_RED, \
     SLACK_STAFF_UPDATES_CHANNEL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_DEVELOPER_UPDATES_CHANNEL, \
     SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_PMS_UPDATES_CHANNEL, SLACK_STAFF_LEADS_CHANNEL, \
-    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL, SLACK_STAFF_MISSED_UPDATES_CHANNEL
+    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL, SLACK_STAFF_MISSED_UPDATES_CHANNEL, \
+    SLACK_STAFF_HUBSPOT_CHANNEL
 from tunga_tasks import slugs
 from tunga_tasks.models import Task, Participation, Application, ProgressEvent, ProgressReport, TaskInvoice
 from tunga_tasks.utils import get_task_integration
-from tunga_utils import slack_utils
+from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, VISIBILITY_DEVELOPER, STATUS_ACCEPTED, \
     APP_INTEGRATION_PROVIDER_SLACK, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BANK, \
     PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
@@ -21,7 +22,8 @@ from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.slack_utils import get_user_im_id
 
 
-def create_task_slack_msg(task, summary='', channel='#general', show_schedule=True, show_contacts=False, is_admin=False):
+def create_task_slack_msg(task, summary='', channel='#general', show_schedule=True, show_contacts=False,
+                          is_admin=False):
     task_url = '{}/work/{}/'.format(TUNGA_URL, task.id)
 
     attachments = [
@@ -87,7 +89,7 @@ def create_task_slack_msg(task, summary='', channel='#general', show_schedule=Tr
                             user.email)
 
                         for user in developers
-                    ]
+                        ]
                 ),
                 slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
                 slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_RED
@@ -139,6 +141,7 @@ def create_task_stakeholders_attachment_slack(task, show_title=True):
         attachment[slack_utils.KEY_TITLE_LINK] = task_url
     return attachment
 
+
 @job
 def notify_new_task_admin_slack(instance, new_user=False, completed=False, call_scheduled=False):
     instance = clean_instance(instance, Task)
@@ -157,7 +160,8 @@ def notify_new_task_admin_slack(instance, new_user=False, completed=False, call_
         instance.user.display_name, new_user and ' (New user)' or '',
         task_url
     )
-    slack_msg = create_task_slack_msg(instance, summary=summary, channel=SLACK_STAFF_LEADS_CHANNEL, show_contacts=True, is_admin=True)
+    slack_msg = create_task_slack_msg(instance, summary=summary, channel=SLACK_STAFF_LEADS_CHANNEL, show_contacts=True,
+                                      is_admin=True)
     slack_utils.send_incoming_webhook(SLACK_STAFF_INCOMING_WEBHOOK, slack_msg)
 
 
@@ -576,7 +580,7 @@ def notify_new_progress_report_slack(instance, updated=False):
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
-    #if not (slack_utils.is_task_notification_enabled(instance.event.task, slugs.EVENT_PROGRESS)):
+    # if not (slack_utils.is_task_notification_enabled(instance.event.task, slugs.EVENT_PROGRESS)):
     #    return
 
     # All reports go to Tunga #updates Slack
@@ -631,9 +635,10 @@ def notify_missed_progress_event_slack(instance):
                         instance.due_at.strftime("%d %b, %Y"),
                         user.display_name,
                         user.email,
-                        user.profile and user.profile.phone_number and '\n*Phone Number:* {}'.format(user.profile.phone_number) or ''
+                        user.profile and user.profile.phone_number and '\n*Phone Number:* {}'.format(
+                            user.profile.phone_number) or ''
                     ) for user in participants
-                ]
+                    ]
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_TUNGA
@@ -803,7 +808,8 @@ def notify_progress_report_wont_meet_deadline_slack_admin(instance):
             slack_utils.KEY_TITLE_LINK: task_url,
             slack_utils.KEY_TEXT: 'The {} on the \"{}\" {} has indicated that they might not meet the coming deadline.\n'
                                   'Please contact all stakeholders.'.format(
-                instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
+                instance.event.type in [PROGRESS_EVENT_TYPE_PM,
+                                        PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
                 instance.event.task.summary,
                 instance.event.task.is_task and 'task' or 'project'
             ),
@@ -892,7 +898,8 @@ def send_survey_summary_report_slack(event, client_report, pm_report, dev_report
                     client=client_report.rate_deliverables or None,
                     pm=pm_report and pm_report.rate_deliverables or None,
                     dev=dev_report and dev_report.rate_deliverables or None,
-                    color=(client_report.rate_deliverables > 3 and SLACK_ATTACHMENT_COLOR_GREEN) or (client_report.rate_deliverables < 3 and SLACK_ATTACHMENT_COLOR_RED or SLACK_ATTACHMENT_COLOR_NEUTRAL)
+                    color=(client_report.rate_deliverables > 3 and SLACK_ATTACHMENT_COLOR_GREEN) or (
+                    client_report.rate_deliverables < 3 and SLACK_ATTACHMENT_COLOR_RED or SLACK_ATTACHMENT_COLOR_NEUTRAL)
                 ))
 
             if pm_report or dev_report:
@@ -938,9 +945,15 @@ def send_survey_summary_report_slack(event, client_report, pm_report, dev_report
         attachments.append({
             slack_utils.KEY_TITLE: 'Reports:',
             slack_utils.KEY_TEXT: '{}{}{}'.format(
-                client_report and '<{}|Client Survey>'.format('{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id, client_report.event.id)) or '',
-                pm_report and '{}<{}|PM Report>{}'.format(client_report and '\n' or '', '{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id, pm_report.event.id), dev_report and '\n' or '') or '{}'.format(dev_report and '\n' or ''),
-                dev_report and '<{}|Developer Report>'.format('{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id, dev_report.event.id)) or '',
+                client_report and '<{}|Client Survey>'.format(
+                    '{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id, client_report.event.id)) or '',
+                pm_report and '{}<{}|PM Report>{}'.format(client_report and '\n' or '',
+                                                          '{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id,
+                                                                                       pm_report.event.id),
+                                                          dev_report and '\n' or '') or '{}'.format(
+                    dev_report and '\n' or ''),
+                dev_report and '<{}|Developer Report>'.format(
+                    '{}/work/{}/event/{}'.format(TUNGA_URL, event.task.id, dev_report.event.id)) or '',
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_BLUE,
@@ -1017,3 +1030,59 @@ def notify_new_task_invoice_admin_slack(instance):
             slack_utils.KEY_CHANNEL: SLACK_STAFF_PAYMENTS_CHANNEL
         }
     )
+
+
+@job
+def notify_hubspot_change_slack(payload):
+    for event_details in type(payload) is list and payload or [payload]:
+        subscription_type = event_details.get(hubspot_utils.KEY_SUBSCRIPTION_TYPE)
+        if subscription_type in [
+            hubspot_utils.KEY_VALUE_DEAL_CREATED,
+            hubspot_utils.KEY_VALUE_DEAL_DELETION,
+            hubspot_utils.KEY_VALUE_DEAL_PROPERTY_CHANGE
+        ]:
+            deal_id = event_details.get(hubspot_utils.KEY_OBJECT_ID)
+            deal_url = 'https://app.hubspot.com/sales/{}/deal/{}/'.format(
+                event_details.get(hubspot_utils.KEY_PORTAL_ID),
+                deal_id
+            )
+
+            attachments = []
+            deal_details = hubspot_utils.get_deal(deal_id)
+            if deal_details and deal_details.get('properties', None):
+                deal_properties = deal_details['properties']
+                deal_name = deal_properties.get(hubspot_utils.KEY_DEALNAME, {})['value'] or ''
+                if deal_name:
+                    deal_text_suffix = ''
+                    if subscription_type == hubspot_utils.KEY_VALUE_DEAL_PROPERTY_CHANGE:
+                        deal_property_name = event_details.get(hubspot_utils.KEY_PROPERTY_NAME, '')
+                        deal_property_value = event_details.get(hubspot_utils.KEY_PROPERTY_VALUE, '')
+                        if deal_property_name:
+                            deal_text_suffix += '\n*Property name:* {}'.format(deal_property_name)
+                        if deal_property_value:
+                            deal_text_suffix += '\n*Property value:* {}'.format(deal_property_value)
+
+                    attachments.append({
+                        slack_utils.KEY_TITLE: deal_name,
+                        slack_utils.KEY_TITLE_LINK: deal_url,
+                        slack_utils.KEY_TEXT: '*Deal stage:* {}{}'.format(
+                            deal_properties.get(hubspot_utils.KEY_DEALSTAGE, {})['value'] or 'Unknown',
+                            deal_text_suffix
+                        ),
+                        slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+                        slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
+                    })
+
+            slack_utils.send_incoming_webhook(
+                SLACK_STAFF_INCOMING_WEBHOOK,
+                {
+                    slack_utils.KEY_CHANNEL: SLACK_STAFF_HUBSPOT_CHANNEL,
+                    slack_utils.KEY_TEXT: '{} in HubSpot | <{}|View details>'.format(
+                        subscription_type == hubspot_utils.KEY_VALUE_DEAL_CREATED and 'New deal created' or (
+                            'Deal {}'.format(subscription_type == hubspot_utils.KEY_VALUE_DEAL_DELETION and 'deleted' or 'updated')
+                        ),
+                        deal_url
+                    ),
+                    slack_utils.KEY_ATTACHMENTS: attachments
+                }
+            )
