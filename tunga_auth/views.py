@@ -17,12 +17,13 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from dry_rest_permissions.generics import DRYPermissions
 from rest_framework import views, status, generics, viewsets, mixins
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, api_view, permission_classes
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from weasyprint import HTML
 
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
@@ -36,7 +37,7 @@ from tunga_auth.serializers import UserSerializer, AccountInfoSerializer, EmailV
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
-from tunga_utils import coinbase_utils, slack_utils, harvest_utils
+from tunga_utils import coinbase_utils, slack_utils, harvest_utils, exact_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
@@ -365,6 +366,17 @@ def harvest_connect_callback(request):
             save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_HARVEST, token_info)
 
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_HARVEST))
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([AllowAny])
+def exact_connect_callback(request):
+    code = request.GET.get('code', None)
+    if code:
+        exact_api = exact_utils.get_api()
+        exact_api.request_token(code)
+        return Response({'message': 'Exact tokens updated'})
+    return Response({'message', 'Bad request'}, status=HTTP_400_BAD_REQUEST)
 
 
 class DevelopersSitemap(Sitemap):

@@ -169,6 +169,10 @@ class TungaUser(AbstractUser):
             return 21
         return 0
 
+    @property
+    def exact_code(self):
+        return '{0:018d}'.format(self.id)
+
 
 @python_2_unicode_compatible
 class EmailVisitor(models.Model):

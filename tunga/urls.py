@@ -25,7 +25,8 @@ from rest_framework_swagger.views import get_swagger_view
 
 from tunga_activity.views import ActionViewSet
 from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, social_login_view, coinbase_connect_callback, \
-    slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap
+    slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap, \
+    exact_connect_callback
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap
@@ -87,6 +88,7 @@ urlpatterns = [
     url(r'^accounts/slack/connect/callback/$', slack_connect_callback, name="slack-connect-callback"),
     url(r'^accounts/harvest/connect/callback/$', harvest_connect_callback, name="harvest-connect-callback"),
     url(r'^accounts/github/connect/callback/$', github_connect_callback, name="github-connect-callback"),
+    url(r'^accounts/exact/connect/callback/$', exact_connect_callback, name="github-connect-callback"),
     url(r'^accounts/', include('allauth.urls')),
     url(r'api/', include(router.urls)),
     url(r'^api/auth/register/account-confirm-email/(?P<key>\w+)/$', ConfirmEmailView.as_view(),

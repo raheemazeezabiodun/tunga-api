@@ -77,7 +77,8 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 'display_name', 'short_name', 'type', 'image',
             'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'verified', 'company', 'avatar_url',
-            'can_contribute', 'date_joined', 'agree_version', 'agreed_at', 'disagree_version', 'disagreed_at'
+            'can_contribute', 'date_joined', 'agree_version', 'agreed_at', 'disagree_version', 'disagreed_at',
+            'exact_code'
         )
 
     def get_can_contribute(self, obj):
