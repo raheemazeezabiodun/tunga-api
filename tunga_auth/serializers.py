@@ -44,6 +44,7 @@ class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixi
     ratings = serializers.SerializerMethodField(read_only=True, required=False)
     avatar_url = serializers.URLField(read_only=True, required=False)
     exact_code = serializers.CharField(read_only=True, required=False)
+    tax_location = serializers.CharField(read_only=True, required=False)
 
     class Meta:
         model = get_user_model()

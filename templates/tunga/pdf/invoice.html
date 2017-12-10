@@ -28,6 +28,10 @@
                                         {% if invoice.client.profile.postal_code and invoice.client.profile.city %}
                                             , {% endif %}{{ invoice.client.profile.city | default:'' }}<br/>
                                 {{ invoice.client.profile.country_name | default:'' }}
+                                {% if location == "europe" %}
+                                <br/>
+                                VAT no: {{ invoice.client.profile.vat_number | default:'' }}
+                                {% endif %}
                             </div>
 
                             <!--<div style="margin: 20px 0;">Invoice generated on behalf of:</div>-->

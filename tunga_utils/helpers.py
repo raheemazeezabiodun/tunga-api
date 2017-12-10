@@ -57,7 +57,7 @@ class Echo(object):
 class GenericObject:
     def __init__(self, **kwargs):
         for k, v in six.iteritems(kwargs):
-            setattr(self, k, v)
+            setattr(self, k, type(v) == dict and GenericObject(**v) or v)
 
 
 def get_social_token(user, provider):
