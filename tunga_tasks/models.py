@@ -583,8 +583,12 @@ class Task(models.Model):
         return Decimal(self.pm_time_percentage) * Decimal(0.01)
 
     @property
+    def tax_ratio(self):
+        return Decimal(self.tax_rate) * Decimal(0.01)
+
+    @property
     def pay(self):
-        return self.bid or self.fee
+        return Decimal(self.bid or self.fee or 0)
 
     @property
     def pay_dev(self):
@@ -595,14 +599,6 @@ class Task(models.Model):
         if self.is_project and self.pm:
             return self.pm_time_ratio*self.pay
         return 0
-
-    @property
-    def tunga_ratio_pm(self):
-        return Decimal(self.tunga_percentage_pm) * Decimal(0.01)
-
-    @property
-    def tax_ratio(self):
-        return Decimal(self.tax_rate) * Decimal(0.01)
 
     def display_fee(self, amount=None):
         if amount is None:
