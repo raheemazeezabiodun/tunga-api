@@ -50,13 +50,14 @@ class SimpleTaskSerializer(ContentTypeAnnotatedModelSerializer):
     class Meta:
         model = Task
         fields = (
-            'id', 'user', 'title', 'summary', 'currency', 'fee', 'bid', 'pay', 'display_fee',
+            'id', 'user', 'title', 'summary', 'currency', 'fee', 'bid', 'pay', 'pay_dev', 'pay_pm', 'display_fee',
             'type', 'scope', 'is_project', 'is_task', 'update_schedule_display',
             'approved', 'review', 'apply', 'processing', 'closed', 'paid', 'btc_paid', 'pay_distributed', 'archived',
             'is_payable', 'is_developer_ready', 'requires_estimate', 'payment_status',
             'can_pay_distribution_btc', 'started_at', 'started', 'analytics_id',
             'approved_at', 'deadline', 'apply_closed_at', 'closed_at', 'processing_at', 'paid_at', 'btc_paid_at',
-            'archived_at', 'created_at', 'invoice_date', 'schedule_call_start', 'schedule_call_end'
+            'archived_at', 'created_at', 'invoice_date', 'schedule_call_start', 'schedule_call_end',
+            'dev_rate', 'pm_rate', 'tunga_ratio_dev', 'tunga_ratio_pm', 'pm_time_ratio', 'tax_ratio'
         )
 
 
@@ -318,6 +319,7 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
     sprints = SimpleSprintSerializer(required=False, read_only=True, many=True)
     tunga_ratio_dev = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
     tunga_ratio_pm = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
+    pm_time_ratio = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
     tax_ratio = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
     started_at = serializers.DateTimeField(required=False, read_only=True)
     started = serializers.BooleanField(required=False, read_only=True)
