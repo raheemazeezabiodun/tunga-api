@@ -270,7 +270,7 @@ def payoneer_sign_up(request):
     """
     error_url = '{}/profile/payment/payoneer?status=error&message=Something went wrong! please reload the page and try again.&status_code={}'
     user = request.user
-    if user and user.is_authenticated() and user.is_developer:
+    if user and user.is_authenticated() and (user.is_developer or user.is_project_manager):
         auth = payoneer.TungaPayoneer(
             settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
             settings.PAYONEER_PARTNER_ID, user.id
@@ -328,7 +328,7 @@ def payoneer_notification(request):
 
         apuid = request.GET.get("apuid", None)  # apuid --> Payee ID
         sessionid = request.GET.get("sessionid", None)  # sessionid
-        payoneerid = request.GET.get("Payoneerid", None)  # Payoneer ID
+        payoneerid = request.GET.get("payoneerid", None)  # Payoneer ID
 
         if apuid and payoneerid:
             try:
