@@ -99,8 +99,8 @@ class ChannelSerializer(DetailAnnotatedModelSerializer, GetCurrentUserAnnotatedS
             current_user = self.get_current_user()
             channel = get_or_create_direct_channel(current_user, participants[0])
         else:
-            if not subject:
-                raise ValidationError({'subject': 'Enter a subject for this conversation'})
+            #if not subject:
+            #    raise ValidationError({'subject': 'Enter a subject for this conversation'})
             channel = Channel.objects.create(**validated_data)
         self.save_participants(channel, participants)
         return channel
