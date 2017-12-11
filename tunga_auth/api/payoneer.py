@@ -8,6 +8,8 @@ actions like;
 """
 import requests
 
+from tunga.settings import PAYONEER_API_URL
+
 try:
     import simplejson as json
 except ImportError as e:
@@ -22,7 +24,7 @@ class TungaPayoneer(object):
     Payoneer
     """
 
-    PAYONEER_API_URL = "https://api.sandbox.payoneer.com/Payouts/HttpApi/API.aspx"
+    PAYONEER_API_URL = PAYONEER_API_URL
     DEFAULT_REQ_METHOD = "POST"
 
     DEFAULT_HEADERS = {
