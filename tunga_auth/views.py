@@ -273,7 +273,7 @@ def payoneer_sign_up(request):
     if user and user.is_authenticated() and user.is_developer:
         auth = payoneer.TungaPayoneer(
             settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
-            settings.PAYONEER_PARTNER_ID, settings.PAYONEER_PAYEE_ID
+            settings.PAYONEER_PARTNER_ID, user.id
         )
 
         try:

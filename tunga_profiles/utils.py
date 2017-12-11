@@ -1,8 +1,12 @@
 from tunga_profiles.models import AppIntegration
+from tunga_utils.constants import STATUS_APPROVED, STATUS_PENDING
 
 
 def profile_check(user):
     if not user.first_name or not user.last_name or not user.email or not user.profile:
+        return False
+
+    if user.is_developer and user.payoneer_status not in [STATUS_APPROVED, STATUS_PENDING]:
         return False
 
     required = ['country', 'city', 'street', 'plot_number', 'postal_code']
