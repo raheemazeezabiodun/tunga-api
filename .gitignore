@@ -1,10 +1,11 @@
 ### Tunga Specific ###
 .idea
+.vs_code
 static/
 media/
 tunga/*/local*.py
 *.sqlite*
-
+*.ini
 
 # Created by https://www.gitignore.io/api/osx,macos,linux,django,python,windows
 

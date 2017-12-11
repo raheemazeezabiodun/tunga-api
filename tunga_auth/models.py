@@ -183,10 +183,32 @@ class TungaUser(AbstractUser):
         return default_token_generator.make_token(self)
 
     @property
+    def exact_code(self):
+        return '{0:018d}'.format(self.id)
+
+    @property
     def tax_rate(self):
         if self.profile and self.profile.country and self.profile.country.code == 'NL':
             return 21
         return 0
+
+    @property
+    def tax_location(self):
+        client_country = ''
+        if self.profile and self.profile.country and self.profile.country.code:
+            client_country = self.profile.country.code
+        if client_country == 'NL':
+            return 'NL'
+        elif client_country in [
+            # EU members
+            'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
+            'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
+            # European Free Trade Association (EFTA)
+            'IS', 'LI', 'NO', 'CH'
+        ]:
+            return 'europe'
+        else:
+            return 'world'
 
 
 @python_2_unicode_compatible

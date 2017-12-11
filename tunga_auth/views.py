@@ -41,7 +41,7 @@ from tunga_auth.utils import get_session_task, get_session_visitor_email, create
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
-from tunga_utils import coinbase_utils, slack_utils, harvest_utils
+from tunga_utils import coinbase_utils, slack_utils, harvest_utils, exact_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
     STATUS_DECLINED, STATUS_PENDING
@@ -462,6 +462,17 @@ def harvest_connect_callback(request):
             save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_HARVEST, token_info)
 
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_HARVEST))
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([AllowAny])
+def exact_connect_callback(request):
+    code = request.GET.get('code', None)
+    if code:
+        exact_api = exact_utils.get_api()
+        exact_api.request_token(code)
+        return Response({'message': 'Exact tokens updated'})
+    return Response({'message', 'Bad request'}, status=HTTP_400_BAD_REQUEST)
 
 
 class DevelopersSitemap(Sitemap):
