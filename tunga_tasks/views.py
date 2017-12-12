@@ -257,12 +257,18 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
 
             task.tax_rate = task_owner.tax_rate
 
-            btc_price = coinbase_utils.get_btc_price(task.currency)
-            task.btc_price = btc_price
+            try:
+                btc_price = coinbase_utils.get_btc_price(task.currency)
+                task.btc_price = btc_price
+            except:
+                task.btc_price = None
 
             if not task.btc_address or not bitcoin_utils.is_valid_btc_address(task.btc_address):
-                address = coinbase_utils.get_new_address(coinbase_utils.get_api_client())
-                task.btc_address = address
+                try:
+                    address = coinbase_utils.get_new_address(coinbase_utils.get_api_client())
+                    task.btc_address = address
+                except:
+                    task.btc_address = None
 
             task.full_clean()
             task.save()

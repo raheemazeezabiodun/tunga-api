@@ -11,18 +11,20 @@ from django.db.models.aggregates import Min, Max
 from django.db.models.query_utils import Q
 from django_rq.decorators import job
 
+from tunga import settings
 from tunga.settings import BITPESA_SENDER, SLACK_DEBUGGING_INCOMING_WEBHOOK, TUNGA_URL
 from tunga_profiles.models import ClientNumber
 from tunga_profiles.utils import get_app_integration
 from tunga_tasks.models import ProgressEvent, Task, ParticipantPayment, \
     TaskInvoice, Integration, IntegrationMeta, Participation, MultiTaskPaymentKey, TaskPayment
-from tunga_utils import bitcoin_utils, coinbase_utils, bitpesa, harvest_utils, slack_utils
+from tunga_utils import bitcoin_utils, coinbase_utils, bitpesa, harvest_utils, slack_utils, payoneer_utils
 from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_MOBILE_MONEY, UPDATE_SCHEDULE_HOURLY, UPDATE_SCHEDULE_DAILY, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
     PROGRESS_EVENT_TYPE_PERIODIC, PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
     STATUS_INITIATED, APP_INTEGRATION_PROVIDER_HARVEST, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
-    PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY
+    PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
+    TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -240,6 +242,83 @@ def update_task_client_surveys(task):
                 else:
                     last_update_at = next_update_at
 
+@job
+def distribute_task_payment_payoneer(task):
+    task = clean_instance(task, Task)
+    if not task.paid or not task.distribution_approved or not task.payment_approved:
+        return
+
+    if task.pay_distributed:
+        return
+
+    pay_description = task.summary
+
+    if task.payment_method == TASK_PAYMENT_METHOD_BANK:
+        TaskPayment.objects.get_or_create(
+            task=task, ref='bank', payment_type=TASK_PAYMENT_METHOD_BANK,
+            defaults=dict(
+                amount=Decimal(task.pay),
+                currency=(task.currency or CURRENCY_EUR).upper(),
+                paid=task.paid,
+                received_at=task.paid_at
+            )
+        )
+
+    participation_shares = task.get_payment_shares()
+
+    # Distribute all payments for this task
+    payments = TaskPayment.objects.filter(
+        (Q(multi_pay_key__tasks=task) & ~Q(multi_pay_key__distribute_tasks=task)) | (Q(task=task) & Q(processed=False)),
+        received_at__isnull=False, payment_type__in=[TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK]
+    )
+
+    task_distribution = []
+    for payment in payments:
+        portion_distribution = []
+        for item in participation_shares:
+            participant = item['participant']
+            share = item['share']
+            share_amount = Decimal(share) * payment.task_pay_share(task)
+            portion_sent = False
+
+            if not participant.user:
+                continue
+
+            if participant.user.payoneer_status != STATUS_APPROVED:
+                continue
+
+            participant_pay, created = ParticipantPayment.objects.get_or_create(
+                source=payment, participant=participant
+            )
+            if created or (participant_pay and participant_pay.status in [STATUS_PENDING, STATUS_RETRY]):
+                payoneer_client = payoneer_utils.get_client(
+                    settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
+                    settings.PAYONEER_PARTNER_ID
+                )
+
+                transaction = payoneer_client.make_payment(
+                    settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
+                    pay_description
+                )
+
+                if transaction.get('status', None) == '000':
+                    participant_pay.ref = transaction.get('paymentid', None)
+                    participant_pay.status = STATUS_PROCESSING
+                    participant_pay.sent_at = datetime.datetime.utcnow()
+                    participant_pay.save()
+                    portion_sent = True
+
+            portion_distribution.append(portion_sent)
+            if portion_distribution and False not in portion_distribution:
+                payment.processed = True
+                payment.save()
+                task_distribution.append(True)
+            else:
+                task_distribution.append(False)
+        if task_distribution and not (False in task_distribution):
+            task.pay_distributed = True
+            task.save()
+
 
 @job
 def distribute_task_payment(task):
@@ -265,7 +344,7 @@ def distribute_task_payment(task):
         for item in participation_shares:
             participant = item['participant']
             share = item['share']
-            share_amount = Decimal(share) * payment.task_btc_share(task)
+            share_amount = Decimal(share) * payment.task_pay_share(task)
             portion_sent = False
 
             if not participant.user:
@@ -568,7 +647,6 @@ def complete_harvest_integration(integration):
 
 @job
 def create_or_update_hubspot_deal_task(task, **kwargs):
-    print('Create deal', kwargs)
     task = clean_instance(task, Task)
     create_or_update_hubspot_deal(task, **kwargs)
 

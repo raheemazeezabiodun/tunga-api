@@ -21,3 +21,11 @@ def validate_btc_address(value):
         raise ValidationError(error_msg)
     if not is_valid_btc_address(value):
         raise ValidationError(error_msg)
+
+
+def validate_btc_address_or_none(value):
+    error_msg = 'Invalid Bitcoin address.'
+    if value is not None and re.match(r"[a-zA-Z1-9]{27,35}$", value) is None:
+        raise ValidationError(error_msg)
+    if value is not None and not is_valid_btc_address(value):
+        raise ValidationError(error_msg)

@@ -50,7 +50,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
 from tunga_utils.models import Upload, Rating
-from tunga_utils.validators import validate_btc_address
+from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
 
 CURRENCY_CHOICES = (
     (CURRENCY_EUR, 'EUR'),
@@ -368,6 +368,7 @@ class Task(models.Model):
     processing = models.BooleanField(default=False, help_text='True if the task is processing')
     paid = models.BooleanField(default=False, help_text='True if the task is paid')
     btc_paid = models.BooleanField(default=False, help_text='True if BTC has been paid in for a Stripe task')
+    distribution_approved = models.BooleanField(default=False)
     pay_distributed = models.BooleanField(
         default=False,
         help_text='True if task has been paid and entire payment has been distributed to participating developers'
@@ -396,6 +397,7 @@ class Task(models.Model):
     processing_at = models.DateTimeField(blank=True, null=True)
     paid_at = models.DateTimeField(blank=True, null=True)
     btc_paid_at = models.DateTimeField(blank=True, null=True)
+    distribution_approved_at = models.DateTimeField(blank=True, null=True)
     archived_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     invoice_date = models.DateTimeField(blank=True, null=True)
@@ -1662,7 +1664,8 @@ class IntegrationActivity(models.Model):
 
 TASK_PAYMENT_TYPE_CHOICES = (
     (TASK_PAYMENT_METHOD_STRIPE, 'Stripe'),
-    (TASK_PAYMENT_METHOD_BITCOIN, 'BitCoin')
+    (TASK_PAYMENT_METHOD_BITCOIN, 'BitCoin'),
+    (TASK_PAYMENT_METHOD_BANK, 'Bank Transfer')
 )
 
 
@@ -1701,8 +1704,8 @@ class TaskPayment(models.Model):
     def __str__(self):
         return '{}:{} - {} | {} {}'.format(
             self.get_payment_type_display(),
-            self.payment_type == TASK_PAYMENT_METHOD_STRIPE and self.charge_id or self.btc_address,
-            self.payment_type == TASK_PAYMENT_METHOD_STRIPE and self.amount or self.btc_received,
+            self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_address or self.charge_id,
+            self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount,
             self.task and self.task.summary or 'Multi Task Payment',
             self.task and '#{}'.format(self.task.id) or ''
         )
@@ -1711,11 +1714,11 @@ class TaskPayment(models.Model):
         unique_together = ('task', 'ref')
         ordering = ['-created_at']
 
-    def task_btc_share(self, task):
+    def task_pay_share(self, task):
         share_ratio = 1
         if self.multi_pay_key:
             share_ratio = self.multi_pay_key.get_task_share_ratio(task)
-        return share_ratio*self.btc_received
+        return share_ratio * (self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount)
 
 
 PAYMENT_STATUS_CHOICES = (
@@ -1774,7 +1777,7 @@ class TaskInvoice(models.Model):
         max_length=30, choices=TASK_PAYMENT_METHOD_CHOICES,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in TASK_PAYMENT_METHOD_CHOICES])
     )
-    btc_address = models.CharField(max_length=40, validators=[validate_btc_address])
+    btc_address = models.CharField(max_length=40, validators=[validate_btc_address_or_none], blank=True, null=True)
     btc_price = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
     number = models.CharField(max_length=20, blank=True, null=True)
     withhold_tunga_fee = models.BooleanField(
