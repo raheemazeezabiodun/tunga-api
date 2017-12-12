@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from tunga.settings import PAYONEER_API_URL, TUNGA_URL, PAYONEER_USERNAME, PAYONEER_PASSWORD, PAYONEER_PARTNER_ID
+from tunga_utils.constants import CURRENCY_EUR
 
 
 class TungaPayoneer(object):
@@ -32,11 +33,11 @@ class TungaPayoneer(object):
         self.client_id = client_id
         self.default_request_params = dict(p1=self.username, p2=self.password, p3=self.client_id)
 
-    def _create_request_params(self, method, data, serialize=False):
+    def _create_request_params(self, method, data=None, serialize=False):
         params = dict()
         params['mname'] = method
         params.update(self.default_request_params)
-        if type(data) == dict:
+        if data and type(data) == dict:
             params.update(data)
         if serialize:
             return '&'.join(['{}={}'.format(key, params[key]) for key in params])
@@ -122,7 +123,7 @@ class TungaPayoneer(object):
         try:
             return self._parse_xml_response(response.text, ['token'])
         except:
-            raise
+            return
 
     def sign_up_auto_populate(self, payee_id, data, headers=None):
         """
@@ -137,7 +138,35 @@ class TungaPayoneer(object):
         try:
             return self._parse_xml_response(response.text, ['token'])
         except:
-            raise
+            return
+
+    def get_balance(self, headers=None):
+        """
+        Get Balance
+        """
+        payload = self._create_request_params('GetAccountDetails')
+        response = requests.post(self.PAYONEER_API_URL, data=payload, headers=headers or self.DEFAULT_HEADERS)
+
+        try:
+            return self._parse_xml_response(response.text, ['accountbalance', 'feesdue', 'curr'])
+        except:
+            return
+
+    def make_payment(self, program_id, payment_id, payee_id, amount, description, currency=CURRENCY_EUR, headers=None):
+        """
+        Make Payment
+        """
+        payload = self._create_request_params(
+            'PerformPayoutPayment', dict(
+                p4=program_id, p5=payment_id, p6=payee_id, p7=amount, p8=description, Currency=currency
+            )
+        )
+        response = requests.post(self.PAYONEER_API_URL, data=payload, headers=headers or self.DEFAULT_HEADERS)
+
+        try:
+            return self._parse_xml_response(response.text, ['status', 'paymentid', 'payoneerid', 'description'])
+        except:
+            return
 
 
 def get_client(username=PAYONEER_USERNAME, password=PAYONEER_PASSWORD, client_id=PAYONEER_PARTNER_ID):
