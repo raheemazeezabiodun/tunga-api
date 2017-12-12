@@ -24,5 +24,4 @@ class Command(BaseCommand):
             paid_at__lte=min_date
         )
         for task in tasks:
-            print(task)
-            distribute_task_payment_payoneer(task.id)
+            distribute_task_payment_payoneer.delay(task.id)
