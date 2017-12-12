@@ -328,7 +328,7 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
         model = Task
         exclude = ('applicants',)
         read_only_fields = (
-            'created_at', 'paid', 'paid_at', 'invoice_date', 'btc_address', 'btc_price', 'pay_distributed'
+            'created_at', 'invoice_date', 'btc_address', 'btc_price', 'pay_distributed'
         )
         extra_kwargs = {
             'type': {'required': True, 'allow_blank': False, 'allow_null': False},
