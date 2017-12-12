@@ -296,17 +296,19 @@ def distribute_task_payment_payoneer(task):
                     settings.PAYONEER_PARTNER_ID
                 )
 
-                transaction = payoneer_client.make_payment(
-                    settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
-                    pay_description
-                )
+                balance = payoneer_client.get_balance()
+                if balance.get('accountbalance', 0) >= share_amount:
+                    transaction = payoneer_client.make_payment(
+                        settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
+                        pay_description
+                    )
 
-                if transaction.get('status', None) == '000':
-                    participant_pay.ref = transaction.get('paymentid', None)
-                    participant_pay.status = STATUS_PROCESSING
-                    participant_pay.sent_at = datetime.datetime.utcnow()
-                    participant_pay.save()
-                    portion_sent = True
+                    if transaction.get('status', None) == '000':
+                        participant_pay.ref = transaction.get('paymentid', None)
+                        participant_pay.status = STATUS_PROCESSING
+                        participant_pay.sent_at = datetime.datetime.utcnow()
+                        participant_pay.save()
+                        portion_sent = True
 
             portion_distribution.append(portion_sent)
             if portion_distribution and False not in portion_distribution:
