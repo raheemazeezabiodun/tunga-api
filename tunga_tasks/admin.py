@@ -119,7 +119,7 @@ class TaskPaymentAdmin(admin.ModelAdmin):
 @admin.register(ParticipantPayment)
 class ParticipantPaymentAdmin(admin.ModelAdmin):
     list_display = (
-        'participant', 'btc_sent', 'btc_received', 'btc_price',
+        'participant', 'amount', 'btc_sent', 'btc_received', 'btc_price',
         'destination', 'ref', 'status', 'created_at', 'sent_at', 'external_created_at'
     )
     list_filter = ('status', 'created_at', 'sent_at', 'external_created_at')

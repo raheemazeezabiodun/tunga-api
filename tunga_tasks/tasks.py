@@ -305,6 +305,7 @@ def distribute_task_payment_payoneer(task):
 
                     if transaction.get('status', None) == '000':
                         participant_pay.ref = transaction.get('paymentid', None)
+                        participant_pay.amount = '{0:.2f}'.format(share_amount)
                         participant_pay.status = STATUS_PROCESSING
                         participant_pay.sent_at = datetime.datetime.utcnow()
                         participant_pay.save()

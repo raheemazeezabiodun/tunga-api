@@ -1739,6 +1739,7 @@ class ParticipantPayment(models.Model):
     destination = models.CharField(max_length=40, validators=[validate_btc_address], blank=True, null=True)
     idem_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     ref = models.CharField(max_length=255, blank=True, null=True)
+    amount = models.DecimalField(max_digits=19, decimal_places=4, blank=True, null=True)
     btc_sent = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
     btc_received = models.DecimalField(max_digits=18, decimal_places=8, default=0)
     btc_price = models.DecimalField(max_digits=18, decimal_places=8, blank=True, null=True)
