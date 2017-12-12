@@ -30,8 +30,7 @@ from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
     SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, HARVEST_CLIENT_ID, \
-    HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK, TUNGA_URL
-from tunga_auth.api import payoneer, api_util
+    HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
 from tunga_auth.models import EmailVisitor, TungaUser
@@ -41,7 +40,7 @@ from tunga_auth.utils import get_session_task, get_session_visitor_email, create
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
-from tunga_utils import coinbase_utils, slack_utils, harvest_utils, exact_utils
+from tunga_utils import coinbase_utils, slack_utils, harvest_utils, exact_utils, payoneer_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
     STATUS_DECLINED, STATUS_PENDING
@@ -268,52 +267,36 @@ def payoneer_sign_up(request):
 
     @return: Returns generated url from payoneer systems
     """
-    error_url = '{}/profile/payment/payoneer?status=error&message=Something went wrong! please reload the page and try again.&status_code={}'
     user = request.user
     if user and user.is_authenticated() and (user.is_developer or user.is_project_manager):
-        auth = payoneer.TungaPayoneer(
+        payoneer_client = payoneer_utils.get_client(
             settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
-            settings.PAYONEER_PARTNER_ID, user.id
+            settings.PAYONEER_PARTNER_ID
         )
 
         try:
-            xml_payload = api_util.parse_default_xml_args(
-                user.id, user.first_name, user.last_name, user.phone_number, user.email
-            )
-            print(xml_payload)
-            response = auth.initiate_auto_populate(None, None, xml_payload)
-        except:
-            return redirect(
-                error_url.format(
-                    TUNGA_URL, HTTP_500_INTERNAL_SERVER_ERROR
+            response = payoneer_client.sign_up_auto_populate(
+                user.id,
+                dict(
+                    first_name=user.first_name, last_name=user.last_name,
+                    email=user.email, phone_number=user.phone_number
                 )
             )
+        except:
+            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR))
 
         try:
-            payoneer_url = response.get("payoneer_url")
+            payoneer_url = response.get("token")
             if payoneer_url:
                 user.payoneer_signup_url = payoneer_url
                 user.save()
-                print (response)
                 return redirect(payoneer_url)
             else:
-                return redirect(
-                    error_url.format(
-                        TUNGA_URL, HTTP_400_BAD_REQUEST
-                    )
-                )
+                return redirect(payoneer_utils.generate_error_redirect_url(HTTP_400_BAD_REQUEST))
         except:
-            return redirect(
-                error_url.format(
-                    TUNGA_URL, HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            )
+            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR))
     else:
-        return redirect(
-            error_url.format(
-                TUNGA_URL, HTTP_401_UNAUTHORIZED
-            )
-        )
+        return redirect(payoneer_utils.generate_error_redirect_url(HTTP_401_UNAUTHORIZED))
 
 
 @csrf_exempt
