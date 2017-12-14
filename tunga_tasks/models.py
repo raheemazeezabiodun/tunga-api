@@ -630,6 +630,8 @@ class Task(models.Model):
             return True
         if self.scope == TASK_SCOPE_PROJECT and not self.pm_required and self.source != TASK_SOURCE_NEW_USER:
             return True
+        if self.scope == TASK_SCOPE_ONGOING and self.approved:
+            return True
         if self.estimate and self.estimate.status == STATUS_ACCEPTED:
             return True
         return False
