@@ -31,7 +31,7 @@ class Command(BaseCommand):
         )
 
         for welcome_task in welcome_tasks:
-            notify_new_task_client_drip_one(welcome_task)
+            notify_new_task_client_drip_one.delay(welcome_task.id)
 
         hiring_tasks = Task.objects.exclude(user__tasks_created__last_drip_mail_at__gt=past_by_24_hrs).filter(
             source=TASK_SOURCE_NEW_USER,
@@ -41,4 +41,4 @@ class Command(BaseCommand):
         )
 
         for hiring_task in hiring_tasks:
-            notify_new_task_client_drip_one(hiring_task, template='hiring')
+            notify_new_task_client_drip_one.delay(hiring_task.id, template='hiring')
