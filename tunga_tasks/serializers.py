@@ -387,10 +387,10 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
             if scope == TASK_SCOPE_PROJECT:
                 if not title and not self.partial:
                     errors.update({'title': 'This field is required.'})
-                if not skills and not self.partial:
-                    errors.update({'skills': 'This field is required.'})
-                if pm_required is None and not self.partial:
-                    errors.update({'pm_required': 'This field is required.'})
+                #if not skills and not self.partial:
+                #    errors.update({'skills': 'This field is required.'})
+                #if pm_required is None and not self.partial:
+                #    errors.update({'pm_required': 'This field is required.'})
         else:
             if not self.instance:
                 if not email:
