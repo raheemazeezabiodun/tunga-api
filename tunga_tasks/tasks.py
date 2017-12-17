@@ -242,6 +242,7 @@ def update_task_client_surveys(task):
                 else:
                     last_update_at = next_update_at
 
+
 @job
 def distribute_task_payment_payoneer(task):
     task = clean_instance(task, Task)
