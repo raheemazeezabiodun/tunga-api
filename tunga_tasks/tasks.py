@@ -258,30 +258,32 @@ def distribute_task_payment_payoneer(task):
             task=task, ref='bank', payment_type=TASK_PAYMENT_METHOD_BANK,
             defaults=dict(
                 amount=Decimal(task.pay),
+                amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
                 paid=task.paid,
                 received_at=task.paid_at
             )
         )
 
-    participation_shares = task.get_payment_shares()
-
     # Distribute all payments for this task
     payments = TaskPayment.objects.filter(
         (Q(multi_pay_key__tasks=task) & ~Q(multi_pay_key__distribute_tasks=task)) | (Q(task=task) & Q(processed=False)),
-        received_at__isnull=False, payment_type__in=[TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK]
+        received_at__isnull=False, payment_type__in=[TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK],
+        tax_only=False
     )
 
     task_distribution = []
     for payment in payments:
         portion_distribution = []
+
+        participation_shares = task.get_payment_shares(exclude_tax=payment.excludes_tax)
         for item in participation_shares:
             participant = item['participant']
             share = item['share']
             share_amount = Decimal(share) * payment.task_pay_share(task)
             portion_sent = False
 
-            if not participant.user:
+            if not participant.user or share == 0:
                 continue
 
             if participant.user.payoneer_status != STATUS_APPROVED:

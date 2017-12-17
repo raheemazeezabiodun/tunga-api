@@ -593,13 +593,25 @@ class Task(models.Model):
         return Decimal(self.bid or self.fee or 0)
 
     @property
+    def dev_hrs(self):
+        if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
+            return self.pay / (self.dev_rate + self.pm_time_ratio*self.pm_rate)
+        return self.pay/self.dev_rate
+
+    @property
+    def pm_hrs(self):
+        if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
+            return self.dev_hrs * self.pm_time_ratio
+        return 0
+
+    @property
     def pay_dev(self):
         return self.pay - self.pay_pm
 
     @property
     def pay_pm(self):
-        if self.is_project and self.pm:
-            return self.pm_time_ratio*self.pay
+        if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
+            return self.pm_hrs * self.pm_rate
         return 0
 
     def display_fee(self, amount=None):
@@ -853,15 +865,18 @@ class Task(models.Model):
                 participation_shares_hash[participant.id] = share_info
         return return_hash and participation_shares_hash or participation_shares
 
-    def get_payment_shares(self):
+    def get_payment_shares(self, exclude_tax=False):
         participation_shares = self.get_participation_shares()
         payment_shares = []
+        should_exclude_tax = exclude_tax or self.payment_withheld_tunga_fee
 
         if participation_shares:
             for data in participation_shares:
                 payment_shares.append({
                     'participant': data['participant'],
-                    'share': Decimal(data['share'])*Decimal(self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev))*Decimal(self.payment_withheld_tunga_fee and 1 or (1 - self.tax_ratio))
+                    'share': Decimal(data['share'])*Decimal(
+                        self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev)
+                    )*Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
                 })
         return payment_shares
 
@@ -873,10 +888,14 @@ class Task(models.Model):
                 return share_info.get('share', 0)
         return 0
 
-    def get_user_payment_share(self, participation_id):
+    def get_user_payment_share(self, participation_id, exclude_tax=False):
         share = self.get_user_participation_share(participation_id=participation_id)
+        should_exclude_tax = exclude_tax or self.payment_withheld_tunga_fee
+
         if share:
-            return share*Decimal(self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev))*Decimal(self.payment_withheld_tunga_fee and 1 or (1 - self.tax_ratio))
+            return share*Decimal(
+                self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev)
+            )*Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
         return 0
 
 
@@ -1690,6 +1709,7 @@ class TaskPayment(models.Model):
     token = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     amount = models.DecimalField(max_digits=19, decimal_places=4, blank=True, null=True)
+    amount_received = models.DecimalField(max_digits=19, decimal_places=4, blank=True, null=True)
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES, blank=True, null=True)
     charge_id = models.CharField(max_length=100, blank=True, null=True)
     paid = models.BooleanField(default=False)
@@ -1697,6 +1717,10 @@ class TaskPayment(models.Model):
 
     # Distribution
     processed = models.BooleanField(default=False)
+
+    # Tax reconciliation
+    excludes_tax = models.BooleanField(default=False)
+    tax_only = models.BooleanField(default=False)
 
     # Dates
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1720,7 +1744,7 @@ class TaskPayment(models.Model):
         share_ratio = 1
         if self.multi_pay_key:
             share_ratio = self.multi_pay_key.get_task_share_ratio(task)
-        return share_ratio * (self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount)
+        return share_ratio * (self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount_received)
 
 
 PAYMENT_STATUS_CHOICES = (
