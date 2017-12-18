@@ -327,13 +327,16 @@ def distribute_task_payment_payoneer(task):
 
 
 @job
-def distribute_task_payment(task):
-    return
+def distribute_task_payment(task, force_distribution=False, destination=None, target_payment=None):
+    if not force_distribution:
+        return
+
     task = clean_instance(task, Task)
+
     if not task.paid:
         return
 
-    if task.pay_distributed:
+    if task.pay_distributed and not target_payment:
         return
 
     pay_description = task.summary
@@ -344,6 +347,10 @@ def distribute_task_payment(task):
         Q(multi_pay_key__tasks=task) | Q(multi_pay_key__distribute_tasks=task) | (Q(task=task) & Q(processed=False)),
         received_at__isnull=False, payment_type=TASK_PAYMENT_METHOD_BITCOIN
     )
+
+    if target_payment:
+        payments.filter(id=target_payment)
+
     task_distribution = []
     for payment in payments:
         portion_distribution = []
@@ -361,15 +368,19 @@ def distribute_task_payment(task):
             )
             payment_method = participant.user.payment_method
             if created or (participant_pay and participant_pay.status in [STATUS_PENDING, STATUS_RETRY]):
-                if payment_method in [PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_BTC_WALLET]:
-                    if not (participant_pay.destination and bitcoin_utils.is_valid_btc_address(
-                            participant_pay.destination)):
-                        participant_pay.destination = participant.user.btc_address
+                if destination or payment_method in [PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_BTC_WALLET]:
+                    pay_destination = destination
+                    if not pay_destination:
+                        pay_destination = participant_pay.destination
+                    if not (pay_destination and bitcoin_utils.is_valid_btc_address(pay_destination)):
+                        pay_destination = participant.user.btc_address
+                    tunga_wallet_balance = coinbase_utils.get_account_balance()
+                    print('to send: ', 'BTC {}'.format(share_amount), pay_destination, ' wallet balance: ', tunga_wallet_balance)
                     transaction = send_payment_share(
-                        destination=participant_pay.destination,
+                        destination=pay_destination,
                         amount=share_amount,
                         idem=str(participant_pay.idem_key),
-                        description='%s - %s' % (pay_description, participant.user.display_name)
+                        description='{} - {}'.format(pay_description, participant.user.display_name)
                     )
                     if transaction.status not in [
                         coinbase_utils.TRANSACTION_STATUS_FAILED, coinbase_utils.TRANSACTION_STATUS_EXPIRED,
