@@ -1825,13 +1825,25 @@ class TaskInvoice(models.Model):
         ordering = ['created_at']
 
     @property
+    def dev_hrs(self):
+        if (self.task.is_project or self.task.pm) and (self.task.includes_pm_fee or not self.task.payment_approved):
+            return self.fee / (self.task.dev_rate + self.task.pm_time_ratio * self.task.pm_rate)
+        return self.fee / self.task.dev_rate
+
+    @property
+    def pm_hrs(self):
+        if (self.task.is_project or self.task.pm) and (self.task.includes_pm_fee or not self.task.payment_approved):
+            return self.dev_hrs * self.task.pm_time_ratio
+        return 0
+
+    @property
     def pay_dev(self):
         return self.fee - self.pay_pm
 
     @property
     def pay_pm(self):
-        if self.task.is_project and self.task.pm:
-            return self.task.pm_time_ratio * self.fee
+        if (self.task.is_project or self.task.pm) and (self.task.includes_pm_fee or not self.task.payment_approved):
+            return self.pm_hrs * self.task.pm_rate
         return 0
 
     def display_fee(self, amount=None):
