@@ -289,11 +289,11 @@ class Task(models.Model):
     )
     # Percentage of dev fee that goes to Tunga
     tunga_percentage_dev = models.DecimalField(
-        max_digits=7, decimal_places=4, default=34.21
+        max_digits=12, decimal_places=9, default=34.21052632
     )
     # Percentage of pm fee that goes to Tunga
     tunga_percentage_pm = models.DecimalField(
-        max_digits=7, decimal_places=4, default=48.71
+        max_digits=12, decimal_places=9, default=48.717948717
     )
     unpaid_balance = models.DecimalField(
         max_digits=19, decimal_places=4, default=0
