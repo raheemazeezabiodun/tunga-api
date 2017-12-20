@@ -262,7 +262,8 @@ def distribute_task_payment_payoneer(task):
                 amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
                 paid=task.paid,
-                received_at=task.paid_at
+                received_at=task.paid_at,
+                excludes_tax=True
             )
         )
 
