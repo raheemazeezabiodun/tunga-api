@@ -22,6 +22,7 @@ class TaskFilter(GenericDateFilterSet):
     payment_status = django_filters.CharFilter(method='filter_payment_status')
     skill = django_filters.CharFilter(name='skills__name', label='skills')
     skill_id = django_filters.NumberFilter(name='skills', label='skills (by ID)')
+    owner = django_filters.CharFilter(method='filter_owner')
 
     class Meta:
         model = Task
@@ -30,6 +31,9 @@ class TaskFilter(GenericDateFilterSet):
             'paid', 'pay_distributed', 'payment_status',
             'skill', 'skill_id'
         )
+
+    def filter_owner(self, queryset, name, value):
+        return queryset.filter(Q(owner=value) | Q(user=value))
 
     def filter_payment_status(self, queryset, name, value):
         queryset = queryset.filter(closed=True)
