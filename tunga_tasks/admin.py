@@ -111,7 +111,7 @@ class ProgressReportAdmin(admin.ModelAdmin):
 
 @admin.register(TaskPayment)
 class TaskPaymentAdmin(admin.ModelAdmin):
-    list_display = ('task', 'payment_type', 'ref', 'btc_address', 'btc_received', 'btc_price', 'amount', 'currency', 'email', 'paid', 'captured', 'processed', 'created_at', 'received_at')
+    list_display = ('task', 'payment_type', 'ref', 'btc_address', 'btc_received', 'btc_price', 'amount', 'amount_received', 'currency', 'email', 'paid', 'captured', 'processed', 'created_at', 'received_at')
     list_filter = ('processed', 'created_at', 'received_at')
     search_fields = ('task__title',)
 
