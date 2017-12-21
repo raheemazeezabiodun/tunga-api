@@ -255,7 +255,10 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             if task.owner:
                 task_owner = task.owner
 
-            task.tax_rate = task_owner.tax_rate
+            final_tax_rate = 0
+            if not task.tax_exempt:
+                final_tax_rate = task_owner.tax_rate
+            task.tax_rate = final_tax_rate
 
             try:
                 btc_price = coinbase_utils.get_btc_price(task.currency)

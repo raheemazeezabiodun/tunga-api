@@ -280,9 +280,11 @@ class Task(models.Model):
     pm_rate = models.DecimalField(
         max_digits=19, decimal_places=4, default=39
     )
+    tax_exempt = models.BooleanField(default=False)
     tax_rate = models.DecimalField(
         max_digits=19, decimal_places=4, default=0
     )
+
     # Used to calculate PM hours given the development hrs
     pm_time_percentage = models.DecimalField(
         max_digits=7, decimal_places=4, default=15
