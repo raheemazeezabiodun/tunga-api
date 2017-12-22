@@ -32,8 +32,8 @@ class TaskFilterBackend(DRYPermissionFiltersBase):
     # @dont_filter_staff_or_superuser
     def filter_list_queryset(self, request, queryset, view):
         label_filter = request.query_params.get('filter', None)
-        if label_filter != 'payments':
-            queryset = queryset.exclude(archived=True)
+        #if label_filter != 'payments':
+        #    queryset = queryset.exclude(archived=True)
         queryset = queryset.filter(user__in=get_user_model().objects.all())
 
         if label_filter in ['running', 'my-tasks', 'payments', 'closed']:

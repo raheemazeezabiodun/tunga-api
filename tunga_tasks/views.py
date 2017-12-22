@@ -100,7 +100,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
               type: string
               paramType: query
     """
-    queryset = Task.objects.all()
+    queryset = Task.objects.filter(Q(archived=False) | Q(paid=True))
     serializer_class = TaskSerializer
     permission_classes = [DRYPermissions]
     filter_class = TaskFilter
