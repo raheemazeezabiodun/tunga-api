@@ -642,7 +642,8 @@ class Task(models.Model):
     def is_developer_ready(self):
         if self.scope == TASK_SCOPE_TASK:
             return True
-        if self.scope == TASK_SCOPE_PROJECT and not self.pm_required and self.source != TASK_SOURCE_NEW_USER:
+        if self.scope == TASK_SCOPE_PROJECT and \
+                (self.pm or (not self.pm_required and self.source != TASK_SOURCE_NEW_USER)):
             return True
         if self.scope == TASK_SCOPE_ONGOING and self.approved:
             return True
