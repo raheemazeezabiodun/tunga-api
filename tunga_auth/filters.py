@@ -11,4 +11,4 @@ class UserFilter(django_filters.FilterSet):
 
     class Meta:
         model = get_user_model()
-        fields = ('type', 'skill', 'skill_id', 'types')
+        fields = ('type', 'skill', 'skill_id', 'types', 'payoneer_status')

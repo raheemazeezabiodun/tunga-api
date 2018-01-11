@@ -24,7 +24,7 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     PROGRESS_EVENT_TYPE_PERIODIC, PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
     STATUS_INITIATED, APP_INTEGRATION_PROVIDER_HARVEST, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
     PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
-    TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR
+    TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -243,10 +243,21 @@ def update_task_client_surveys(task):
                     last_update_at = next_update_at
 
 
+def get_task_payments(task):
+    # Distribute all payments for this task
+    return TaskPayment.objects.filter(
+        task=task,
+        processed=False,
+        received_at__isnull=False,
+        payment_type__in=[TASK_PAYMENT_METHOD_PAYONEER, TASK_PAYMENT_METHOD_BANK],
+        tax_only=False
+    )
+
+
 @job
 def distribute_task_payment_payoneer(task):
     task = clean_instance(task, Task)
-    if not task.paid or not task.distribution_approved or not task.payment_approved:
+    if not task.distribution_approved or not task.payment_approved:
         return
 
     if task.pay_distributed:
@@ -254,25 +265,23 @@ def distribute_task_payment_payoneer(task):
 
     pay_description = task.summary
 
-    if task.payment_method == TASK_PAYMENT_METHOD_BANK:
+    payments = get_task_payments(task)
+    if not payments:
+        # Create Bank or Payoneer payment
         TaskPayment.objects.get_or_create(
-            task=task, ref='bank', payment_type=TASK_PAYMENT_METHOD_BANK,
+            task=task,
+            ref=task.payment_method == TASK_PAYMENT_METHOD_BANK and 'bank' or 'payoneer',
+            payment_type=task.payment_method == TASK_PAYMENT_METHOD_BANK and TASK_PAYMENT_METHOD_BANK or TASK_PAYMENT_METHOD_PAYONEER,
             defaults=dict(
-                amount=Decimal(task.pay),
+                amount=Decimal(task.payment_method == TASK_PAYMENT_METHOD_BANK and task.pay or task.pay_dev),
                 amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
-                paid=task.paid,
-                received_at=task.paid_at,
+                paid=True,
+                received_at=task.paid_at or datetime.datetime.utcnow(),
                 excludes_tax=True
             )
         )
-
-    # Distribute all payments for this task
-    payments = TaskPayment.objects.filter(
-        (Q(multi_pay_key__tasks=task) & ~Q(multi_pay_key__distribute_tasks=task)) | (Q(task=task) & Q(processed=False)),
-        received_at__isnull=False, payment_type__in=[TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK],
-        tax_only=False
-    )
+        payments = get_task_payments(task)
 
     task_distribution = []
     for payment in payments:

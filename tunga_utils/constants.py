@@ -56,6 +56,7 @@ TASK_PAYMENT_METHOD_BITCOIN = 'bitcoin'
 TASK_PAYMENT_METHOD_BANK = 'bank'
 TASK_PAYMENT_METHOD_STRIPE = 'stripe'
 TASK_PAYMENT_METHOD_AYDEN = 'ayden'
+TASK_PAYMENT_METHOD_PAYONEER = 'payoneer'
 
 # Transaction and Action Statuses
 STATUS_INITIAL = 'initial'
