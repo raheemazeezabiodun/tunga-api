@@ -317,12 +317,14 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
     estimate = SimpleEstimateSerializer(required=False, read_only=True)
     quote = SimpleQuoteSerializer(required=False, read_only=True)
     sprints = SimpleSprintSerializer(required=False, read_only=True, many=True)
-    tunga_ratio_dev = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
-    tunga_ratio_pm = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
-    pm_time_ratio = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
-    tax_ratio = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
+    tunga_ratio_dev = serializers.DecimalField(max_digits=15, decimal_places=12, required=False, read_only=True)
+    tunga_ratio_pm = serializers.DecimalField(max_digits=15, decimal_places=12, required=False, read_only=True)
+    pm_time_ratio = serializers.DecimalField(max_digits=15, decimal_places=12, required=False, read_only=True)
+    tax_ratio = serializers.DecimalField(max_digits=15, decimal_places=12, required=False, read_only=True)
     started_at = serializers.DateTimeField(required=False, read_only=True)
     started = serializers.BooleanField(required=False, read_only=True)
+    dev_hrs = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
+    pm_hrs = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
 
     class Meta:
         model = Task

@@ -283,6 +283,12 @@ class Task(models.Model):
     pm_rate = models.DecimalField(
         max_digits=19, decimal_places=4, default=39
     )
+    dev_pay_rate = models.DecimalField(
+        max_digits=19, decimal_places=4, blank=True, null=True, default=None
+    )
+    pm_pay_rate = models.DecimalField(
+        max_digits=19, decimal_places=4, blank=True, null=True, default=None
+    )
     tax_exempt = models.BooleanField(default=False)
     tax_rate = models.DecimalField(
         max_digits=19, decimal_places=4, default=0
@@ -579,10 +585,14 @@ class Task(models.Model):
 
     @property
     def tunga_ratio_dev(self):
+        if self.dev_pay_rate and self.dev_rate:
+            return Decimal(self.dev_rate - self.dev_pay_rate) / Decimal(self.dev_rate)
         return Decimal(self.tunga_percentage_dev) * Decimal(0.01)
 
     @property
     def tunga_ratio_pm(self):
+        if self.pm_pay_rate and self.pm_rate:
+            return Decimal(self.pm_rate - self.pm_pay_rate) / Decimal(self.pm_rate)
         return Decimal(self.tunga_percentage_pm) * Decimal(0.01)
 
     @property
