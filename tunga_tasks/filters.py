@@ -39,13 +39,26 @@ class TaskFilter(GenericDateFilterSet):
         queryset = queryset.filter(closed=True)
         if value in ['paid', 'processing']:
             request = self.request
-            is_po = request and request.user and request.user.is_authenticated() and request.user.is_project_owner and not request.user.is_admin
+            is_admin = request and request.user and request.user.is_authenticated() and request.user.is_admin
+            is_po = request and request.user and request.user.is_authenticated() and request.user.is_project_owner and not is_admin
+            is_dev = request and request.user and request.user.is_authenticated() and request.user.is_developer and not is_admin
+            is_pm = request and request.user and request.user.is_authenticated() and request.user.is_project_manager and not is_admin
+            is_dev_or_pm = is_dev or is_pm
+            paid_filter = Q(paid=True)
             if value == 'paid':
-                return is_po and queryset or queryset.filter(paid=True, pay_distributed=True)
+                if is_admin:
+                    paid_filter = Q(paid=True) & Q(pay_distributed=True)
+                elif is_dev_or_pm:
+                    paid_filter = Q(pay_distributed=True)
+                return queryset.filter(paid_filter)
             else:
-                processing_filter = (Q(processing=True) & Q(paid=False))
+                # exclude all paid work
+                queryset = queryset.exclude(paid_filter)
+                processing_filter = Q(processing=True) | Q(paid=True)
                 if not is_po:
-                    processing_filter = processing_filter | (Q(paid=True) & Q(pay_distributed=False))
+                    processing_filter = processing_filter | Q(paid=True)
+                if is_dev_or_pm:
+                    processing_filter = (processing_filter | Q(payment_approved=True)) & Q(pay_distributed=False)
                 return queryset.filter(processing_filter)
         elif value == 'pending':
             queryset = queryset.filter(processing=False, paid=False)

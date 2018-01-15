@@ -43,7 +43,7 @@ class TaskFilterBackend(DRYPermissionFiltersBase):
                 queryset = queryset.filter(closed=True)
             elif label_filter == 'payments':
                 queryset = queryset.filter(closed=True).order_by('paid', 'pay_distributed', 'processing', '-created_at')
-            if label_filter != 'payments' or not request.user.is_admin:
+            if label_filter != 'payments' or (request.user.is_authenticated() and not request.user.is_admin):
                 queryset = queryset.filter(
                     Q(user=request.user) |
                     Q(owner=request.user) |
