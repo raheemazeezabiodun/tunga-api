@@ -609,9 +609,12 @@ class Task(models.Model):
 
     @property
     def dev_hrs(self):
-        if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
-            return self.pay / (self.dev_rate + self.pm_time_ratio*self.pm_rate)
-        return self.pay/self.dev_rate
+        try:
+            if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
+                return self.pay / (self.dev_rate + self.pm_time_ratio*self.pm_rate)
+            return self.pay/self.dev_rate
+        except:
+            return 0
 
     @property
     def pm_hrs(self):
