@@ -1085,7 +1085,7 @@ def notify_new_task_invoice_client_email(instance):
 @job
 def notify_new_task_invoice_admin_email(instance):
     instance = clean_instance(instance, TaskInvoice)
-    subject = "{} generated for an invoice".format(instance.user.display_name)
+    subject = "{} generated an invoice".format(instance.user.display_name)
     to = TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS
     ctx = {
         'user': instance.user,
