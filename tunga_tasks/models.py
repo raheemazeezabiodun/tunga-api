@@ -284,10 +284,10 @@ class Task(models.Model):
         max_digits=19, decimal_places=4, default=39
     )
     dev_pay_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, blank=True, null=True, default=None
+        max_digits=19, decimal_places=4, blank=True, null=True, default=12.5
     )
     pm_pay_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, blank=True, null=True, default=None
+        max_digits=19, decimal_places=4, blank=True, null=True, default=19
     )
     tax_exempt = models.BooleanField(default=False)
     tax_rate = models.DecimalField(
