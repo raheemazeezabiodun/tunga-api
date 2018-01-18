@@ -177,3 +177,12 @@ SKILL_TYPE_LIBRARY = 'library'
 SKILL_TYPE_STORAGE = 'storage'
 SKILL_TYPE_API = 'api'
 SKILL_TYPE_OTHER = 'other'
+
+# File types
+DOC_ESTIMATE = 'estimate'
+DOC_PROPOSAL = 'proposal'
+DOC_PLANNING = 'planning'
+DOC_REQUIREMENTS = 'requirements'
+DOC_WIREFRAMES = 'wireframes'
+DOC_TIMELINE = 'timeline'
+DOC_OTHER = 'other'

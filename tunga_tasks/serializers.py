@@ -18,7 +18,7 @@ from tunga_tasks import slugs
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, ProgressEvent, ProgressReport, \
     Project, IntegrationMeta, Integration, IntegrationEvent, IntegrationActivity, TASK_PAYMENT_METHOD_CHOICES, \
     Estimate, Quote, WorkActivity, WorkPlan, AbstractEstimate, TaskPayment, ParticipantPayment, \
-    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint
+    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint, TaskDocument
 from tunga_tasks.signals import application_response, participation_response, task_applications_closed, task_closed, \
     task_integration, estimate_created, estimate_status_changed, quote_status_changed, quote_created, task_approved, \
     task_call_window_scheduled, task_fully_saved, task_details_completed, task_owner_added, task_payment_approved
@@ -33,7 +33,7 @@ from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, SkillSerializer, \
     CreateOnlyCurrentUserDefault, SimpleUserSerializer, UploadSerializer, DetailAnnotatedModelSerializer, \
-    SimpleRatingSerializer, InvoiceUserSerializer, TaskInvoiceSerializer
+    SimpleRatingSerializer, InvoiceUserSerializer, TaskInvoiceSerializer, SimpleUploadSerializer
 
 
 class SimpleProjectSerializer(ContentTypeAnnotatedModelSerializer):
@@ -252,6 +252,16 @@ class ParticipantShareSerializer(serializers.Serializer):
         return floatformat(obj['share']*100)
 
 
+class TaskDocumentSerializer(SimpleUploadSerializer):
+    created_by = SimpleUserSerializer(
+        required=False, read_only=True, default=CreateOnlyCurrentUserDefault()
+    )
+
+    class Meta(SimpleUploadSerializer.Meta):
+        model = TaskDocument
+        fields = '__all__'
+
+
 class TaskDetailsSerializer(ContentTypeAnnotatedModelSerializer):
     project = SimpleProjectSerializer()
     parent = SimpleTaskSerializer()
@@ -325,6 +335,7 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
     started = serializers.BooleanField(required=False, read_only=True)
     dev_hrs = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
     pm_hrs = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
+    documents = TaskDocumentSerializer(required=False, read_only=True, many=True)
 
     class Meta:
         model = Task
@@ -1299,3 +1310,4 @@ class SkillsApprovalSerializer(serializers.ModelSerializer):
         model = SkillsApproval
         fields = '__all__'
         details_serializer = SkillsApprovalDetailsSerializer
+

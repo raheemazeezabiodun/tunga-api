@@ -251,3 +251,4 @@ class TaskInvoiceSerializer(serializers.ModelSerializer, GetCurrentUserAnnotated
             except:
                 pass
         return obj.get_amount_details(share=0)
+
