@@ -294,46 +294,43 @@ def distribute_task_payment_payoneer(task):
             share_amount = Decimal(share) * payment.task_pay_share(task)
             portion_sent = False
 
-            if not participant.user or share == 0:
-                continue
-
-            if participant.user.payoneer_status != STATUS_APPROVED:
-                continue
-
-            participant_pay, created = ParticipantPayment.objects.get_or_create(
-                source=payment, participant=participant
-            )
-            if created or (participant_pay and participant_pay.status in [STATUS_PENDING, STATUS_RETRY]):
-                payoneer_client = payoneer_utils.get_client(
-                    settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
-                    settings.PAYONEER_PARTNER_ID
+            if share > 0 and participant.user or participant.user.payoneer_status == STATUS_APPROVED:
+                participant_pay, created = ParticipantPayment.objects.get_or_create(
+                    source=payment, participant=participant
                 )
-
-                balance = payoneer_client.get_balance()
-                if balance.get('accountbalance', 0) >= share_amount:
-                    transaction = payoneer_client.make_payment(
-                        settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
-                        pay_description
+                if created or (participant_pay and participant_pay.status in [STATUS_PENDING, STATUS_RETRY]):
+                    payoneer_client = payoneer_utils.get_client(
+                        settings.PAYONEER_USERNAME, settings.PAYONEER_PASSWORD,
+                        settings.PAYONEER_PARTNER_ID
                     )
 
-                    if transaction.get('status', None) == '000':
-                        participant_pay.ref = transaction.get('paymentid', None)
-                        participant_pay.amount = '{0:.2f}'.format(share_amount)
-                        participant_pay.status = STATUS_PROCESSING
-                        participant_pay.sent_at = datetime.datetime.utcnow()
-                        participant_pay.save()
-                        portion_sent = True
+                    balance = payoneer_client.get_balance()
+                    if balance.get('accountbalance', 0) >= share_amount:
+                        transaction = payoneer_client.make_payment(
+                            settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
+                            pay_description
+                        )
+
+                        if transaction.get('status', None) == '000':
+                            participant_pay.ref = transaction.get('paymentid', None)
+                            participant_pay.amount = '{0:.2f}'.format(share_amount)
+                            participant_pay.status = STATUS_PROCESSING
+                            participant_pay.sent_at = datetime.datetime.utcnow()
+                            participant_pay.save()
+                            portion_sent = True
 
             portion_distribution.append(portion_sent)
-            if portion_distribution and False not in portion_distribution:
-                payment.processed = True
-                payment.save()
-                task_distribution.append(True)
-            else:
-                task_distribution.append(False)
-        if task_distribution and not (False in task_distribution):
-            task.pay_distributed = True
-            task.save()
+
+        if portion_distribution and False not in portion_distribution:
+            payment.processed = True
+            payment.save()
+            task_distribution.append(True)
+        else:
+            task_distribution.append(False)
+
+    if task_distribution and not (False in task_distribution):
+        task.pay_distributed = True
+        task.save()
 
 
 @job
