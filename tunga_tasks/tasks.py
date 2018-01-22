@@ -683,7 +683,7 @@ def distribute_multi_task_payment(multi_task_key):
 
     # Distribute connected tasks
     for task in multi_task_key.tasks.all():
-        distribute_task_payment(task)
+        distribute_task_payment_payoneer(task)
 
 
 @job
@@ -739,4 +739,4 @@ def update_multi_tasks(multi_task_key, distribute=False):
         )
 
         if distribute and multi_task_key.paid:
-            distribute_task_payment.delay(task.id)
+            distribute_task_payment_payoneer.delay(task.id)

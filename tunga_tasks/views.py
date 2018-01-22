@@ -8,8 +8,8 @@ import django_rq
 from allauth.socialaccount.providers.github.provider import GitHubProvider
 from dateutil.parser import parse
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.query_utils import Q
 from django.db.models import Sum
+from django.db.models.query_utils import Q
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -30,7 +30,7 @@ from stripe.error import InvalidRequestError
 from weasyprint import HTML
 
 from tunga.settings import BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET, \
-    BITONIC_URL, BITONIC_PAYMENT_COST_PERCENTAGE, TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_HUBSPOT_CHANNEL
+    BITONIC_URL, TUNGA_URL
 from tunga_activity.filters import ActionFilter
 from tunga_activity.models import ActivityReadLog
 from tunga_activity.serializers import SimpleActivitySerializer, LastReadActivitySerializer
@@ -52,15 +52,15 @@ from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, Parti
     IntegrationSerializer, TaskPaySerializer, EstimateSerializer, QuoteSerializer, \
     MultiTaskPaymentKeySerializer, TaskPaymentSerializer, ParticipantPaymentSerializer, SimpleProgressEventSerializer, \
     SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer
-from tunga_utils.serializers import TaskInvoiceSerializer
-from tunga_tasks.tasks import distribute_task_payment, generate_invoice_number, complete_bitpesa_payment, \
+from tunga_tasks.tasks import complete_bitpesa_payment, \
     update_multi_tasks
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
-from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils, slack_utils, hubspot_utils
+from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
 from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
     TASK_PAYMENT_METHOD_STRIPE, CURRENCY_EUR, TASK_PAYMENT_METHOD_BITCOIN
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.mixins import SaveUploadsMixin
+from tunga_utils.serializers import TaskInvoiceSerializer
 
 
 class ProjectViewSet(viewsets.ModelViewSet):

@@ -1,10 +1,9 @@
 import datetime
 
-from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 
 from tunga_tasks.models import Task
-from tunga_tasks.tasks import distribute_task_payment, distribute_task_payment_payoneer
+from tunga_tasks.tasks import distribute_task_payment_payoneer
 
 
 class Command(BaseCommand):
