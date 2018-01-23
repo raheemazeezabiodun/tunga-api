@@ -675,10 +675,13 @@ class Task(models.Model):
     @property
     def amount(self):
         processing_share = 0
-        if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
-            processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-        elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
-            processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+        processing_fee = 0
+        if not self.exclude_payment_costs:
+            if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
+                processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+            elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
+                processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(self.pay) or (processing_share * self.pay)
 
         amount_details = None
         if self.pay:
@@ -688,7 +691,7 @@ class Task(models.Model):
                     pledge=self.pay,
                     developer=Decimal(1 - self.tunga_ratio_dev) * self.pay_dev,
                     pm=Decimal(1 - self.tunga_ratio_pm) * self.pay_pm,
-                    processing=self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(self.pay) or (processing_share * self.pay)
+                    processing=Decimal(processing_fee)
                 )
             )
             amount_details['tunga'] = self.pay - (amount_details['developer'] + amount_details['pm'])
@@ -1887,12 +1890,15 @@ class TaskInvoice(models.Model):
         fee_portion_pm = Decimal(self.pay_pm) * share
 
         processing_share = 0
-        if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
-            processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-        elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
-            processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+        processing_fee = 0
 
-        processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(fee_portion) or (Decimal(processing_share) * fee_portion)
+        if not self.exclude_payment_costs:
+            if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
+                processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+            elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
+                processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
+
+            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(fee_portion) or (Decimal(processing_share) * fee_portion)
 
         amount_details = dict(
             currency=CURRENCY_SYMBOLS.get(self.currency, ''),
@@ -1923,6 +1929,10 @@ class TaskInvoice(models.Model):
     @property
     def summary(self):
         return self.number or '%s - Fee: %s' % (self.title, self.display_fee())
+
+    @property
+    def exclude_payment_costs(self):
+        return self.task.exclude_payment_costs
 
 
 @python_2_unicode_compatible

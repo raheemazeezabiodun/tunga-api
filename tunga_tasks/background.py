@@ -88,7 +88,7 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, is_admin=False
                         'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
                         'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
                         # European Free Trade Association (EFTA)
-                                                                                    'IS', 'LI', 'NO', 'CH'
+                        'IS', 'LI', 'NO', 'CH'
                     ]:
                         invoice_location = 'europe'
                     else:

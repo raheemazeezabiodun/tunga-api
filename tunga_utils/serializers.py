@@ -236,6 +236,7 @@ class TaskInvoiceSerializer(serializers.ModelSerializer, GetCurrentUserAnnotated
     amount = serializers.JSONField(required=False, read_only=True)
     developer_amount = serializers.SerializerMethodField(required=False, read_only=True)
     tax_ratio = serializers.DecimalField(max_digits=19, decimal_places=4, required=False, read_only=True)
+    exclude_payment_costs = serializers.BooleanField(required=False, read_only=True)
 
     class Meta:
         model = TaskInvoice
