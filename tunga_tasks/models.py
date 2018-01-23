@@ -278,10 +278,10 @@ class Task(models.Model):
         max_digits=19, decimal_places=4, blank=True, null=True, default=None
     )
     dev_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, default=19
+        max_digits=19, decimal_places=4, default=20
     )
     pm_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, default=39
+        max_digits=19, decimal_places=4, default=40
     )
     dev_pay_rate = models.DecimalField(
         max_digits=19, decimal_places=4, blank=True, null=True, default=12.5
@@ -328,7 +328,7 @@ class Task(models.Model):
         MultiTaskPaymentKey, related_name='distribute_tasks', on_delete=models.DO_NOTHING, blank=True, null=True
     )
     includes_pm_fee = models.BooleanField(default=False)
-    exclude_payment_costs = models.BooleanField(default=False)
+    exclude_payment_costs = models.BooleanField(default=True)
 
     # Classification details
     type = models.IntegerField(choices=TASK_TYPE_CHOICES, default=TASK_TYPE_OTHER)  # Web, Mobile ...
