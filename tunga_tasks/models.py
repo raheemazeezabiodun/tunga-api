@@ -328,6 +328,7 @@ class Task(models.Model):
         MultiTaskPaymentKey, related_name='distribute_tasks', on_delete=models.DO_NOTHING, blank=True, null=True
     )
     includes_pm_fee = models.BooleanField(default=False)
+    exclude_payment_costs = models.BooleanField(default=False)
 
     # Classification details
     type = models.IntegerField(choices=TASK_TYPE_CHOICES, default=TASK_TYPE_OTHER)  # Web, Mobile ...
