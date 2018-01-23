@@ -50,9 +50,10 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     PROGRESS_REPORT_STUCK_REASON_UNCLEAR_SPEC, PROGRESS_REPORT_STUCK_REASON_PERSONAL, \
     PROGRESS_REPORT_STUCK_REASON_OTHER, \
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
-    TASK_PAYMENT_METHOD_PAYONEER
+    TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
+    DOC_TIMELINE, DOC_OTHER
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
-from tunga_utils.models import Upload, Rating
+from tunga_utils.models import Upload, Rating, GenericUpload
 from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
 
 CURRENCY_CHOICES = (
@@ -523,7 +524,7 @@ class Task(models.Model):
         if str(self.edit_token) == get_edit_token_header(request) or request.user == self.user or \
                 (self.parent and request.user == self.parent.user) or \
                 self.has_admin_access(request.user) or \
-                (request.user.is_authenticated() and request.user.is_project_manager): #and (self.pm == request.user or not self.pm)):
+                (request.user.is_authenticated() and request.user.is_project_manager):
             return True
         elif self.visibility == VISIBILITY_DEVELOPER:
             return request.user.is_authenticated() and request.user.is_developer
@@ -856,6 +857,10 @@ class Task(models.Model):
             Q(tasks=self) | Q(tasks__parent=self) |
             Q(progress_events__task=self) | Q(progress_events__task__parent=self)
         )
+
+    @property
+    def documents(self):
+        return self.taskdocument_set.all()
 
     @property
     def payment_withheld_tunga_fee(self):
@@ -1216,6 +1221,7 @@ class AbstractEstimate(models.Model):
 # @python_2_unicode_compatible
 class Estimate(AbstractEstimate):
     pass
+
 
 QUOTE_STATUS_CHOICES = ESTIMATE_STATUS_CHOICES
 
@@ -1987,3 +1993,53 @@ class SkillsApproval(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return request.user.is_project_manager and request.user == self.created_by
+
+
+TASK_DOCUMENT_CHOICES = (
+    (DOC_ESTIMATE, 'Estimate'),
+    (DOC_PROPOSAL, 'Proposal'),
+    (DOC_PLANNING, 'Planning'),
+    (DOC_REQUIREMENTS, 'Requirements Document'),
+    (DOC_WIREFRAMES, 'Wireframes'),
+    (DOC_TIMELINE, 'Timeline'),
+    (DOC_OTHER, 'Other')
+)
+
+
+@python_2_unicode_compatible
+class TaskDocument(GenericUpload):
+    task = models.ForeignKey(Task)
+    file_type = models.CharField(choices=TASK_DOCUMENT_CHOICES, max_length=30)
+    description = models.TextField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+
+    def __str__(self):
+        return '{} - {}'.format(self.file_type, self.task)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    activity_objects = GenericRelation(
+        Action,
+        object_id_field='action_object_object_id',
+        content_type_field='action_object_content_type',
+        related_query_name='documents'
+    )
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.event.has_object_read_permission(request)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_manager or request.user.is_project_owner
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.created_by

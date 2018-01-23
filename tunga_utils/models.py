@@ -85,6 +85,7 @@ class Upload(GenericUpload):
     def has_object_write_permission(self, request):
         return request.user == self.user
 
+
 CONTACT_REQUEST_ITEM_CHOICES = (
     (CONTACT_REQUEST_ITEM_DO_IT_YOURSELF, 'Do-it-yourself'),
     (CONTACT_REQUEST_ITEM_ONBOARDING, 'Tunga onboarding'),

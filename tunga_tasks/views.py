@@ -41,17 +41,17 @@ from tunga_tasks.filterbackends import TaskFilterBackend, ApplicationFilterBacke
     ProgressEventFilterBackend
 from tunga_tasks.filters import TaskFilter, ApplicationFilter, ParticipationFilter, TimeEntryFilter, \
     ProjectFilter, ProgressReportFilter, ProgressEventFilter, EstimateFilter, QuoteFilter, TaskPaymentFilter, \
-    ParticipantPaymentFilter, SkillsApprovalFilter, SprintFilter
+    ParticipantPaymentFilter, SkillsApprovalFilter, SprintFilter, TaskDocumentFilter
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, Project, ProgressReport, ProgressEvent, \
     Integration, IntegrationMeta, IntegrationActivity, TaskPayment, TaskInvoice, Estimate, Quote, \
-    MultiTaskPaymentKey, ParticipantPayment, SkillsApproval, Sprint
+    MultiTaskPaymentKey, ParticipantPayment, SkillsApproval, Sprint, TaskDocument
 from tunga_tasks.notifications.generic import notify_new_task_invoice, notify_hubspot_change
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, ParticipationSerializer, \
     TimeEntrySerializer, ProjectSerializer, ProgressReportSerializer, ProgressEventSerializer, \
     IntegrationSerializer, TaskPaySerializer, EstimateSerializer, QuoteSerializer, \
     MultiTaskPaymentKeySerializer, TaskPaymentSerializer, ParticipantPaymentSerializer, SimpleProgressEventSerializer, \
-    SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer
+    SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer, TaskDocumentSerializer
 from tunga_tasks.tasks import complete_bitpesa_payment, \
     update_multi_tasks
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
@@ -367,8 +367,6 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
                 task.paid_at = paid_at
                 task.unpaid_balance = 0
                 task.save()
-
-                # distribute_task_payment.delay(task.id)
 
                 task_serializer = TaskSerializer(task, context={'request': request})
                 task_payment_serializer = TaskPaymentSerializer(task_pay, context={'request': request})
@@ -1106,6 +1104,20 @@ class SkillsApprovalViewSet(viewsets.ModelViewSet):
     )
 
 
+class TaskDocumentViewSet(viewsets.ModelViewSet):
+    """
+    Task Document Resource
+    """
+    queryset = TaskDocument.objects.all()
+    serializer_class = TaskDocumentSerializer
+    permission_classes = [IsAuthenticated, DRYPermissions]
+    filter_class = TaskDocumentFilter
+    search_fields = (
+        'description', 'task__title', '^created_by__username',
+        '^created_by__first_name', '^created_by__last_name'
+    )
+
+
 @csrf_exempt
 @api_view(http_method_names=['POST'])
 @permission_classes([AllowAny])
@@ -1140,8 +1152,6 @@ def coinbase_notification(request):
             task.paid_at = paid_at
             task.save()
 
-            # Coinbase waits for 6 confirmations, so not safe to distribute yet
-            # distribute_task_payment.delay(task.id)
         else:
             try:
                 multi_task_key = MultiTaskPaymentKey.objects.get(btc_address=address)
