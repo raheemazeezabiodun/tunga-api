@@ -2007,14 +2007,16 @@ TASK_DOCUMENT_CHOICES = (
 
 
 @python_2_unicode_compatible
-class TaskDocument(GenericUpload):
+class TaskDocument(models.Model):
     task = models.ForeignKey(Task)
+    file = models.FileField(verbose_name='Upload', upload_to='documents/%Y/%m/%d')
     file_type = models.CharField(choices=TASK_DOCUMENT_CHOICES, max_length=30)
     description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 
     def __str__(self):
-        return '{} - {}'.format(self.file_type, self.task)
+        return '{} - {} - {}'.format(self.file_type, self.task, self.file.name)
 
     class Meta:
         ordering = ['-created_at']

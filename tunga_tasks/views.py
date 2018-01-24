@@ -13,6 +13,7 @@ from django.db.models.query_utils import Q
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
+from django.utils import six
 from django.utils.crypto import get_random_string
 from django.views.decorators.csrf import csrf_exempt
 from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
@@ -1116,6 +1117,21 @@ class TaskDocumentViewSet(viewsets.ModelViewSet):
         'description', 'task__title', '^created_by__username',
         '^created_by__first_name', '^created_by__last_name'
     )
+
+    def create(self, request, *args, **kwargs):
+        request.data['file'] = self.get_file()
+        return super(TaskDocumentViewSet, self).create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        request.data['file'] = self.get_file()
+        return super(TaskDocumentViewSet, self).update(request, *args, **kwargs)
+
+    def get_file(self):
+        uploads = self.request.FILES
+        if uploads:
+            for uploaded_file in six.itervalues(uploads):
+                return uploaded_file
+        return None
 
 
 @csrf_exempt
