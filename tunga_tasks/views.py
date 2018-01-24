@@ -218,8 +218,52 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
         return Response(serializer.data)
 
     @detail_route(
+        methods=['get', 'post'], url_path='documents',
+        permission_classes=[IsAuthenticated],
+        serializer_class=TaskDocumentSerializer,
+        filter_class=None,
+        filter_backends=DEFAULT_FILTER_BACKENDS,
+        search_fields=('taskdocument_description',)
+    )
+    def documents(self, request, pk=None):
+        """
+        Task Documents Endpoint
+        ---
+        response_serializer: TaskDocumentSerializer
+        omit_parameters:
+            - query
+        """
+        task = get_object_or_404(self.get_queryset(), pk=pk)
+        self.check_object_permissions(request, task)
+
+        if request.method == 'POST':
+            uploaded_file = None
+            uploads = self.request.FILES
+            if uploads:
+                for item in six.itervalues(uploads):
+                    uploaded_file = item
+            request.data['task'] = pk
+            request.data['file'] = uploaded_file
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            queryset = task.taskdocument_set.all()
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+
+    @detail_route(
         methods=['get', 'post', 'put'], url_path='invoice',
-        serializer_class=TaskPaySerializer, permission_classes=[IsAuthenticated]
+        serializer_class=TaskPaySerializer,
+        permission_classes=[IsAuthenticated]
     )
     def invoice(self, request, pk=None):
         """
