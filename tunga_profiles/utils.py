@@ -12,7 +12,7 @@ def profile_check(user):
     required = ['country', 'city', 'street', 'plot_number', 'postal_code']
 
     if user.is_developer or user.is_project_manager:
-        required.extend(['payment_method', 'id_document'])
+        required.extend(['id_document'])
     elif user.is_project_owner and user.tax_location == 'europe':
         required.extend(['vat_number'])
 
