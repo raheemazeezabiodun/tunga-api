@@ -51,7 +51,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     PROGRESS_REPORT_STUCK_REASON_OTHER, \
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
     TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
-    DOC_TIMELINE, DOC_OTHER
+    DOC_TIMELINE, DOC_OTHER, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
 from tunga_utils.models import Upload, Rating, GenericUpload
 from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
@@ -1291,8 +1291,9 @@ PROGRESS_EVENT_TYPE_CHOICES = (
     (PROGRESS_EVENT_TYPE_SUBMIT, 'Final Draft'),
     (PROGRESS_EVENT_TYPE_COMPLETE, 'Submission'),
     (PROGRESS_EVENT_TYPE_PM, 'PM Report'),
-    (PROGRESS_EVENT_TYPE_CLIENT, 'Client Survey'),
     (PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, 'Internal Milestone'),
+    (PROGRESS_EVENT_TYPE_CLIENT, 'Client Survey'),
+    (PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, 'MidSprint Client Survey'),
 )
 
 
@@ -1360,7 +1361,7 @@ class ProgressEvent(models.Model):
                 return self.task.pm == user
             else:
                 return self.task.user == user
-        elif self.type == PROGRESS_EVENT_TYPE_CLIENT:
+        elif self.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]:
             return self.task.has_admin_access(user)
         return self.task.get_is_participant(user, active_only=active_only)
 
@@ -1370,7 +1371,7 @@ class ProgressEvent(models.Model):
         if self.type == PROGRESS_EVENT_TYPE_PM:
             if self.task.is_project and self.task.pm:
                 participants.append(self.task.pm)
-        elif self.type == PROGRESS_EVENT_TYPE_CLIENT:
+        elif self.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]:
             if self.task.owner:
                 participants.append(self.task.owner)
             else:

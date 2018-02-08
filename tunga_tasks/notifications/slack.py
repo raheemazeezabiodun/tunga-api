@@ -17,7 +17,7 @@ from tunga_tasks.utils import get_task_integration
 from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, VISIBILITY_DEVELOPER, STATUS_ACCEPTED, \
     APP_INTEGRATION_PROVIDER_SLACK, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BANK, \
-    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
+    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.slack_utils import get_user_im_id
 
@@ -331,7 +331,7 @@ def remind_progress_event_slack(instance):
         return
 
     is_pm_report = instance.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.type == PROGRESS_EVENT_TYPE_CLIENT
+    is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -392,7 +392,7 @@ def remind_progress_event_slack(instance):
 
 def create_progress_report_slack_message(instance, updated=False, to_client=False):
     is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.event.type == PROGRESS_EVENT_TYPE_CLIENT
+    is_client_report = instance.event.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -576,7 +576,7 @@ def notify_new_progress_report_slack(instance, updated=False):
     instance = clean_instance(instance, ProgressReport)
 
     is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.event.type == PROGRESS_EVENT_TYPE_CLIENT
+    is_client_report = instance.event.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -601,7 +601,7 @@ def notify_new_progress_report_slack(instance, updated=False):
 def notify_missed_progress_event_slack(instance):
     instance = clean_instance(instance, ProgressEvent)
 
-    is_client_report = instance.type == PROGRESS_EVENT_TYPE_CLIENT
+    is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
 
     if instance.status != "missed":
         return

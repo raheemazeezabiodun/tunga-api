@@ -24,7 +24,8 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     PROGRESS_EVENT_TYPE_PERIODIC, PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
     STATUS_INITIATED, APP_INTEGRATION_PROVIDER_HARVEST, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
     PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
-    TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER
+    TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER, \
+    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -206,7 +207,8 @@ def update_task_client_surveys(task):
 
     if target_task.update_interval and target_task.update_interval_units:
         periodic_start_date = ProgressEvent.objects.filter(
-            Q(task=target_task) | Q(task__parent=target_task), type=PROGRESS_EVENT_TYPE_CLIENT
+            Q(task=target_task) | Q(task__parent=target_task),
+            type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
         ).aggregate(latest_date=Max('due_at'))['latest_date']
 
         now = datetime.datetime.utcnow()
@@ -228,7 +230,8 @@ def update_task_client_surveys(task):
                     if next_update_at <= future_by_18_hours and (
                         not target_task.deadline or next_update_at < target_task.deadline):
                         num_updates_on_same_day = ProgressEvent.objects.filter(
-                            task=target_task, type=PROGRESS_EVENT_TYPE_CLIENT,
+                            task=target_task,
+                            type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
                             due_at__contains=next_update_at.date()
                         ).count()
 
