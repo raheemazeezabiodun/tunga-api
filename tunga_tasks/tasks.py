@@ -305,7 +305,7 @@ def distribute_task_payment_payoneer(task):
                     )
 
                     balance = payoneer_client.get_balance()
-                    if balance.get('accountbalance', 0) >= share_amount:
+                    if Decimal(20) <= share_amount <= balance.get('accountbalance', 0):
                         transaction = payoneer_client.make_payment(
                             settings.PAYONEER_PARTNER_ID, participant_pay.id, participant.user.id, share_amount,
                             pay_description
