@@ -70,8 +70,10 @@ def notify_review_task_admin(instance):
 
 @job
 def notify_new_task_community(instance):
-    notify_new_task_community_email(instance)
-    notify_new_task_community_slack(instance)
+    # Disable community notifications for new tasks
+    # notify_new_task_community_email(instance)
+    # notify_new_task_community_slack(instance)
+    pass
 
 
 @job
