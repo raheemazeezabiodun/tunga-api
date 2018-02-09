@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 
 import uuid
@@ -190,10 +192,10 @@ class UserProfile(models.Model):
 
     @property
     def location(self):
-        location = self.city_name
+        location = self.city
         if self.country_name:
-            location = '{}{}{}'.format(location, location and ', ' or '', self.country_name)
-        return location
+            location = '{}{}{}'.format(location, location and ', ' or '', self.country.name)
+        return location or ''
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
