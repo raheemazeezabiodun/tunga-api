@@ -23,7 +23,6 @@ def upload_invoice(task, user, invoice_type, invoice_file):
         exact_user_id = exact_api.relations.get(relation_code=user.exact_code)['ID']
     except (ObjectDoesNotExist, TypeError):
         pass
-    print('exact_user_id: ', exact_user_id)
 
     relation_dict = dict(
         Code=user.exact_code,
@@ -38,13 +37,11 @@ def upload_invoice(task, user, invoice_type, invoice_file):
     else:
         relation_dict['IsSales'] = True
 
-    print('relation_dict: ', relation_dict)
     if exact_user_id:
-        exact_user = exact_api.relations.update(exact_user_id, relation_dict)
+        exact_api.relations.update(exact_user_id, relation_dict)
     else:
         exact_user = exact_api.relations.create(relation_dict)
         exact_user_id = exact_user['ID']
-    print('exact_user: ', exact_user)
 
     invoice_number_suffix = 'C'
     if invoice_type == 'tunga':
@@ -59,15 +56,12 @@ def upload_invoice(task, user, invoice_type, invoice_file):
         Subject='{} - {}'.format(invoice.title, '{}{}'.format(invoice.number, invoice_number_suffix)),
         Account=exact_user_id,
     )
-    print('invoice_dict: ', invoice_dict)
     exact_document = exact_api.restv1(POST('documents/Documents', invoice_dict))
-    print('exact_document: ', exact_document)
 
     attachment_dict = dict(
         Attachment=base64.b64encode(invoice_file),
         Document=exact_document['ID'],
         FileName='{} - {}.pdf'.format(invoice.title, '{}{}'.format(invoice.number, invoice_number_suffix))
     )
-    print('attachment_dict: ', attachment_dict)
-    exact_attachment = exact_api.restv1(POST('documents/DocumentAttachments', attachment_dict))
-    print('exact_attachment: ', exact_attachment)
+    exact_api.restv1(POST('documents/DocumentAttachments', attachment_dict))
+
