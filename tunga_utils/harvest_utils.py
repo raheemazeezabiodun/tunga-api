@@ -43,6 +43,7 @@ def store_token(token, **kwargs):
             user=user, provider=APP_INTEGRATION_PROVIDER_HARVEST, defaults=defaults
         )
 
+
 def create_user(first_name, last_name, email, **kwargs):
     user = {'first_name': first_name, 'last_name':last_name, 'email':email}
     

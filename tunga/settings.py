@@ -438,6 +438,9 @@ PAYONEER_PASSWORD = None
 PAYONEER_PARTNER_ID = None
 PAYONEER_API_URL = None
 
+EXACT_DOCUMENT_TYPE_SALES_INVOICE = None
+EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE = None
+
 RAVEN_CONFIG = {
     'dsn': '',  # Raven URL here
     # 'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
