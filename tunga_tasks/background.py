@@ -14,14 +14,14 @@ from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
 
 
 @job
-def process_invoices(pk, invoice_types=('client',), user_id=None, is_admin=False, filepath=None):
+def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=None, is_admin=False, filepath=None):
     all_invoices = list()
 
     if pk == 'all':
         tasks = Task.objects.filter(closed=True, taskinvoice__isnull=False)
         if user_id and not is_admin:
             tasks = tasks.filter(
-                Q(user_id=user_id) | Q(owner_id=user_id) | Q(pm_id=user_id) | Q(participant_id=user_id))
+                Q(user_id=user_id) | Q(owner_id=user_id) | Q(pm_id=user_id) | Q(participant__user_id=user_id))
         tasks = tasks.distinct()
     else:
         tasks = Task.objects.filter(id=pk)
@@ -51,11 +51,12 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, is_admin=False
 
                     amount_details = invoice.get_amount_details(share=share_info['share'])
 
-                    common_developer_info.append({
-                        'developer': InvoiceUserSerializer(participant.user).data,
-                        'amount': amount_details,
-                        'dev_number': developer.number or ''
-                    })
+                    if not developer_ids or participant.user.id in developer_ids:
+                        common_developer_info.append({
+                            'developer': InvoiceUserSerializer(participant.user).data,
+                            'amount': amount_details,
+                            'dev_number': developer.number or ''
+                        })
 
                 for invoice_type in invoice_types:
                     task_developers = []
