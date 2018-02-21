@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
+import datetime
 from django.db import models
 
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.text import slugify
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
@@ -79,12 +81,25 @@ class SkillPageProfile(models.Model):
 class BlogPost(models.Model):
     slug = models.SlugField(max_length=50, unique=True)
     title = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='blog/%Y/%m/%d', blank=True, null=True)
     body = models.TextField()
+    published = models.BooleanField(default=False)
+    published_at = models.DateTimeField(null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return '{} Blog Post'.format(self.title)
+        return 'Blog Post | {}'.format(self.title)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.slug = slugify(self.title)
+        if self.published and not self.published_at:
+            self.published_at = datetime.datetime.utcnow()
+        super(BlogPost, self).save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
     class Meta:
         ordering = ['-created_at']

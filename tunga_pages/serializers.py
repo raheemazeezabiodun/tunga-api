@@ -29,3 +29,6 @@ class BlogPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = '__all__'
+        extra_kwargs = {
+            'slug': {'required': False, 'allow_blank': True, 'allow_null': True},
+        }

@@ -29,7 +29,7 @@ from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, socia
     payoneer_sign_up, payoneer_notification, exact_connect_callback
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
-from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap, BlogPostViewSet
+from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap, BlogPostViewSet, BlogSitemap
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     HarvestAPIView, DeveloperInvitationViewSet
@@ -79,6 +79,7 @@ router.register(r'task-document', TaskDocumentViewSet)
 
 # Dictionary containing your sitemap classes
 sitemaps = {
+    'blog': BlogSitemap(),
     'skills': SkillPagesSitemap(),
     'developers': DevelopersSitemap(),
 }
