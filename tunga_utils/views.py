@@ -1,7 +1,9 @@
 import json
+import os
 import re
 from operator import itemgetter
 
+import datetime
 import requests
 from django.core.files.storage import FileSystemStorage
 from django.utils import six
@@ -10,6 +12,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+from tunga.settings import MEDIA_ROOT, MEDIA_URL
 from tunga_profiles.models import Skill
 from tunga_utils.models import ContactRequest
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer
@@ -75,7 +78,11 @@ def upload_file(request):
     file_response = dict()
     if request.FILES['file']:
         uploaded_file = request.FILES['file']
-        fs = FileSystemStorage()
+        store_path = datetime.datetime.utcnow().strftime('uploads/%Y/%m/%d')
+        fs = FileSystemStorage(
+            location=os.path.join(MEDIA_ROOT, store_path),
+            base_url='{}{}/'.format(MEDIA_URL, store_path)
+        )
         filename = fs.save(uploaded_file.name, uploaded_file)
         uploaded_file_url = fs.url(filename)
         file_response = dict(url=uploaded_file_url)
