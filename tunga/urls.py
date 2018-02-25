@@ -40,7 +40,7 @@ from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationView
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
     TaskDocumentViewSet
-from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts
+from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file
 
 api_schema_view = get_swagger_view(title='Tunga API')
 
@@ -123,6 +123,8 @@ urlpatterns = [
     url(r'^api/countries/', CountryListView.as_view(), name='countries'),
     url(r'^api/contact-request/', ContactRequestView.as_view(), name='contact-request'),
     url(r'^api/medium/', get_medium_posts, name='medium-posts'),
+    url(r'^api/oembed/', get_oembed_details, name='oembed-details'),
+    url(r'^api/upload/', upload_file, name='upload-file'),
     url(r'^api/docs/', api_schema_view),
     url(r'^api/payoneer/ipcn/callback/', payoneer_notification, name="payoneer-ipcn-status"),
     url(r'^api/payoneer/', payoneer_sign_up, name="payoneer"),

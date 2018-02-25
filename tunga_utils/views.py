@@ -3,6 +3,7 @@ import re
 from operator import itemgetter
 
 import requests
+from django.core.files.storage import FileSystemStorage
 from django.utils import six
 from rest_framework import viewsets, generics
 from rest_framework.decorators import api_view, permission_classes
@@ -56,3 +57,26 @@ def get_medium_posts(request):
         except:
             pass
     return Response(posts)
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([AllowAny])
+def get_oembed_details(request):
+    r = requests.get('https://noembed.com/embed?url=' + request.GET.get('url', None))
+    oembed_response = dict()
+    if r.status_code == 200:
+        oembed_response = r.json()
+    return Response(oembed_response)
+
+
+@api_view(http_method_names=['POST'])
+@permission_classes([IsAuthenticated])
+def upload_file(request):
+    file_response = dict()
+    if request.FILES['file']:
+        uploaded_file = request.FILES['file']
+        fs = FileSystemStorage()
+        filename = fs.save(uploaded_file.name, uploaded_file)
+        uploaded_file_url = fs.url(filename)
+        file_response = dict(url=uploaded_file_url)
+    return Response(file_response)
