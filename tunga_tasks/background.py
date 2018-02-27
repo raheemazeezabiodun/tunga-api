@@ -10,6 +10,8 @@ from weasyprint import HTML
 from tunga_profiles.models import DeveloperNumber
 from tunga_tasks.models import Task
 from tunga_tasks.tasks import generate_invoice_number
+from tunga_utils import bitcoin_utils
+from tunga_utils.constants import TASK_PAYMENT_METHOD_BITCOIN
 from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
 
 
@@ -65,7 +67,8 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
                         common_developer_info.append({
                             'developer': InvoiceUserSerializer(participant.user).data,
                             'amount': amount_details,
-                            'dev_number': developer.number or ''
+                            'dev_number': developer.number or '',
+                            'participant': participant
                         })
 
                 for invoice_type in invoice_types:
@@ -83,6 +86,17 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
                                 invoice_type != 'client' and common_info['dev_number'] or '',
                                 (invoice_type == 'developer' and 'D' or (invoice_type == 'tunga' and 'T' or 'C'))
                             )
+
+                            participant_payment_method = None
+                            if common_info['participant']:
+                                try:
+                                    participant_payment = common_info['participant'].participantpayment_set.filter().latest('created_at')
+                                    if participant_payment and bitcoin_utils.is_valid_btc_address(participant_payment.destination):
+                                        participant_payment_method = TASK_PAYMENT_METHOD_BITCOIN
+                                except:
+                                    pass
+
+                            final_dev_info['payment_method'] = participant_payment_method
                             task_developers.append(final_dev_info)
 
                     invoice_data['developers'] = task_developers
