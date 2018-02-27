@@ -51,7 +51,8 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
 
                     amount_details = invoice.get_amount_details(share=share_info['share'])
 
-                    if not developer_ids or participant.user.id in developer_ids:
+                    if (not developer_ids or participant.user.id in developer_ids) and \
+                            not (participant.prepaid or (participant.prepaid is None and participant.user.is_internal)):
                         common_developer_info.append({
                             'developer': InvoiceUserSerializer(participant.user).data,
                             'amount': amount_details,
