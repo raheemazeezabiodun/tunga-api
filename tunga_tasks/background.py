@@ -15,6 +15,15 @@ from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
 
 @job
 def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=None, is_admin=False, filepath=None):
+    """
+    :param pk: id of the task
+    :param invoice_types: tuple of invoice types to generate e.g 'client', 'developer', 'tunga'
+    :param user_id: user viewing the invoice(s)
+    :param developer_ids: participant invoices to generate. only applies to 'developer' and 'tunga' invoices
+    :param is_admin: is requester an admin?
+    :param filepath: file to store invoice in
+    :return:
+    """
     all_invoices = list()
 
     if pk == 'all':

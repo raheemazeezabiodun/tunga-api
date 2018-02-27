@@ -15,6 +15,13 @@ def get_api():
 
 
 def upload_invoice(task, user, invoice_type, invoice_file):
+    """
+    :param task: parent task for the invoice
+    :param user: Tunga user related to the invoice e.g a client or a developer
+    :param invoice_type: type of invoice e.g 'client', 'developer', 'tunga'
+    :param invoice_file: generated file object for the invoice
+    :return:
+    """
     exact_api = get_api()
     invoice = task.invoice
 
