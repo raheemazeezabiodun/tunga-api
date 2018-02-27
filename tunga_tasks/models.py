@@ -1024,12 +1024,21 @@ class Participation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     activated_at = models.DateTimeField(blank=True, null=True)
     pause_updates_until = models.DateTimeField(blank=True, null=True)
+    prepaid = models.NullBooleanField(default=None)
     paid_at = models.DateTimeField(blank=True, null=True)
 
     ratings = GenericRelation(Rating, related_query_name='participants')
 
     def __str__(self):
         return '#{} | {} - {}'.format(self.id, self.user.get_short_name() or self.user.username, self.task.title)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.user.is_internal and type(self.prepaid) is not bool:
+            self.prepaid = True
+        super(Participation, self).save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
     class Meta:
         unique_together = ('user', 'task')

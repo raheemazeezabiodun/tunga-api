@@ -35,6 +35,7 @@ PAYONEER_STATUS_CHOICES = (
 
 class TungaUser(AbstractUser):
     type = models.IntegerField(choices=USER_TYPE_CHOICES, blank=True, null=True)
+    is_internal = models.BooleanField(default=False)
     image = models.ImageField(upload_to='photos/%Y/%m/%d', blank=True, null=True)
     verified = models.BooleanField(default=False)
     pending = models.BooleanField(default=True)

@@ -295,9 +295,12 @@ def distribute_task_payment_payoneer(task):
             participant = item['participant']
             share = item['share']
             share_amount = Decimal(share) * payment.task_pay_share(task)
+
             portion_sent = False
 
-            if share > 0 and participant.user or participant.user.payoneer_status == STATUS_APPROVED:
+            if share <= 0 or participant.prepaid or (participant.prepaid is None and participant.user.is_internal):
+                portion_sent = True
+            elif share > 0 and participant.user or participant.user.payoneer_status == STATUS_APPROVED:
                 participant_pay, created = ParticipantPayment.objects.get_or_create(
                     source=payment, participant=participant
                 )
