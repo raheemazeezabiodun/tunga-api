@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
 from oauthlib import oauth1
 from oauthlib.oauth1 import SIGNATURE_TYPE_QUERY
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, views
 from rest_framework.decorators import detail_route, api_view, permission_classes
 from rest_framework.exceptions import ValidationError, NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -1176,6 +1176,189 @@ class TaskDocumentViewSet(viewsets.ModelViewSet):
             for uploaded_file in six.itervalues(uploads):
                 return uploaded_file
         return None
+
+class InvoiceReminder(views.APIView):
+    """
+    invoice_reminder
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        """
+        try:
+            dueday = request.GET.get("dueday", "")
+            invoice_id = request.GET.get("invoice_id", "")
+            task_id = request.GET.get("task_id", "")
+
+            task = Task.objects.get(id=task_id)
+            if(task.send_early_invoice_reminder(int(dueday))):
+
+                return Response(
+                        {
+                        'status': 'Invoice Sent',
+                        'dueday': dueday,
+                        'invoice_id': invoice_id,
+                        'task_id': task_id,
+                        }
+                    )
+            return Response(
+                    {
+                    'status': 'Not yet due date',
+                    }
+                )
+           
+        except Exception as e:
+            raise
+
+class InvoicePayment(views.APIView):
+    """
+    On accepting on the dialog, this trigger payment to the developers in the payout via payoneer
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        """
+        try:
+            #
+            ignoreinvoice = request.GET.get("ignoreinvoice")
+
+            # The true in the parameter is string
+            if(ignoreinvoice == "True"):
+                ignoreinvoice = True
+            else:
+                ignoreinvoice = False
+
+            if(ignoreinvoice):
+                # Pay the developer even though we don't have the invoice.
+                task_id = request.GET.get("task", "")
+                developer = request.GET.get("developer", "")
+
+                task_worked = Task.objects.get(id=task_id)
+
+                # Mark the task for processing
+                # Just don't make the task as paid
+                task_worked.distribution_approved=True
+                task_worked.save()
+
+                return Response(
+                    {
+                    'status': 'Processing',
+                    'message': 'You are not logged in',
+                    "task_title":task_worked.title,
+                    "task_id":task_worked.id
+                    },
+                )
+
+            else:
+                # Process paymanent and mark the invoice as done.
+                developer_id = request.GET.get("developer","")
+                invoice_id = request.GET.get("invoice","")
+
+                user_payee = authmodel.TungaUser.objects.get(id=developer_id)
+                invoice = TaskInvoice.objects.get(id=invoice_id)
+
+                payoneer_ret_status = distribute_task_payment_payoneer.delay(invoice.task)
+                invoice.task.paid=True
+                invoice.task.distribution_approved=True
+                invoice.task.save()
+
+                return Response(
+                            {
+                                "developer_id":developer_id,
+                                "invoice_id":invoice_id
+                            }
+                        )
+
+        except Exception as e:
+            raise
+
+class InvoiceFiltering(views.APIView):
+    """
+    Filters All invoices for all users with pending
+    Task: https://github.com/tunga-io/tunga-web/issues/270
+    """
+    def get(self, request, *args, **kwargs):
+        """
+        """
+        try:
+            current_user = request.user
+            pending =  request.GET.get("pending", "")
+
+            if current_user and current_user.is_authenticated():
+                return Response(self.dictify_invoices(pending))
+            else:
+                #invoice_list = TaskInvoice.objects.all()
+
+                return Response(
+                    {'status': 'Unauthorized', 'message': 'You are not logged in'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        except Exception as e:
+            raise e
+
+
+    def dictify_invoices(self, status):
+        """
+        Return all invoices in a dictionary format.
+        """
+        if(status == "true" or status == "True"): # Our api may pass true with small letter
+            status = True
+        elif(status == "false" or status == "False"):
+            status = False
+
+        # Wondering Why we have this  condition below?
+        # Well try to make taskinvoice_isnull=Status
+        if(status):
+            task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=False)
+        else:
+            task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=True)
+
+        task_invoice_list = []
+
+        for invoice in task_invoices:
+            task_invoice_list.append(
+                    {
+                        "invoice_id":invoice.invoice.id,
+                        "invoice_title":invoice.invoice.title,
+                        "task":self.filter_tasks(invoice.invoice),
+                        "client":self.filter_client(invoice.invoice),
+                        "currency":invoice.invoice.currency,
+                        "payment_method":invoice.invoice.payment_method,
+                        "number":invoice.invoice.number,
+                        "btc_address":invoice.invoice.btc_address,
+                        "tax_rate":invoice.invoice.tax_rate,
+                        "fee":invoice.invoice.fee,
+                        "invoice_date":invoice.invoice.created_at,
+                        "last_updated":invoice.invoice.updated_at,
+                        "sum":invoice.invoice.dev_hrs,
+                        "payout":invoice.invoice.pay_dev
+                    }
+                )
+        return task_invoice_list
+
+    def filter_tasks(self, invoice):
+        """
+        From the invoice get the task.
+        """
+        if(invoice.task):
+            return {
+                "task":invoice.task.id,
+                "title":invoice.task.title,
+                "invoice_date":invoice.task.invoice_date,
+                "created_at":invoice.task.created_at
+                }
+
+        return {}
+
+    def filter_client(self, invoice):
+        """
+        From the invoice get the client.
+        """
+        if(invoice.client):
+            return {
+                "username":invoice.client.username,
+                "verified":invoice.client.verified,
+                }
+
+        return {}
 
 
 @csrf_exempt
