@@ -836,12 +836,6 @@ def send_survey_summary_report_slack(event, client_report, pm_report, dev_report
     pm_report = clean_instance(pm_report, ProgressReport)
     dev_report = clean_instance(dev_report, ProgressReport)
 
-    print('client reports: ', client_report)
-    print('pm report: ', pm_report)
-    print('dev report: ', dev_report)
-
-    # Notify via Slack of sent email to double check and prevent multiple sends
-
     attachments = list()
     if not client_report:
         attachments.append({

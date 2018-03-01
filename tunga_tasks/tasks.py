@@ -13,7 +13,6 @@ from django_rq.decorators import job
 
 from tunga import settings
 from tunga.settings import BITPESA_SENDER, SLACK_DEBUGGING_INCOMING_WEBHOOK, TUNGA_URL
-from tunga_profiles.models import ClientNumber
 from tunga_profiles.utils import get_app_integration
 from tunga_tasks.models import ProgressEvent, Task, ParticipantPayment, \
     TaskInvoice, Integration, IntegrationMeta, Participation, MultiTaskPaymentKey, TaskPayment
@@ -440,21 +439,8 @@ def distribute_task_payment(task, force_distribution=False, destination=None, ta
                             if complete_bitpesa_payment(transaction):
                                 portion_sent = True
                     else:
-                        # Notify via Slack of failed payment due to balance
-                        slack_utils.send_incoming_webhook(
-                            SLACK_DEBUGGING_INCOMING_WEBHOOK,
-                            {
-                                slack_utils.KEY_TEXT: "Not enough balance to make payment for <{}|{}>\n"
-                                                      "Balance: BTC {}\n"
-                                                      "Required: BTC {}".format(
-                                    '{}/work/{}'.format(TUNGA_URL, task.id),
-                                    task.summary,
-                                    tunga_wallet_balance,
-                                    share_amount
-                                ),
-                                slack_utils.KEY_CHANNEL: '#alerts'
-                            }
-                        )
+                        # TODO: Notify via Slack of failed payment due to balance
+                        pass
             elif participant_pay and payment_method == PAYMENT_METHOD_MOBILE_MONEY and \
                             participant_pay.status == STATUS_INITIATED:
                 tunga_wallet_balance = coinbase_utils.get_account_balance()
@@ -464,21 +450,8 @@ def distribute_task_payment(task, force_distribution=False, destination=None, ta
                     if transaction and complete_bitpesa_payment(transaction):
                         portion_sent = True
                 else:
-                    # Notify via Slack of failed payment due to balance
-                    slack_utils.send_incoming_webhook(
-                        SLACK_DEBUGGING_INCOMING_WEBHOOK,
-                        {
-                            slack_utils.KEY_TEXT: "Not enough balance to make payment for <{}|{}>\n"
-                                                  "Balance: BTC {}\n"
-                                                  "Required: BTC {}".format(
-                                '{}/work/{}'.format(TUNGA_URL, task.id),
-                                task.summary,
-                                tunga_wallet_balance,
-                                share_amount
-                            ),
-                            slack_utils.KEY_CHANNEL: '#alerts'
-                        }
-                    )
+                    # TODO: Notify via Slack of failed payment due to balance
+                    pass
 
             portion_distribution.append(portion_sent)
         if portion_distribution and False not in portion_distribution:
@@ -493,14 +466,6 @@ def distribute_task_payment(task, force_distribution=False, destination=None, ta
 
 
 def complete_bitpesa_payment(transaction):
-    slack_utils.send_incoming_webhook(
-        SLACK_DEBUGGING_INCOMING_WEBHOOK,
-        {
-            slack_utils.KEY_TEXT: 'BitPesa Payment Attempt\n'
-                                  'Transaction: {}'.format(transaction),
-            slack_utils.KEY_CHANNEL: '#alerts'
-        }
-    )
     bp_transaction_id = transaction.get(bitpesa.KEY_ID, None)
     metadata = transaction.get(bitpesa.KEY_METADATA, None)
     reference = metadata.get(bitpesa.KEY_REFERENCE, None)
@@ -585,28 +550,6 @@ def send_payment_share(destination, amount, idem, description=None):
         description=description
     )
     return transaction
-
-
-@job
-def generate_invoice_number(invoice):
-    invoice = clean_instance(invoice, TaskInvoice)
-    if not invoice.number:
-        client, created = ClientNumber.objects.get_or_create(user=invoice.client)
-        client_number = client.number
-        task_number = invoice.task.task_number
-        previous_for_month = TaskInvoice.objects.filter(
-            created_at__year=invoice.created_at.year,
-            created_at__month=invoice.created_at.month,
-            created_at__lt=invoice.created_at
-        ).count()
-
-        month_number = previous_for_month + 1
-        invoice_number = '%s%s%s%s' % (
-            client_number, invoice.created_at.strftime('%Y%m'), '{:02d}'.format(month_number), task_number
-        )
-        invoice.number = invoice_number
-        invoice.save()
-    return invoice
 
 
 @job

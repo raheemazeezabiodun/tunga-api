@@ -50,17 +50,14 @@ def upload_invoice(task, user, invoice_type, invoice_file):
         exact_user = exact_api.relations.create(relation_dict)
         exact_user_id = exact_user['ID']
 
-    invoice_number_suffix = 'C'
-    if invoice_type == 'tunga':
-        dev_number_creator, created = DeveloperNumber.objects.get_or_create(user=user)
-        invoice_number_suffix = '{}T'.format(dev_number_creator.number)
-    elif invoice_type == 'developer':
-        dev_number_creator, created = DeveloperNumber.objects.get_or_create(user=user)
-        invoice_number_suffix = '{}D'.format(dev_number_creator.number)
+    invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
 
     invoice_dict = dict(
         Type=invoice_type == 'tunga' and EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE or EXACT_DOCUMENT_TYPE_SALES_INVOICE,
-        Subject='{} - {}'.format(invoice.title, '{}{}'.format(invoice.number, invoice_number_suffix)),
+        Subject='{} - {}'.format(
+            invoice.title,
+            invoice_number
+        ),
         Account=exact_user_id,
     )
     exact_document = exact_api.restv1(POST('documents/Documents', invoice_dict))
@@ -68,7 +65,7 @@ def upload_invoice(task, user, invoice_type, invoice_file):
     attachment_dict = dict(
         Attachment=base64.b64encode(invoice_file),
         Document=exact_document['ID'],
-        FileName='{} - {}.pdf'.format(invoice.title, '{}{}'.format(invoice.number, invoice_number_suffix))
+        FileName='{} - {}.pdf'.format(invoice.title, invoice_number)
     )
     exact_api.restv1(POST('documents/DocumentAttachments', attachment_dict))
 

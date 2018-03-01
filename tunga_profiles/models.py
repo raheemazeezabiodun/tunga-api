@@ -246,6 +246,7 @@ class Work(AbstractExperience):
     class Meta:
         verbose_name_plural = 'work'
 
+
 CONNECTION_STATUS_CHOICES = (
     (STATUS_INITIAL, 'Initial'),
     (STATUS_ACCEPTED, 'Accepted'),

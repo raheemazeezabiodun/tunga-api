@@ -14,6 +14,16 @@ from tunga_utils.hubspot_utils import create_hubspot_engagement
 
 
 def render_mail(subject, template_prefix, to_emails, context, bcc=None, cc=None, **kwargs):
+    """
+    :param subject:
+    :param template_prefix: path to template for email with extension (e.g hello if template name is hello.html)
+    :param to_emails:
+    :param context: variables to be passed into template
+    :param bcc:
+    :param cc:
+    :param kwargs:
+    :return:
+    """
     from_email = DEFAULT_FROM_EMAIL
     if not re.match(r'^\[\s*Tunga', subject):
         subject = '{} {}'.format(EMAIL_SUBJECT_PREFIX, subject)

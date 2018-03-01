@@ -131,6 +131,6 @@ class ParticipantPaymentAdmin(admin.ModelAdmin):
 
 @admin.register(TaskInvoice)
 class TaskInvoiceAdmin(ReadOnlyModelAdmin):
-    list_display = ('number', 'task', 'display_fee', 'payment_method', 'created_at')
-    list_filter = ('payment_method', 'created_at')
+    list_display = ('number', 'task', 'display_fee', 'payment_method', 'created_at', 'version')
+    list_filter = ('payment_method', 'created_at', 'version')
     search_fields = ('number', 'task__title')
