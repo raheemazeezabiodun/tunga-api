@@ -9,7 +9,6 @@ from weasyprint import HTML
 
 from tunga_profiles.models import DeveloperNumber
 from tunga_tasks.models import Task
-from tunga_tasks.tasks import generate_invoice_number
 from tunga_utils import bitcoin_utils
 from tunga_utils.constants import TASK_PAYMENT_METHOD_BITCOIN
 from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
@@ -40,12 +39,7 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
     for task in tasks:
         invoice = task.invoice
         if invoice:
-            if not invoice.number:
-                try:
-                    invoice = generate_invoice_number(invoice)
-                except:
-                    pass
-
+            invoice = invoice.clean_invoice()
             if invoice.number:
                 initial_invoice_data = TaskInvoiceSerializer(invoice).data
                 initial_invoice_data['date'] = task.invoice.created_at.strftime('%d %B %Y')
@@ -72,19 +66,20 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
                         })
 
                 for invoice_type in invoice_types:
+                    if invoice_type == 'developer' and invoice.version > 1:
+                        continue
                     task_developers = []
                     invoice_data = copy(initial_invoice_data)
 
                     if invoice_type == 'client':
-                        invoice_data['number_client'] = '{}C'.format(invoice_data['number'])
+                        invoice_data['number_client'] = invoice.invoice_id(invoice_type='client')
                         task_developers = [dict()]
                     else:
                         for common_info in common_developer_info:
                             final_dev_info = copy(common_info)
-                            final_dev_info['number'] = '{}{}{}'.format(
-                                invoice_data['number'],
-                                invoice_type != 'client' and common_info['dev_number'] or '',
-                                (invoice_type == 'developer' and 'D' or (invoice_type == 'tunga' and 'T' or 'C'))
+                            final_dev_info['number'] = invoice.invoice_id(
+                                invoice_type=invoice_type,
+                                user=common_info['participant'] and common_info['participant'].user or None
                             )
 
                             participant_payment_method = None

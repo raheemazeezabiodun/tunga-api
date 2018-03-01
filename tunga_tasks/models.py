@@ -2,11 +2,11 @@
 
 from __future__ import unicode_literals
 
+import datetime
 import re
 import uuid
 from decimal import Decimal
 
-import datetime
 import tagulous.models
 from actstream.models import Action
 from dateutil.relativedelta import relativedelta
@@ -29,7 +29,7 @@ from tunga.settings import BITONIC_PAYMENT_COST_PERCENTAGE, \
 from tunga_activity.models import ActivityReadLog
 from tunga_comments.models import Comment
 from tunga_messages.models import Channel
-from tunga_profiles.models import Skill, Connection
+from tunga_profiles.models import Skill, Connection, ClientNumber, DeveloperNumber
 from tunga_settings.models import VISIBILITY_CHOICES
 from tunga_utils import stripe_utils
 from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPER, VISIBILITY_DEVELOPER, \
@@ -52,7 +52,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
     TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
     DOC_TIMELINE, DOC_OTHER, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
-from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
+from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header, clean_instance
 from tunga_utils.models import Upload, Rating, GenericUpload
 from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
 
@@ -1856,14 +1856,23 @@ class TaskInvoice(models.Model):
     tax_rate = models.DecimalField(
         max_digits=19, decimal_places=4, default=0
     )
+    version = models.FloatField(blank=True, null=True, default=2.0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.summary
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if not self.number:
+            self.number = self.generate_invoice_number()
+        super(TaskInvoice, self).save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
+
     class Meta:
-        ordering = ['created_at']
+        ordering = ['-created_at']
 
     @property
     def dev_hrs(self):
@@ -1928,14 +1937,30 @@ class TaskInvoice(models.Model):
 
         amount_details['tunga'] = round_decimal(fee_portion - (amount_details['developer'] + amount_details['pm']), 2)
         amount_details['total'] = round_decimal(fee_portion + amount_details['processing'], 2)
-        amount_details['total_dev'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_dev + processing_fee, 2)
-        amount_details['total_pm'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_pm + processing_fee, 2)
+        amount_details['total_dev'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_dev + amount_details['processing'], 2)
+        amount_details['total_pm'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_pm + amount_details['processing'], 2)
 
         vat = self.tax_rate
         vat_amount = Decimal(vat) * Decimal(0.01) * amount_details['total']
         amount_details['vat'] = vat
         amount_details['vat_amount'] = round_decimal(vat_amount, 2)
         amount_details['plus_tax'] = round_decimal(amount_details['total'] + vat_amount, 2)
+
+        # Invoice specific amounts
+
+        # Tunga invoicing client
+        amount_details['invoice_client'] = round_decimal(fee_portion, 2)
+        amount_details['total_invoice_client'] = round_decimal(amount_details['invoice_client'] + amount_details['processing'], 2)
+        amount_details['total_invoice_client_plus_tax'] = round_decimal(amount_details['total_invoice_client'] + vat_amount, 2)
+
+        # Developer invoicing Tunga
+        amount_details['invoice_tunga'] = self.version > 1 and round_decimal(amount_details['developer'], 2) or round_decimal(fee_portion_dev, 2)
+        amount_details['total_invoice_tunga'] = round_decimal(amount_details['developer'], 2)
+
+        # Tunga invoicing Developer
+        amount_details['invoice_developer'] = round_decimal(Decimal(self.task.tunga_ratio_dev) * fee_portion_dev, 2)
+        amount_details['total_invoice_developer'] = round_decimal(amount_details['invoice_developer'] + amount_details['processing'], 2)
+
         return amount_details
 
     @property
@@ -1949,6 +1974,58 @@ class TaskInvoice(models.Model):
     @property
     def exclude_payment_costs(self):
         return self.task.exclude_payment_costs
+
+    def generate_invoice_number(self):
+        if not self.number or self.version > 1:
+
+            if self.version > 1:
+                return '{}/{}/{}/{}'.format(
+                    (self.created_at or datetime.datetime.utcnow()).strftime('%Y'), self.client.id, self.task.id, self.id
+                )
+            elif self.created_at:  # month number means task should already be created to avoid collisions
+                client, created = ClientNumber.objects.get_or_create(user=self.client)
+                client_number = client.number
+                task_number = self.task.task_number
+                previous_for_month = TaskInvoice.objects.filter(
+                    created_at__year=self.created_at.year,
+                    created_at__month=self.created_at.month,
+                    created_at__lt=self.created_at
+                ).count()
+
+                month_number = previous_for_month + 1
+                return '{}{}{}{}'.format(
+                    client_number, self.created_at.strftime('%Y%m'), '{:02d}'.format(month_number), task_number
+                )
+
+        return self.number
+
+    def clean_invoice(self):
+        new_invoice_number = self.generate_invoice_number()
+        if new_invoice_number != self.number:
+            self.number = new_invoice_number
+            self.save()
+        return self
+
+    def suffix_letter(self, invoice_type):
+        if self.version == 1:
+            if invoice_type == 'client':
+                return 'C'
+            elif invoice_type == 'developer':
+                return 'D'
+            elif invoice_type == 'tunga':
+                return 'T'
+        return ''
+
+    def invoice_id(self, invoice_type='client', user=None):
+        full_number = self.number
+        if user and invoice_type != 'client':
+            if self.version > 1:
+                dev_number = user.id
+            else:
+                dev_number_creator, created = DeveloperNumber.objects.get_or_create(user=user)
+                dev_number = dev_number_creator.number
+            full_number = '{}{}{}'.format(full_number, self.version > 1 and '/' or '', dev_number)
+        return '{}{}'.format(full_number, self.suffix_letter(invoice_type))
 
 
 @python_2_unicode_compatible
