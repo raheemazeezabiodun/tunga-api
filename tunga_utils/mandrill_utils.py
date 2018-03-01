@@ -54,9 +54,6 @@ def send_email(template_name, to, subject=None, merge_vars=None, cc=None, bcc=No
 @job
 def log_emails(responses, to, subject=None, cc=None, bcc=None, deal_ids=None):
     mandrill_client = get_client()
-
-    print('logging responses: ', responses)
-
     if responses:
         for response in responses:
             content_id = response.get('_id')
