@@ -21,7 +21,7 @@ class TungaUserAdmin(UserAdmin):
     search_fields = ('first_name', 'last_name', 'email')
 
     fieldsets = UserAdmin.fieldsets + (
-        (_('Profile'), {'fields': ('type', 'image', 'verified', 'pending')}),
+        (_('Profile'), {'fields': ('type', 'image', 'is_internal', 'verified', 'pending')}),
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (
@@ -29,8 +29,11 @@ class TungaUserAdmin(UserAdmin):
         (_('Profile'), {'fields': ('email', 'first_name', 'last_name')})
     )
 
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'type', 'source', 'pending', 'verified')
-    list_filter = ('date_joined', 'type', 'pending', 'is_staff', 'is_superuser')
+    list_display = (
+        'username', 'email', 'first_name', 'last_name',
+        'is_staff', 'is_internal', 'type', 'source', 'pending', 'verified'
+    )
+    list_filter = ('date_joined', 'type', 'pending', 'is_staff', 'is_superuser', 'is_internal', 'payoneer_status')
     list_max_show_all = 1000
 
     inlines = (UserProfileInline,)
