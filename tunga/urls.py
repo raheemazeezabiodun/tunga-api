@@ -39,7 +39,7 @@ from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationView
     ProgressReportViewSet, ProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
-    TaskDocumentViewSet, InvoiceFiltering, InvoicePayment, InvoiceReminder
+    TaskDocumentViewSet, InvoiceFiltering, InvoicePayment
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file
 
 api_schema_view = get_swagger_view(title='Tunga API')
@@ -146,12 +146,7 @@ urlpatterns = [
     #    ==> ?ignoreinvoice=True&developer=3&task=1
     
     url(r'^api/invoices/pay/', InvoicePayment.as_view(), name="invoice_payments"),
-    
-    # /api/invoices/duedate/?dueday=14&invoice_id=2&task_id=1
-    url(r'^api/invoices/duedate/', InvoiceReminder.as_view(), name="invoice_reminder"),
-    # ---------------------------------------------------------------------------------------------------------
-    
-    
+
     url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, name='password_reset_confirm'),
     url(r'^$', router.get_api_root_view(), name='backend-root'),

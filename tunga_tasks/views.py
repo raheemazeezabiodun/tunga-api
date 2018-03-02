@@ -1177,38 +1177,6 @@ class TaskDocumentViewSet(viewsets.ModelViewSet):
                 return uploaded_file
         return None
 
-class InvoiceReminder(views.APIView):
-    """
-    invoice_reminder
-    """
-    def get(self, request, *args, **kwargs):
-        """
-        """
-        try:
-            dueday = request.GET.get("dueday", "")
-            invoice_id = request.GET.get("invoice_id", "")
-            task_id = request.GET.get("task_id", "")
-
-            task = Task.objects.get(id=task_id)
-            if(task.send_early_invoice_reminder(int(dueday))):
-
-                return Response(
-                        {
-                        'status': 'Invoice Sent',
-                        'dueday': dueday,
-                        'invoice_id': invoice_id,
-                        'task_id': task_id,
-                        }
-                    )
-            return Response(
-                    {
-                    'status': 'Not yet due date',
-                    }
-                )
-           
-        except Exception as e:
-            raise
-
 class InvoicePayment(views.APIView):
     """
     On accepting on the dialog, this trigger payment to the developers in the payout via payoneer
