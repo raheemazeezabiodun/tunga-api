@@ -170,7 +170,7 @@
                                 {% if developer_info.payment_method == "bitcoin" %}
                                     <p>Bitcoin address: {{ invoice.btc_address }}</p>
                                 {% else %}
-                                    <p>Payee ID: {{ developer_info.developer.id }}</p>
+                                    <p>Payoneer Payee ID: {{ developer_info.developer.id }}</p>
                                 {% endif %}
                             {% else %}
                                 {% if invoice_type == "client" and location != "NL" %}

@@ -279,10 +279,10 @@ class Task(models.Model):
         max_digits=19, decimal_places=4, blank=True, null=True, default=None
     )
     dev_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, default=20
+        max_digits=30, decimal_places=15, default=20
     )
     pm_rate = models.DecimalField(
-        max_digits=19, decimal_places=4, default=40
+        max_digits=30, decimal_places=15, default=40
     )
     dev_pay_rate = models.DecimalField(
         max_digits=19, decimal_places=4, blank=True, null=True, default=12.5
