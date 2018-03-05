@@ -51,7 +51,8 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     PROGRESS_REPORT_STUCK_REASON_OTHER, \
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
     TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
-    DOC_TIMELINE, DOC_OTHER, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+    DOC_TIMELINE, DOC_OTHER, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, VAT_LOCATION_NL, VAT_LOCATION_EUROPE, \
+    VAT_LOCATION_WORLD
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header, clean_instance
 from tunga_utils.models import Upload, Rating, GenericUpload
 from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
@@ -1966,6 +1967,26 @@ class TaskInvoice(models.Model):
     @property
     def tax_ratio(self):
         return Decimal(self.tax_rate) * Decimal(0.01)
+
+    @property
+    def vat_location_client(self):
+        task_owner = self.task.user
+        if self.task.owner:
+            task_owner = self.task.owner
+
+        if task_owner.profile and task_owner.profile.country and task_owner.profile.country.code:
+            client_country = task_owner.profile.country.code
+            if client_country == VAT_LOCATION_NL:
+                return VAT_LOCATION_NL
+            elif client_country in [
+                # EU members
+                'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
+                'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
+                # European Free Trade Association (EFTA)
+                'IS', 'LI', 'NO', 'CH'
+            ]:
+                return VAT_LOCATION_EUROPE
+        return VAT_LOCATION_WORLD
 
     @property
     def summary(self):

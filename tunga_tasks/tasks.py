@@ -10,13 +10,15 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Min, Max
 from django.db.models.query_utils import Q
 from django_rq.decorators import job
+from weasyprint import HTML
 
 from tunga import settings
-from tunga.settings import BITPESA_SENDER, SLACK_DEBUGGING_INCOMING_WEBHOOK, TUNGA_URL
+from tunga.settings import BITPESA_SENDER
 from tunga_profiles.utils import get_app_integration
+from tunga_tasks.background import process_invoices
 from tunga_tasks.models import ProgressEvent, Task, ParticipantPayment, \
     TaskInvoice, Integration, IntegrationMeta, Participation, MultiTaskPaymentKey, TaskPayment
-from tunga_utils import bitcoin_utils, coinbase_utils, bitpesa, harvest_utils, slack_utils, payoneer_utils
+from tunga_utils import bitcoin_utils, coinbase_utils, bitpesa, harvest_utils, payoneer_utils, exact_utils
 from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_MOBILE_MONEY, UPDATE_SCHEDULE_HOURLY, UPDATE_SCHEDULE_DAILY, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
@@ -24,7 +26,7 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     STATUS_INITIATED, APP_INTEGRATION_PROVIDER_HARVEST, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
     PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
     TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER, \
-    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, TASK_PAYMENT_METHOD_STRIPE
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -387,7 +389,6 @@ def distribute_task_payment(task, force_distribution=False, destination=None, ta
                     if not (pay_destination and bitcoin_utils.is_valid_btc_address(pay_destination)):
                         pay_destination = participant.user.btc_address
                     tunga_wallet_balance = coinbase_utils.get_account_balance()
-                    print('to send: ', 'BTC {}'.format(share_amount), pay_destination, ' wallet balance: ', tunga_wallet_balance)
                     transaction = send_payment_share(
                         destination=pay_destination,
                         amount=share_amount,
@@ -689,3 +690,55 @@ def update_multi_tasks(multi_task_key, distribute=False):
 
         if distribute and multi_task_key.paid:
             distribute_task_payment_payoneer.delay(task.id)
+
+
+@job
+def sync_exact_invoices(task):
+    invoice = task.invoice
+    client = task.owner or task.user
+
+    if task.payment_method == TASK_PAYMENT_METHOD_STRIPE:
+        # Only sync client invoices for Stripe payments
+        invoice_file_client = HTML(
+            string=process_invoices(task.id, invoice_types=['client'], user_id=client.id, is_admin=False),
+            encoding='utf-8'
+        ).write_pdf()
+        exact_utils.upload_invoice(
+            task, client, 'client', invoice_file_client,
+            float(invoice.amount.get('total_invoice_client', 0)),
+            float(invoice.amount.get('vat_amount', 0))
+        )
+
+    participation_shares = task.get_participation_shares()
+    for share_info in participation_shares:
+        participant = share_info['participant']
+        dev = participant.user
+
+        if participant.status != STATUS_ACCEPTED or share_info['share'] <= 0:
+            continue
+
+        amount_details = invoice.get_amount_details(share=share_info['share'])
+
+        invoice_file_tunga = HTML(
+            string=process_invoices(
+                task.id, invoice_types=['tunga'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
+            ),
+            encoding='utf-8'
+        ).write_pdf()
+        exact_utils.upload_invoice(
+            task, dev, 'tunga', invoice_file_tunga,
+            float(amount_details('total_invoice_tunga', 0)), 0
+        )
+
+        if invoice.version == 1:
+            # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
+            invoice_file_dev = HTML(
+                string=process_invoices(
+                    task.id, invoice_types=['developer'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
+                ),
+                encoding='utf-8'
+            ).write_pdf()
+            exact_utils.upload_invoice(
+                task, dev, 'developer', invoice_file_dev,
+                float(amount_details('total_invoice_developer', 0)), 0
+            )

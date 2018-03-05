@@ -5,8 +5,11 @@ from exactonline.exceptions import ObjectDoesNotExist
 from exactonline.resource import POST
 from exactonline.storage import IniStorage
 
-from tunga.settings import BASE_DIR, EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE
-from tunga_profiles.models import DeveloperNumber
+from tunga.settings import BASE_DIR, EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
+    EXACT_JOURNAL_CLIENT_SALES, EXACT_JOURNAL_DEVELOPER_SALES, EXACT_JOURNAL_DEVELOPER_PURCHASE, \
+    EXACT_PAYMENT_CONDITION_CODE_14_DAYS, EXACT_VAT_CODE_NL, EXACT_VAT_CODE_WORLD, EXACT_GL_ACCOUNT_CLIENT_FEE, \
+    EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE
+from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL
 
 
 def get_api():
@@ -14,16 +17,22 @@ def get_api():
     return ExactApi(storage=storage)
 
 
-def upload_invoice(task, user, invoice_type, invoice_file):
+def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, vat_location=None):
     """
     :param task: parent task for the invoice
     :param user: Tunga user related to the invoice e.g a client or a developer
     :param invoice_type: type of invoice e.g 'client', 'developer', 'tunga'
     :param invoice_file: generated file object for the invoice
+    :param amount:
+    :param vat_amount:
     :return:
     """
     exact_api = get_api()
     invoice = task.invoice
+
+    if invoice_type == 'type' and invoice.version == 1:
+        # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
+        return
 
     exact_user_id = None
     try:
@@ -52,20 +61,106 @@ def upload_invoice(task, user, invoice_type, invoice_file):
 
     invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
 
-    invoice_dict = dict(
-        Type=invoice_type == 'tunga' and EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE or EXACT_DOCUMENT_TYPE_SALES_INVOICE,
-        Subject='{} - {}'.format(
-            invoice.title,
-            invoice_number
-        ),
-        Account=exact_user_id,
-    )
-    exact_document = exact_api.restv1(POST('documents/Documents', invoice_dict))
+    exact_document = exact_api.restv1(POST(
+        'documents/Documents',
+        dict(
+            Type=invoice_type == 'tunga' and EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE or EXACT_DOCUMENT_TYPE_SALES_INVOICE,
+            Subject='{} - {}'.format(
+                invoice.title,
+                invoice_number
+            ),
+            Account=exact_user_id,
+        )
+    ))
 
-    attachment_dict = dict(
-        Attachment=base64.b64encode(invoice_file),
-        Document=exact_document['ID'],
-        FileName='{} - {}.pdf'.format(invoice.title, invoice_number)
-    )
-    exact_api.restv1(POST('documents/DocumentAttachments', attachment_dict))
+    exact_api.restv1(POST(
+        'documents/DocumentAttachments',
+        dict(
+            Attachment=base64.b64encode(invoice_file),
+            Document=exact_document['ID'],
+            FileName='{} - {}.pdf'.format(invoice.title, invoice_number)
+        )
+    ))
 
+    if invoice_type == 'client':
+        exact_api.restv1(POST(
+            'salesentry/SalesEntries',
+            dict(
+                Currency=CURRENCY_EUR,
+                Customer=exact_user_id,
+                Description=task.summary,
+                Document=exact_document['ID'],
+                EntryDate=invoice.created_at.isoformat(),
+                GAccountAmountFC=amount,
+                Journal=EXACT_JOURNAL_CLIENT_SALES,
+                ReportingPeriod=invoice.created_at.month,
+                ReportingYear=invoice.created_at.year,
+                VATAmountDC=vat_amount,
+                VATAmountFC=vat_amount,
+                YourRef=invoice_number,
+                SalesEntryLines=[
+                    dict(
+                        AmountFC=amount,
+                        Description=invoice_number,
+                        GLAccount=EXACT_GL_ACCOUNT_CLIENT_FEE,
+                        VATAmountFC=vat_amount,
+                        VATCode=vat_location == VAT_LOCATION_NL and EXACT_VAT_CODE_NL or EXACT_VAT_CODE_WORLD,
+                    )
+                ],
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+            )
+        ))
+    elif invoice_type == 'tunga':
+        exact_api.restv1(POST(
+            'purchaseentry/PurchaseEntries',
+            dict(
+                Currency=CURRENCY_EUR,
+                Supplier=exact_user_id,
+                Description=task.summary,
+                Document=exact_document['ID'],
+                EntryDate=invoice.created_at.isoformat(),
+                GAccountAmountFC=amount,
+                Journal=EXACT_JOURNAL_DEVELOPER_PURCHASE,
+                ReportingPeriod=invoice.created_at.month,
+                ReportingYear=invoice.created_at.year,
+                VATAmountDC=vat_amount,
+                VATAmountFC=vat_amount,
+                YourRef=invoice_number,
+                PurchaseEntryLines=[
+                    dict(
+                        AmountFC=amount,
+                        Description=invoice_number,
+                        GLAccount=EXACT_GL_ACCOUNT_DEVELOPER_FEE,
+                        VATAmountFC=vat_amount
+                    )
+                ],
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+            )
+        ))
+    elif invoice_type == 'developer':
+        exact_api.restv1(POST(
+            'salesentry/SalesEntries',
+            dict(
+                Currency=CURRENCY_EUR,
+                Customer=exact_user_id,
+                Description=task.summary,
+                Document=exact_document['ID'],
+                EntryDate=invoice.created_at.isoformat(),
+                GAccountAmountFC=amount,
+                Journal=EXACT_JOURNAL_DEVELOPER_SALES,
+                ReportingPeriod=invoice.created_at.month,
+                ReportingYear=invoice.created_at.year,
+                VATAmountDC=vat_amount,
+                VATAmountFC=vat_amount,
+                YourRef=invoice_number,
+                SalesEntryLines=[
+                    dict(
+                        AmountFC=amount,
+                        Description=invoice_number,
+                        GLAccount=EXACT_GL_ACCOUNT_TUNGA_FEE,
+                        VATAmountFC=vat_amount
+                    )
+                ],
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+            )
+        ))

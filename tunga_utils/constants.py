@@ -187,3 +187,9 @@ DOC_REQUIREMENTS = 'requirements'
 DOC_WIREFRAMES = 'wireframes'
 DOC_TIMELINE = 'timeline'
 DOC_OTHER = 'other'
+
+
+# VAT Locations
+VAT_LOCATION_NL = 'NL'
+VAT_LOCATION_EUROPE = 'europe'
+VAT_LOCATION_WORLD = 'world'

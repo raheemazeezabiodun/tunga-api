@@ -10,7 +10,7 @@ from weasyprint import HTML
 from tunga_profiles.models import DeveloperNumber
 from tunga_tasks.models import Task
 from tunga_utils import bitcoin_utils
-from tunga_utils.constants import TASK_PAYMENT_METHOD_BITCOIN
+from tunga_utils.constants import TASK_PAYMENT_METHOD_BITCOIN, VAT_LOCATION_WORLD
 from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
 
 
@@ -96,28 +96,11 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
 
                     invoice_data['developers'] = task_developers
 
-                    client_country = None
-                    if invoice_type == 'client' and task_owner.profile and \
-                            task_owner.profile.country and task_owner.profile.country.code:
-                        client_country = task_owner.profile.country.code
-
-                    if client_country == 'NL':
-                        invoice_location = 'NL'
-                    elif client_country in [
-                        # EU members
-                        'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
-                        'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
-                        # European Free Trade Association (EFTA)
-                        'IS', 'LI', 'NO', 'CH'
-                    ]:
-                        invoice_location = 'europe'
-                    else:
-                        invoice_location = 'world'
-
                     all_invoices.append(
                         dict(
                             invoice_type=invoice_type,
-                            invoice=invoice_data, location=invoice_location
+                            invoice=invoice_data,
+                            location=invoice_type == 'client' and invoice.vat_location_client or VAT_LOCATION_WORLD
                         )
                     )
     ctx = dict(
