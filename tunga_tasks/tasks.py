@@ -694,6 +694,7 @@ def update_multi_tasks(multi_task_key, distribute=False):
 
 @job
 def sync_exact_invoices(task):
+    task = clean_instance(task, Task)
     invoice = task.invoice
     client = task.owner or task.user
 
