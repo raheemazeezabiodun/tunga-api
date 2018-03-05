@@ -23,7 +23,7 @@
                             <div class="bold">
                                 {{ invoice.client.profile.company }}<br/>
                                 Attn: {{ invoice.client.display_name }}<br/>
-                                {{ invoice.client.profile.street | default:'' }} {{ developer_info.client.profile.plot_number | default:'' }}<br/>
+                                {{ invoice.client.profile.street | default:'' }} {{ invoice.client.profile.plot_number | default:'' }}<br/>
                                 {{ invoice.client.profile.postal_code | default:'' }}
                                         {% if invoice.client.profile.postal_code and invoice.client.profile.city %}
                                             , {% endif %}{{ invoice.client.profile.city | default:'' }}<br/>
