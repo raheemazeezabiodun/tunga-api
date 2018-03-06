@@ -31,6 +31,7 @@ apscheduler==3.3.*
 mailchimp3==2.*
 raven==6.0.0
 stripe==1.56.0
-mandrill
-exactonline
+mandrill==1.0.57
+exactonline==0.3.2
+honcho==1.0.1
 -e git+https://github.com/davidsemakula/python-harvest.git@2.1.0rc1#egg=python-harvest-redux
