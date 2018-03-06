@@ -1,0 +1,11 @@
+repo: https://github.com/tunga-io/tunga-api.git
+branch: master
+server_root: /srv/tunga/api/
+web_process: tunga
+worker_process: tunga_rqworker
+target_environment: production
+gunicorn_host: 0.0.0.0
+gunicorn_port: 8000
+gunicorn_workers: 4
+gunicorn_user: david
+gunicorn_timeout: 120

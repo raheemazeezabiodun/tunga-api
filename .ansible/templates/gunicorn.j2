@@ -1,0 +1,6 @@
+command = '{{ server_root }}env_tunga/bin/gunicorn'
+pythonpath = '{{ server_root }}'
+bind = '{{ gunicorn_host }}:{{ gunicorn_port }}'
+workers = {{ gunicorn_workers }}
+user = '{{ gunicorn_user }}'
+timeout = {{ gunicorn_timeout }}

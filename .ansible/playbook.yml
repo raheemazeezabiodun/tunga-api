@@ -1,0 +1,39 @@
+- hosts: apiservers
+  vars:
+    checkout_path: ~/deploy/tunga-api/
+  tasks:
+    - name: remove repo folder
+      file: path='{{ checkout_path }}' state=absent
+    - namd: clone repo
+      git:
+        repo: '{{ repo }}'
+        dest: '{{ checkout_path}}'
+        version: '{{ branch }}'
+    - name: copy files to server root
+      shell: 'rsync -av -R * {{ server_root }}'
+      args:
+        chdir: '{{ checkout_path }}'
+    - name: copy local settings
+      shell: 'cp ~/deploy/local_{{ target_environment }}.py {{ server_root }}tunga/env/local.py'
+    - name: remove dev config in production
+      file: path='{{ server_root }}tunga/env/dev.py' state=absent
+      when: target_environment == 'production'
+    - name: install python dependencies
+      pip:
+        requirements: '{{ server_root }}requirements.txt'
+        virtualenv: '{{ server_root }}env_tunga'
+    - name: migrate database
+      shell: '{{ server_root }}env_tunga/bin/python {{ server_root }}manage.py migrate'
+    - template:
+        src: ./templates/gunicorn.j2
+        dest: '{{ server_root }}gunicorn.py'
+    - name: restart web process
+      supervisorctl:
+        name: '{{ web_process }}'
+        state: restarted
+    - name: restart worker process
+      supervisorctl:
+        name: '{{ worker_process }}'
+        state: restarted
+    - name: reload nginx
+      service: name=nginx state=reloaded
