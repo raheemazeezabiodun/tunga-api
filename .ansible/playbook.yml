@@ -4,7 +4,7 @@
   tasks:
     - name: remove repo folder
       file: path='{{ checkout_path }}' state=absent
-    - namd: clone repo
+    - name: clone repo
       git:
         repo: '{{ repo }}'
         dest: '{{ checkout_path}}'
