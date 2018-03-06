@@ -36,4 +36,22 @@ python manage.py test
 API Documentation is generated automatically at http://127.0.0.1:8000/api/docs/ using [Django REST Swagger](https://github.com/marcgibbons/django-rest-swagger)
 
 # Deployment
+Install [Ansible] (https://www.ansible.com/)
+
+## Sandbox
+1. Push changes to `develop` branch
+2. Run the following commands
+```
+cd .ansible
+ansible-playbook playbook.yml -i env/test
+```
+
+## Production
+1. Push changes to `master` branch
+2. Run the following commands
+```
+cd .ansible
+ansible-playbook playbook.yml -i env/prod
+```
+
 
