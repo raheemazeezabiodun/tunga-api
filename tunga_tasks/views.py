@@ -22,7 +22,7 @@ from oauthlib.oauth1 import SIGNATURE_TYPE_QUERY
 from rest_framework import viewsets, status, views
 from rest_framework.decorators import detail_route, api_view, permission_classes
 from rest_framework.exceptions import ValidationError, NotAuthenticated, PermissionDenied
-from rest_framework.generics import get_object_or_404
+from rest_framework.generics import get_object_or_404, CreateAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
@@ -62,7 +62,7 @@ from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, 
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.mixins import SaveUploadsMixin
 from tunga_utils.serializers import TaskInvoiceSerializer
-
+from tunga_auth import models as authmodel
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
@@ -1181,12 +1181,12 @@ class InvoicePayment(views.APIView):
     """
     On accepting on the dialog, this trigger payment to the developers in the payout via payoneer
     """
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         """
         try:
             #
-            ignoreinvoice = request.GET.get("ignoreinvoice")
+            ignoreinvoice = request.data.get("ignoreinvoice")
 
             # The true in the parameter is string
             if(ignoreinvoice == "True"):
@@ -1196,8 +1196,8 @@ class InvoicePayment(views.APIView):
 
             if(ignoreinvoice):
                 # Pay the developer even though we don't have the invoice.
-                task_id = request.GET.get("task", "")
-                developer = request.GET.get("developer", "")
+                task_id = request.data.get("task", "")
+                developer = request.data.get("developer", "")
 
                 task_worked = Task.objects.get(id=task_id)
 
@@ -1217,8 +1217,8 @@ class InvoicePayment(views.APIView):
 
             else:
                 # Process paymanent and mark the invoice as done.
-                developer_id = request.GET.get("developer","")
-                invoice_id = request.GET.get("invoice","")
+                developer_id = request.data.get("developer","")
+                invoice_id = request.data.get("invoice","")
 
                 user_payee = authmodel.TungaUser.objects.get(id=developer_id)
                 invoice = TaskInvoice.objects.get(id=invoice_id)
@@ -1243,18 +1243,17 @@ class InvoiceFiltering(views.APIView):
     Filters All invoices for all users with pending
     Task: https://github.com/tunga-io/tunga-web/issues/270
     """
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         """
         """
         try:
+            
             current_user = request.user
-            pending =  request.GET.get("pending", "")
-
+            pending =  request.data.get("pending", "")
+            
             if current_user and current_user.is_authenticated():
                 return Response(self.dictify_invoices(pending))
             else:
-                #invoice_list = TaskInvoice.objects.all()
-
                 return Response(
                     {'status': 'Unauthorized', 'message': 'You are not logged in'},
                     status=status.HTTP_401_UNAUTHORIZED
