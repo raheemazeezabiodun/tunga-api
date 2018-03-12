@@ -9,6 +9,8 @@
         repo: '{{ repo }}'
         dest: '{{ checkout_path}}'
         version: '{{ branch }}'
+    - name: make sure server root exists
+      file: path='{{ server_root }}' state=directory
     - name: copy files to server root
       shell: 'rsync -av -R * {{ server_root }}'
       args:

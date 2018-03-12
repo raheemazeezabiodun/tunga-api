@@ -23,7 +23,7 @@ CORS_ALLOW_HEADERS = (
     'X-EDIT-TOKEN'
 )
 
-TUNGA_URL = 'http://test.tunga.io'
+TUNGA_URL = 'http://sandbox.tunga.io'
 
 """
 COINBASE_BASE_URL = 'https://sandbox.coinbase.com'

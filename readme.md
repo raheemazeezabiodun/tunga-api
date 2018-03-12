@@ -43,7 +43,7 @@ Install [Ansible](https://www.ansible.com/)
 2. Run the following commands
 ```
 cd .ansible
-ansible-playbook deploy.yml -i env/test
+ansible-playbook deploy.yml -i env/sandbox
 ```
 
 ## Production
