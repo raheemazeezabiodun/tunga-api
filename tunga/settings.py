@@ -18,7 +18,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '!8g-9plb-5pa795jxv4@f18fu-+j^h2cyk_-?p%4s31eudmmr+'
 
-ALLOWED_HOSTS = ['tunga.io', 'web.tunga.io', 'www.tunga.io']
+ALLOWED_HOSTS = ['*']
 
 DEBUG = True
     
@@ -195,8 +195,8 @@ LOGIN_URL = '/'
 
 LOGIN_REDIRECT_URL = '/'
 
-EMAIL_SUBJECT_PREFIX = '[Tunga] '
-DEFAULT_FROM_EMAIL = 'hello@tunga.io'
+EMAIL_SUBJECT_PREFIX = '[Tunga Sandbox] '
+DEFAULT_FROM_EMAIL = None
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
 EMAIL_USE_TLS = False
@@ -255,7 +255,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 ACCOUNT_SIGNUP_FORM_CLASS = 'tunga_auth.forms.SignupForm'
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
@@ -323,13 +323,10 @@ SWAGGER_SETTINGS = {
 
 
 # Local
-TUNGA_NAME = 'Tunga'
-TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS = ['bart@tunga.io']
-TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS = ['bart@tunga.io', 'david@tunga.io', 'domieck@tunga.io', 'eric@tunga.io']
+TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS = []
+TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS = []
 TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS = TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS
-TUNGA_SHARE_EMAIL = 'admin@tunga.io'
-TUNGA_SHARE_PERCENTAGE = 13
-TUNGA_URL = 'https://tunga.io'
+TUNGA_URL = 'http://sandbox.tunga.io'
 
 TUNGA_FEE_DEV = 19
 TUNGA_FEE_PM = 39
@@ -352,10 +349,10 @@ GITHUB_SCOPES = ['user:email', 'repo', 'admin:repo_hook', 'admin:org_hook']
 
 STRIPE_SECRET = ''
 
-COINBASE_API_KEY = ''
-COINBASE_API_SECRET = ''
-COINBASE_CLIENT_ID = ''
-COINBASE_CLIENT_SECRET = ''
+COINBASE_API_KEY = None
+COINBASE_API_SECRET = None
+COINBASE_CLIENT_ID = None
+COINBASE_CLIENT_SECRET = None
 COINBASE_SCOPES = ['wallet:accounts:read', 'wallet:addresses:create']
 COINBASE_BASE_URL = 'https://www.coinbase.com'
 COINBASE_BASE_API_URL = 'https://api.coinbase.com'
@@ -369,8 +366,8 @@ BITONIC_PAYMENT_COST_PERCENTAGE = 3
 
 BANK_TRANSFER_PAYMENT_COST_PERCENTAGE = 5.5
 
-BITPESA_API_KEY = ''
-BITPESA_API_SECRET = ''
+BITPESA_API_KEY = None
+BITPESA_API_SECRET = None
 BITPESA_API_URL = 'https://api.bitpesa.co/v1/'
 BITPESA_SENDER = None
 
@@ -460,10 +457,9 @@ RAVEN_CONFIG = {
 }
 
 try:
-    from .env.dev import *
+    from .env.local import *
 except ImportError:
-    from .env.production import *
-
+    pass
 
 if DEBUG:
     for template_engine in TEMPLATES:
