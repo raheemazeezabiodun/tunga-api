@@ -1,14 +1,13 @@
 from __future__ import unicode_literals
 
 import datetime
-from django.db import models
 
+from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.text import slugify
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
-from tunga.settings import TUNGA_URL
 from tunga_profiles.models import Skill
 
 
@@ -21,8 +20,11 @@ class SkillPage(models.Model):
     welcome_cta = models.CharField(max_length=50)
     pitch_header = models.CharField(max_length=100)
     pitch_body = models.CharField(max_length=450)
-    story_header = models.CharField(max_length=100)
-    story_body_one = models.TextField()
+    pitch_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
+    content_header = models.CharField(max_length=100)
+    content_sub_header = models.CharField(max_length=100, blank=True, null=True)
+    content = models.TextField()
+    content_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
     story_interlude_one_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
     story_interlude_one_text = models.CharField(max_length=200)
     story_interlude_one_cta = models.CharField(max_length=30)
@@ -57,7 +59,8 @@ class SkillPageProfile(models.Model):
     page = models.ForeignKey(SkillPage, on_delete=models.CASCADE)
     intro = models.CharField(max_length=100)
     priority = models.IntegerField(default=100)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skill_profiles_created', on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='skill_profiles_created',
+                                   on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
