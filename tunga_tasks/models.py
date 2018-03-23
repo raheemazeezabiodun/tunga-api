@@ -53,7 +53,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
     DOC_TIMELINE, DOC_OTHER, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, VAT_LOCATION_NL, VAT_LOCATION_EUROPE, \
     VAT_LOCATION_WORLD
-from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header, clean_instance
+from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
 from tunga_utils.models import Upload, Rating, GenericUpload
 from tunga_utils.validators import validate_btc_address, validate_btc_address_or_none
 
@@ -245,12 +245,12 @@ class MultiTaskPaymentKey(models.Model):
     @property
     def pay_participants(self):
         connected_tasks = self.distribute_only and self.distribute_tasks or self.tasks
-        return sum([task.pay*Decimal(1 - task.tunga_ratio_dev) for task in list(connected_tasks.all())])
+        return sum([task.pay * Decimal(1 - task.tunga_ratio_dev) for task in list(connected_tasks.all())])
 
     def get_task_share_ratio(self, task):
         if (task.multi_pay_key_id == self.id and not self.distribute_only) or \
                 (task.multi_pay_distribute_key_id == self.id and self.distribute_only):
-            return task.pay/self.amount
+            return task.pay / self.amount
         return 0
 
 
@@ -365,7 +365,7 @@ class Task(models.Model):
     trello_board_url = models.URLField(blank=True, null=True)
     google_drive_url = models.URLField(blank=True, null=True)
     hubspot_deal_id = models.CharField(editable=False, null=True, max_length=12)
-    
+
     # Task state modifiers
     approved = models.BooleanField(
         default=False, help_text='True if task or project is ready for developers'
@@ -430,12 +430,12 @@ class Task(models.Model):
         settings.AUTH_USER_MODEL, related_name='tasks_managed', on_delete=models.DO_NOTHING, blank=True, null=True
     )
     applicants = models.ManyToManyField(
-            settings.AUTH_USER_MODEL, through='Application', through_fields=('task', 'user'),
-            related_name='task_applications', blank=True
+        settings.AUTH_USER_MODEL, through='Application', through_fields=('task', 'user'),
+        related_name='task_applications', blank=True
     )
     participants = models.ManyToManyField(
-            settings.AUTH_USER_MODEL, through='Participation', through_fields=('task', 'user'),
-            related_name='task_participants', blank=True)
+        settings.AUTH_USER_MODEL, through='Participation', through_fields=('task', 'user'),
+        related_name='task_participants', blank=True)
     payment_approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='tasks_payments_approved',
         on_delete=models.DO_NOTHING, blank=True, null=True
@@ -614,8 +614,8 @@ class Task(models.Model):
     def dev_hrs(self):
         try:
             if (self.is_project or self.pm) and (self.includes_pm_fee or not self.payment_approved):
-                return self.pay / (self.dev_rate + self.pm_time_ratio*self.pm_rate)
-            return self.pay/self.dev_rate
+                return self.pay / (self.dev_rate + self.pm_time_ratio * self.pm_rate)
+            return self.pay / self.dev_rate
         except:
             return 0
 
@@ -643,6 +643,7 @@ class Task(models.Model):
         if self.currency in CURRENCY_SYMBOLS:
             return '{}{}'.format(CURRENCY_SYMBOLS[self.currency], floatformat(amount, arg=-2))
         return amount or ''
+
     display_fee.short_description = 'Fee'
 
     @property
@@ -683,7 +684,8 @@ class Task(models.Model):
                 processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
             elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(self.pay) or (processing_share * self.pay)
+            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
+                self.pay) or (processing_share * self.pay)
 
         amount_details = None
         if self.pay:
@@ -882,9 +884,9 @@ class Task(models.Model):
 
             for participant in participants:
                 if not total_shares:
-                    share = 1/Decimal(num_participants)
+                    share = 1 / Decimal(num_participants)
                 else:
-                    share = Decimal(participant.share or 0)/Decimal(total_shares)
+                    share = Decimal(participant.share or 0) / Decimal(total_shares)
                 share_info = {
                     'participant': participant,
                     'share': share,
@@ -903,9 +905,9 @@ class Task(models.Model):
             for data in participation_shares:
                 payment_shares.append({
                     'participant': data['participant'],
-                    'share': Decimal(data['share'])*Decimal(
+                    'share': Decimal(data['share']) * Decimal(
                         self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev)
-                    )*Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
+                    ) * Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
                 })
         return payment_shares
 
@@ -922,30 +924,30 @@ class Task(models.Model):
         should_exclude_tax = exclude_tax or self.payment_withheld_tunga_fee
 
         if share:
-            return share*Decimal(
+            return share * Decimal(
                 self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev)
-            )*Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
+            ) * Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
         return 0
-    
+
     # Send friendly reminder on 14 or 21 days from due date
     def is_due_date(self, day):
         """
         # Send friendly reminder on 14 days from due date
         """
         due_date = self.deadline + datetime.timedelta(days=day)
-        if(self.invoice_date):
+        if (self.invoice_date):
             days_ahead_14 = self.deadline + datetime.timedelta(days=day)
-            
+
             # Make a new date 
             new_date = datetime.date(year=days_ahead_14.year, day=days_ahead_14.day, month=days_ahead_14.month)
-            
+
             # Check if the new date corresponds with the original date.
-            if(days_ahead_14.day == new_date.day):
-                if(days_ahead_14.day > self.deadline.day and ( days_ahead_14.day/7 == 2 or days_ahead_14.day/7 == 3)):
-                    print "Now {} Days Ahead {}".format(self.deadline.day, days_ahead_14.day)
-                    return True 
-                else:                    
-                    print "We are not ready to send the day"
+            if (days_ahead_14.day == new_date.day):
+                if days_ahead_14.day > self.deadline.day and (days_ahead_14.day / 7 == 2 or days_ahead_14.day / 7 == 3):
+                    return True
+                else:
+                    return False
+
 
 @python_2_unicode_compatible
 class TaskAccess(models.Model):
@@ -1090,7 +1092,8 @@ class WorkActivity(models.Model):
     hours = models.FloatField()
     completed = models.NullBooleanField(default=None)
     due_at = models.DateTimeField(blank=True, null=True)
-    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, blank=True, null=True, related_name='assigned_work_activities')
+    assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, blank=True, null=True,
+                                 related_name='assigned_work_activities')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1211,7 +1214,7 @@ class AbstractEstimate(models.Model):
 
     @property
     def pm_hours(self):
-        return Decimal(self.dev_hours)*self.task.pm_time_ratio
+        return Decimal(self.dev_hours) * self.task.pm_time_ratio
 
     @property
     def hours(self):
@@ -1223,7 +1226,7 @@ class AbstractEstimate(models.Model):
 
     @property
     def pm_fee(self):
-        return Decimal(self.pm_hours)*self.task.pm_rate
+        return Decimal(self.pm_hours) * self.task.pm_rate
 
     @property
     def fee(self):
@@ -1241,8 +1244,8 @@ class AbstractEstimate(models.Model):
                 fee=self.pm_fee
             ),
             total=dict(
-                hours=self.dev_hours+self.pm_hours,
-                fee=self.dev_fee+self.pm_fee
+                hours=self.dev_hours + self.pm_hours,
+                fee=self.dev_fee + self.pm_fee
             )
         )
 
@@ -1288,7 +1291,8 @@ class TimeEntry(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return '{} hrs | {} - {}'.format(self.hours, self.task.summary, self.user.get_short_name() or self.user.username)
+        return '{} hrs | {} - {}'.format(self.hours, self.task.summary,
+                                         self.user.get_short_name() or self.user.username)
 
     class Meta:
         ordering = ['spent_at']
@@ -1336,7 +1340,8 @@ class ProgressEvent(models.Model):
     due_at = models.DateTimeField()
     title = models.CharField(max_length=200, blank=True, null=True)
     description = models.CharField(max_length=1000, blank=True, null=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='progress_events_created', blank=True, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='progress_events_created', blank=True,
+                                   null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_reminder_at = models.DateTimeField(blank=True, null=True)
     missed_notification_at = models.DateTimeField(blank=True, null=True)
@@ -1521,9 +1526,12 @@ class ProgressReport(models.Model):
 @python_2_unicode_compatible
 class SummaryReport(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    developer = models.ForeignKey(ProgressReport, related_name='dev_summary_reports', on_delete=models.CASCADE, blank=True, null=True)
-    pm = models.ForeignKey(ProgressReport, related_name='pm_summary_reports', on_delete=models.CASCADE, blank=True, null=True)
-    owner = models.ForeignKey(ProgressReport, related_name='owner_summary_reports', on_delete=models.CASCADE, blank=True, null=True)
+    developer = models.ForeignKey(ProgressReport, related_name='dev_summary_reports', on_delete=models.CASCADE,
+                                  blank=True, null=True)
+    pm = models.ForeignKey(ProgressReport, related_name='pm_summary_reports', on_delete=models.CASCADE, blank=True,
+                           null=True)
+    owner = models.ForeignKey(ProgressReport, related_name='owner_summary_reports', on_delete=models.CASCADE,
+                              blank=True, null=True)
 
     report_for = models.DateTimeField(auto_now_add=True)
 
@@ -1559,8 +1567,8 @@ class IntegrationEvent(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=200, blank=True, null=True)
     created_by = models.ForeignKey(
-            settings.AUTH_USER_MODEL, blank=True, null=True, related_name='integration_events_created',
-            on_delete=models.DO_NOTHING
+        settings.AUTH_USER_MODEL, blank=True, null=True, related_name='integration_events_created',
+        on_delete=models.DO_NOTHING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1577,7 +1585,6 @@ APP_INTEGRATION_PROVIDER_CHOICES = (
     (APP_INTEGRATION_PROVIDER_SLACK, 'Slack'),
     (APP_INTEGRATION_PROVIDER_HARVEST, 'Harvest'),
 )
-
 
 INTEGRATION_TYPE_CHOICES = (
     (INTEGRATION_TYPE_REPO, 'Repo'),
@@ -1622,7 +1629,8 @@ class Integration(models.Model):
     @staticmethod
     @allow_staff_or_superuser
     def has_write_permission(request):
-        return request.user and request.user.is_authenticated() and (request.user.is_project_owner or request.user.is_project_manager)
+        return request.user and request.user.is_authenticated() and (
+                    request.user.is_project_owner or request.user.is_project_manager)
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
@@ -1707,8 +1715,8 @@ class IntegrationMeta(models.Model):
     meta_key = models.CharField(max_length=30)
     meta_value = models.CharField(max_length=500)
     created_by = models.ForeignKey(
-            settings.AUTH_USER_MODEL, related_name='integration_meta_created', blank=True, null=True,
-            on_delete=models.DO_NOTHING
+        settings.AUTH_USER_MODEL, related_name='integration_meta_created', blank=True, null=True,
+        on_delete=models.DO_NOTHING
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1737,7 +1745,7 @@ class IntegrationActivity(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return '%s | ' % (self.integration, )
+        return '%s | ' % (self.integration,)
 
     class Meta:
         ordering = ['created_at']
@@ -1805,7 +1813,8 @@ class TaskPayment(models.Model):
         share_ratio = 1
         if self.multi_pay_key:
             share_ratio = self.multi_pay_key.get_task_share_ratio(task)
-        return share_ratio * (self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount_received)
+        return share_ratio * (
+                    self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount_received)
 
 
 PAYMENT_STATUS_CHOICES = (
@@ -1922,6 +1931,7 @@ class TaskInvoice(models.Model):
         if self.currency in CURRENCY_SYMBOLS:
             return '{}{}'.format(CURRENCY_SYMBOLS[self.currency], floatformat(amount, arg=-2))
         return amount or ''
+
     display_fee.short_description = 'Fee'
 
     @property
@@ -1943,7 +1953,8 @@ class TaskInvoice(models.Model):
             elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
 
-            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(fee_portion) or (Decimal(processing_share) * fee_portion)
+            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
+                fee_portion) or (Decimal(processing_share) * fee_portion)
 
         amount_details = dict(
             currency=CURRENCY_SYMBOLS.get(self.currency, ''),
@@ -1957,8 +1968,10 @@ class TaskInvoice(models.Model):
 
         amount_details['tunga'] = round_decimal(fee_portion - (amount_details['developer'] + amount_details['pm']), 2)
         amount_details['total'] = round_decimal(fee_portion + amount_details['processing'], 2)
-        amount_details['total_dev'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_dev + amount_details['processing'], 2)
-        amount_details['total_pm'] = round_decimal(Decimal(self.task.tunga_ratio_dev)*fee_portion_pm + amount_details['processing'], 2)
+        amount_details['total_dev'] = round_decimal(
+            Decimal(self.task.tunga_ratio_dev) * fee_portion_dev + amount_details['processing'], 2)
+        amount_details['total_pm'] = round_decimal(
+            Decimal(self.task.tunga_ratio_dev) * fee_portion_pm + amount_details['processing'], 2)
 
         vat = self.tax_rate
         vat_amount = Decimal(vat) * Decimal(0.01) * amount_details['total']
@@ -1970,16 +1983,20 @@ class TaskInvoice(models.Model):
 
         # Tunga invoicing client
         amount_details['invoice_client'] = round_decimal(fee_portion, 2)
-        amount_details['total_invoice_client'] = round_decimal(amount_details['invoice_client'] + amount_details['processing'], 2)
-        amount_details['total_invoice_client_plus_tax'] = round_decimal(amount_details['total_invoice_client'] + vat_amount, 2)
+        amount_details['total_invoice_client'] = round_decimal(
+            amount_details['invoice_client'] + amount_details['processing'], 2)
+        amount_details['total_invoice_client_plus_tax'] = round_decimal(
+            amount_details['total_invoice_client'] + vat_amount, 2)
 
         # Developer invoicing Tunga
-        amount_details['invoice_tunga'] = self.version > 1 and round_decimal(amount_details['developer'], 2) or round_decimal(fee_portion_dev, 2)
+        amount_details['invoice_tunga'] = self.version > 1 and round_decimal(amount_details['developer'],
+                                                                             2) or round_decimal(fee_portion_dev, 2)
         amount_details['total_invoice_tunga'] = round_decimal(amount_details['developer'], 2)
 
         # Tunga invoicing Developer
         amount_details['invoice_developer'] = round_decimal(Decimal(self.task.tunga_ratio_dev) * fee_portion_dev, 2)
-        amount_details['total_invoice_developer'] = round_decimal(amount_details['invoice_developer'] + amount_details['processing'], 2)
+        amount_details['total_invoice_developer'] = round_decimal(
+            amount_details['invoice_developer'] + amount_details['processing'], 2)
 
         return amount_details
 
@@ -2002,7 +2019,7 @@ class TaskInvoice(models.Model):
                 'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
                 'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
                 # European Free Trade Association (EFTA)
-                'IS', 'LI', 'NO', 'CH'
+                                                                            'IS', 'LI', 'NO', 'CH'
             ]:
                 return VAT_LOCATION_EUROPE
         return VAT_LOCATION_WORLD
@@ -2020,7 +2037,8 @@ class TaskInvoice(models.Model):
 
             if self.version > 1:
                 return '{}/{}/{}/{}'.format(
-                    (self.created_at or datetime.datetime.utcnow()).strftime('%Y'), self.client.id, self.task.id, self.id
+                    (self.created_at or datetime.datetime.utcnow()).strftime('%Y'), self.client.id, self.task.id,
+                    self.id
                 )
             elif self.created_at:  # month number means task should already be created to avoid collisions
                 client, created = ClientNumber.objects.get_or_create(user=self.client)

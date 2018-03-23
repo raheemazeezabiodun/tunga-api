@@ -1313,7 +1313,7 @@ class InvoiceFiltering(views.APIView):
         """
         From the invoice get the client.
         """
-        if (invoice.client):
+        if invoice.client:
             return {
                 "username": invoice.client.username,
                 "verified": invoice.client.verified,
