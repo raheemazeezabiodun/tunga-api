@@ -12,24 +12,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.DeleteModel(
-            name='Frameworks',
-        ),
-        migrations.DeleteModel(
-            name='Languages',
-        ),
-        migrations.DeleteModel(
-            name='Libraries',
-        ),
-        migrations.DeleteModel(
-            name='Platforms',
-        ),
-        migrations.DeleteModel(
-            name='Storage',
-        ),
-        migrations.DeleteModel(
-            name='ThirdPartyApis',
-        ),
         migrations.RemoveField(
             model_name='userprofile',
             name='frameworks',
@@ -53,6 +35,24 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='userprofile',
             name='third_party_apis',
+        ),
+        migrations.DeleteModel(
+            name='Frameworks',
+        ),
+        migrations.DeleteModel(
+            name='Languages',
+        ),
+        migrations.DeleteModel(
+            name='Libraries',
+        ),
+        migrations.DeleteModel(
+            name='Platforms',
+        ),
+        migrations.DeleteModel(
+            name='Storage',
+        ),
+        migrations.DeleteModel(
+            name='ThirdPartyApis',
         ),
         migrations.AddField(
             model_name='userprofile',
