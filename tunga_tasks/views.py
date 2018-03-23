@@ -1273,7 +1273,7 @@ class InvoiceFiltering(views.APIView):
             task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=True)
 
         task_invoice_list = []
-        if task_invoice_list:
+        if task_invoices:
             for invoice in task_invoices:
                 task_invoice_list.append(
                     {
