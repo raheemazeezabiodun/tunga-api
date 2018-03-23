@@ -18,16 +18,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '!8g-9plb-5pa795jxv4@f18fu-+j^h2cyk_-?p%4s31eudmmr+'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*", 'tunga.io', 'web.tunga.io', 'www.tunga.io']
 
 DEBUG = True
-    
+
 # Application definition
 
 INSTALLED_APPS = [
     # Default
     'django.contrib.admin',
-    #'django.contrib.auth',
+    # 'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -241,7 +241,6 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 RQ_SHOW_ADMIN_LINK = True
 
-
 # Third Party
 SERIALIZATION_MODULES = {
     'xml': 'tagulous.serializers.xml_serializer',
@@ -269,7 +268,7 @@ SOCIALACCOUNT_PROVIDERS = {
     'facebook': {
         'VERIFIED_EMAIL': True,
     },
-    'github' : {
+    'github': {
         'SCOPE': ['user:email']
     },
     'slack': {
@@ -282,7 +281,7 @@ OAUTH2_PROVIDER = {
     # this is the list of available scopes
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 120*24*60*60  # 120 days
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 120 * 24 * 60 * 60  # 120 days
 }
 
 REST_FRAMEWORK = {
@@ -317,10 +316,9 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 
 SWAGGER_SETTINGS = {
     'is_authenticated': True,
-    #'is_superuser': True,
+    # 'is_superuser': True,
     'permission_denied_handler': 'tunga_utils.helpers.swagger_permission_denied_handler',
 }
-
 
 # Local
 TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS = []
@@ -418,7 +416,6 @@ HUBSPOT_DEFAULT_DEAL_PIPELINE = 'default'
 HUBSPOT_DEFAULT_DEAL_STAGE_NEW_USER = HUBSPOT_DEFAULT_DEAL_STAGE_MEMBER = 'appointmentscheduled'
 HUBSPOT_DOMIECK_OWNER_ID = ''
 
-
 MAILCHIMP_USERNAME = None
 MAILCHIMP_API_KEY = None
 MAILCHIMP_NEW_USER_LIST = None
@@ -428,7 +425,6 @@ MAILCHIMP_NEW_USER_AUTOMATION_EMAIL_ID = None
 MANDRILL_API_KEY = None
 MANDRILL_VAR_SUBJECT = 'subject'
 MANDRILL_VAR_FIRST_NAME = 'first_name'
-
 
 PAYONEER_USERNAME = None
 PAYONEER_PASSWORD = None

@@ -28,9 +28,13 @@
                                         {% if invoice.client.profile.postal_code and invoice.client.profile.city %}
                                             , {% endif %}{{ invoice.client.profile.city | default:'' }}<br/>
                                 {{ invoice.client.profile.country_name | default:'' }}
+                                
                                 {% if location == "europe" %}
-                                <br/>
-                                VAT no: {{ invoice.client.profile.vat_number | default:'' }}
+                                    <br/>
+                                    VAT no: {{ invoice.client.profile.vat_number | default:'' }}
+                                {% elif location == "world" %}
+                                    <br/>
+                                    VAT no: {{ invoice.client.profile.vat_number | default:'' }}
                                 {% endif %}
                             </div>
 

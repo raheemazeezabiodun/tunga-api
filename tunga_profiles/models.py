@@ -160,6 +160,8 @@ class UserProfile(models.Model):
     company_bio = models.TextField(blank=True, null=True)
     vat_number = models.CharField(max_length=50, blank=True, null=True)
     company_reg_no = models.CharField(max_length=50, blank=True, null=True)
+    reference_number = models.CharField(max_length=50, blank=True, null=True)
+    company_details = models.CharField(max_length=50, blank=True, null=True)
 
     # Payment Information
     payment_method = models.CharField(
@@ -178,7 +180,7 @@ class UserProfile(models.Model):
     # Tax Information
     tax_name = models.CharField(max_length=200, blank=True, null=True)
     tax_percentage = models.FloatField(blank=True, null=True)
-
+    
     def __str__(self):
         return self.user.get_short_name()
 

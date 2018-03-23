@@ -926,7 +926,26 @@ class Task(models.Model):
                 self.payment_withheld_tunga_fee and 1 or (1 - self.tunga_ratio_dev)
             )*Decimal(should_exclude_tax and 1 or (1 - self.tax_ratio))
         return 0
-
+    
+    # Send friendly reminder on 14 or 21 days from due date
+    def is_due_date(self, day):
+        """
+        # Send friendly reminder on 14 days from due date
+        """
+        due_date = self.deadline + datetime.timedelta(days=day)
+        if(self.invoice_date):
+            days_ahead_14 = self.deadline + datetime.timedelta(days=day)
+            
+            # Make a new date 
+            new_date = datetime.date(year=days_ahead_14.year, day=days_ahead_14.day, month=days_ahead_14.month)
+            
+            # Check if the new date corresponds with the original date.
+            if(days_ahead_14.day == new_date.day):
+                if(days_ahead_14.day > self.deadline.day and ( days_ahead_14.day/7 == 2 or days_ahead_14.day/7 == 3)):
+                    print "Now {} Days Ahead {}".format(self.deadline.day, days_ahead_14.day)
+                    return True 
+                else:                    
+                    print "We are not ready to send the day"
 
 @python_2_unicode_compatible
 class TaskAccess(models.Model):

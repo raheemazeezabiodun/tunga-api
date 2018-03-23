@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
 from oauthlib import oauth1
 from oauthlib.oauth1 import SIGNATURE_TYPE_QUERY
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, views
 from rest_framework.decorators import detail_route, api_view, permission_classes
 from rest_framework.exceptions import ValidationError, NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -52,9 +52,10 @@ from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, Parti
     TimeEntrySerializer, ProjectSerializer, ProgressReportSerializer, ProgressEventSerializer, \
     IntegrationSerializer, TaskPaySerializer, EstimateSerializer, QuoteSerializer, \
     MultiTaskPaymentKeySerializer, TaskPaymentSerializer, ParticipantPaymentSerializer, SimpleProgressEventSerializer, \
-    SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer, TaskDocumentSerializer
+    SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer, \
+    TaskDocumentSerializer
 from tunga_tasks.tasks import complete_bitpesa_payment, \
-    update_multi_tasks
+    update_multi_tasks, distribute_task_payment_payoneer
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
 from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
 from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
@@ -344,7 +345,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
                 client=task.owner or task.user,
                 developer=developer,
                 payment_method=task.payment_method,
-                btc_price=btc_price,
+                btc_price=task.btc_price,
                 btc_address=task.btc_address,
                 withhold_tunga_fee=task.withhold_tunga_fee,
                 tax_rate=task.tax_rate
@@ -425,7 +426,8 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
 
             callback = '{}://{}/task/{}/rate/'.format(request.scheme, request.get_host(), pk)
             next_url = callback
-            if task and task.has_object_write_permission(request) and bitcoin_utils.is_valid_btc_address(task.btc_address):
+            if task and task.has_object_write_permission(request) and bitcoin_utils.is_valid_btc_address(
+                    task.btc_address):
                 if provider == TASK_PAYMENT_METHOD_BITONIC:
                     client = oauth1.Client(
                         BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET,
@@ -495,7 +497,8 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
                 invoice_types = [u'client', u'tunga', u'developer']
 
         if target_task:
-            rendered_html = process_invoices(pk, invoice_types=invoice_types, user_id=request.user.id, is_admin=request.user.is_admin)
+            rendered_html = process_invoices(pk, invoice_types=invoice_types, user_id=request.user.id,
+                                             is_admin=request.user.is_admin)
             if rendered_html:
                 if request.accepted_renderer.format == 'html':
                     return HttpResponse(rendered_html)
@@ -511,7 +514,9 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             pdf_path = 'media/all_invoices_{}.pdf'.format(
                 str(datetime.datetime.utcnow()).replace('-', '_').replace(' ', '_').replace('.', '_').replace(':', '_'))
             queue = django_rq.get_queue('default')
-            queue.enqueue(process_invoices, args=(pk,), kwargs=dict(invoice_types=invoice_types, user_id=request.user.id, is_admin=request.user.is_admin, filepath=pdf_path), timeout=900)
+            queue.enqueue(process_invoices, args=(pk,),
+                          kwargs=dict(invoice_types=invoice_types, user_id=request.user.id,
+                                      is_admin=request.user.is_admin, filepath=pdf_path), timeout=900)
             return HttpResponse("Your pdf has been saved to:  {}/{}".format(TUNGA_URL, pdf_path))
 
     @detail_route(
@@ -1088,7 +1093,7 @@ class MultiTaskPaymentKeyViewSet(viewsets.ModelViewSet):
             next_url = callback
             if multi_task_key and multi_task_key.has_object_write_permission(
                     request) and bitcoin_utils.is_valid_btc_address(
-                    multi_task_key.btc_address):
+                multi_task_key.btc_address):
                 if provider == TASK_PAYMENT_METHOD_BITONIC:
                     client = oauth1.Client(
                         BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET,
@@ -1176,6 +1181,145 @@ class TaskDocumentViewSet(viewsets.ModelViewSet):
             for uploaded_file in six.itervalues(uploads):
                 return uploaded_file
         return None
+
+
+class InvoicePayment(views.APIView):
+    """
+    On accepting on the dialog, this trigger payment to the developers in the payout via payoneer
+    """
+
+    def post(self, request, *args, **kwargs):
+        """
+        """
+        try:
+            ignore_invoice = request.data.get("ignoreinvoice")
+
+            # The true in the parameter is string
+            if ignore_invoice == "True":
+                ignore_invoice = True
+            else:
+                ignore_invoice = False
+
+            if ignore_invoice:
+                task_id = request.data.get("task", "")
+                task_worked = Task.objects.get(id=task_id)
+                # Mark the task for processing
+                # Just don't make the task as paid
+                task_worked.distribution_approved = True
+                task_worked.save()
+
+                return Response(
+                    {
+                        'status': 'Processing',
+                        'message': 'You are not logged in',
+                        "task_title": task_worked.title,
+                        "task_id": task_worked.id
+                    },
+                )
+
+            else:
+                invoice_id = request.data.get("invoice", "")
+
+                invoice = TaskInvoice.objects.get(id=invoice_id)
+
+                payoneer_ret_status = distribute_task_payment_payoneer.delay(invoice.task)
+                invoice.task.paid = True
+                invoice.task.distribution_approved = True
+                invoice.task.save()
+
+                return Response(
+                    {
+                        "invoice_id": invoice_id
+                    }
+                )
+
+        except Exception as e:
+            raise
+
+
+class InvoiceFiltering(views.APIView):
+    """
+    Filters All invoices for all users with pending
+    Task: https://github.com/tunga-io/tunga-web/issues/270
+    """
+
+    def post(self, request, *args, **kwargs):
+        try:
+            current_user = request.user
+            pending = request.data.get("pending", "")
+
+            if current_user and current_user.is_authenticated():
+                return Response(self.dictify_invoices(pending))
+            else:
+                return Response(
+                    {'status': 'Unauthorized', 'message': 'You are not logged in'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        except Exception as e:
+            raise e
+
+    def dictify_invoices(self, status):
+        """
+        Return all invoices in a dictionary format.
+        """
+        if (status == "true" or status == "True"):  # Our api may pass true with small letter
+            status = True
+        elif (status == "false" or status == "False"):
+            status = False
+
+        if (status):
+            task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=False)
+        else:
+            task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=True)
+
+        task_invoice_list = []
+
+        for invoice in task_invoices:
+            task_invoice_list.append(
+                {
+                    "invoice_id": invoice.invoice.id,
+                    "invoice_title": invoice.invoice.title,
+                    "task": self.filter_tasks(invoice.invoice),
+                    "client": self.filter_client(invoice.invoice),
+                    "currency": invoice.invoice.currency,
+                    "payment_method": invoice.invoice.payment_method,
+                    "number": invoice.invoice.number,
+                    "btc_address": invoice.invoice.btc_address,
+                    "tax_rate": invoice.invoice.tax_rate,
+                    "fee": invoice.invoice.fee,
+                    "invoice_date": invoice.invoice.created_at,
+                    "last_updated": invoice.invoice.updated_at,
+                    "sum": invoice.invoice.dev_hrs,
+                    "payout": invoice.invoice.pay_dev
+                }
+            )
+        return task_invoice_list
+
+    def filter_tasks(self, invoice):
+        """
+        From the invoice get the task.
+        """
+        if (invoice.task):
+            return {
+                "task": invoice.task.id,
+                "title": invoice.task.title,
+                "invoice_date": invoice.task.invoice_date,
+                "created_at": invoice.task.created_at
+            }
+
+        return {}
+
+    def filter_client(self, invoice):
+        """
+        From the invoice get the client.
+        """
+        if (invoice.client):
+            return {
+                "username": invoice.client.username,
+                "verified": invoice.client.verified,
+            }
+
+        return {}
 
 
 @csrf_exempt
