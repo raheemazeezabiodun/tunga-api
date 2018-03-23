@@ -1273,26 +1273,26 @@ class InvoiceFiltering(views.APIView):
             task_invoices = Task.objects.filter(closed=True, taskinvoice__isnull=True)
 
         task_invoice_list = []
-
-        for invoice in task_invoices:
-            task_invoice_list.append(
-                {
-                    "invoice_id": invoice.invoice.id,
-                    "invoice_title": invoice.invoice.title,
-                    "task": self.filter_tasks(invoice.invoice),
-                    "client": self.filter_client(invoice.invoice),
-                    "currency": invoice.invoice.currency,
-                    "payment_method": invoice.invoice.payment_method,
-                    "number": invoice.invoice.number,
-                    "btc_address": invoice.invoice.btc_address,
-                    "tax_rate": invoice.invoice.tax_rate,
-                    "fee": invoice.invoice.fee,
-                    "invoice_date": invoice.invoice.created_at,
-                    "last_updated": invoice.invoice.updated_at,
-                    "sum": invoice.invoice.dev_hrs,
-                    "payout": invoice.invoice.pay_dev
-                }
-            )
+        if task_invoice_list:
+            for invoice in task_invoices:
+                task_invoice_list.append(
+                    {
+                        "invoice_id": invoice.invoice.id,
+                        "invoice_title": invoice.invoice.title,
+                        "task": self.filter_tasks(invoice.invoice),
+                        "client": self.filter_client(invoice.invoice),
+                        "currency": invoice.invoice.currency,
+                        "payment_method": invoice.invoice.payment_method,
+                        "number": invoice.invoice.number,
+                        "btc_address": invoice.invoice.btc_address,
+                        "tax_rate": invoice.invoice.tax_rate,
+                        "fee": invoice.invoice.fee,
+                        "invoice_date": invoice.invoice.created_at,
+                        "last_updated": invoice.invoice.updated_at,
+                        "sum": invoice.invoice.dev_hrs(),
+                        "payout": invoice.invoice.pay_dev()
+                    }
+                )
         return task_invoice_list
 
     def filter_tasks(self, invoice):
