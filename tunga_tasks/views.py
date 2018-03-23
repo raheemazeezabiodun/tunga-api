@@ -1289,8 +1289,8 @@ class InvoiceFiltering(views.APIView):
                         "fee": invoice.invoice.fee,
                         "invoice_date": invoice.invoice.created_at,
                         "last_updated": invoice.invoice.updated_at,
-                        "sum": invoice.invoice.dev_hrs(),
-                        "payout": invoice.invoice.pay_dev()
+                        "sum": invoice.invoice.dev_hrs,
+                        "payout": invoice.invoice.pay_dev
                     }
                 )
         return task_invoice_list
