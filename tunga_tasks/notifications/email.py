@@ -1022,7 +1022,7 @@ def notify_parties_of_low_rating_email(instance):
 
 
 @job
-def notify_new_task_invoice_client_email(instance):
+def notify_new_task_invoice_client_email(instance, reminder=False, client=False, reminder_template=""):
     instance = clean_instance(instance, TaskInvoice)
 
     to = [instance.user.email]
@@ -1056,17 +1056,27 @@ def notify_new_task_invoice_client_email(instance):
             type='application/pdf'
         )
     ]
-
-    mandrill_response = mandrill_utils.send_email('69-invoice', to, merge_vars=merge_vars, attachments=attachments)
+    
+    invoice_template = '69-invoice'
+    if(reminder and client):
+        # mandrill_response = mandrill_utils.send_email('69-invoice', to, merge_vars=merge_vars, attachments=attachments)
+        invoice_template = reminder_template
+        
+    mandrill_response = mandrill_utils.send_email(invoice_template, to, merge_vars=merge_vars, attachments=attachments)
     if mandrill_response:
         mandrill_utils.log_emails.delay(mandrill_response, to, deal_ids=[instance.task.hubspot_deal_id])
 
 
 @job
-def notify_new_task_invoice_admin_email(instance):
+def notify_new_task_invoice_admin_email(instance, recipient=None, reminder=False, client=False):
     instance = clean_instance(instance, TaskInvoice)
-    subject = "{} generated an invoice".format(instance.user.display_name)
-    to = TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS
+    
+    if (reminder and client):
+        subject = "{} generated an invoice Reminder".format(instance.user.display_name)
+    else:
+        subject = "{} generated an invoice".format(instance.user.display_name)
+    
+    to = recipient if recipient else TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS
     ctx = {
         'user': instance.user,
         'owner': instance.task.owner or instance.task.user,
