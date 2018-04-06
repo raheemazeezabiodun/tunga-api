@@ -80,21 +80,33 @@ def send_mail(subject, template_prefix, to_emails, context, bcc=None, cc=None, *
 def send_contact_request_email(instance):
     instance = clean_instance(instance, ContactRequest)
 
-    subject = "New {} Request".format(instance.item and 'Offer' or 'Contact')
-    msg_suffix = 'wants to know more about Tunga.'
-    if instance.item:
-        item_name = instance.get_item_display()
-        subject = '%s (%s)' % (subject, item_name)
-        msg_suffix = 'requested for "%s"' % item_name
-    to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
+    if instance.body:
+        subject = "New email from Tunga"
+        to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
+        template_prefix = 'tunga/email/contact_message'
+        ctx = {
+            'email': instance.email,
+            'message': instance.body
+        }
+    else:
 
-    ctx = {
-        'email': instance.email,
-        'message': '%s %s ' % (
-            instance.email,
-            msg_suffix
-        )
-    }
-    if send_mail(subject, 'tunga/email/contact_request_message', to, ctx):
+        subject = "New {} Request".format(instance.item and 'Offer' or 'Contact')
+        msg_suffix = 'wants to know more about Tunga.'
+        if instance.item:
+            item_name = instance.get_item_display()
+            subject = '%s (%s)' % (subject, item_name)
+            msg_suffix = 'requested for "%s"' % item_name
+        to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
+
+        ctx = {
+            'email': instance.email,
+            'message': '%s %s ' % (
+                instance.email,
+                msg_suffix
+            )
+        }
+        template_prefix = 'tunga/email/contact_request_message'
+
+    if send_mail(subject, template_prefix, to, ctx):
         instance.email_sent_at = datetime.datetime.utcnow()
         instance.save()
