@@ -101,12 +101,13 @@ class ContactRequest(models.Model):
         max_length=50, choices=CONTACT_REQUEST_ITEM_CHOICES, blank=True, null=True,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in CONTACT_REQUEST_ITEM_CHOICES])
     )
+    fullname = models.CharField(max_length=50, blank=True, null=True)
     body = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     email_sent_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return '%s on %s' % (self.email, self.created_at)
+        return '{} on {}'.format(self.email, self.created_at)
 
 
 RATING_CRITERIA_CHOICES = (

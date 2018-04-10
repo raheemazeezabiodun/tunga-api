@@ -8,6 +8,7 @@ from django_rq.decorators import job
 from premailer import premailer
 
 from tunga.settings import DEFAULT_FROM_EMAIL, TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS, EMAIL_SUBJECT_PREFIX
+from tunga_utils import mandrill_utils
 from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.models import ContactRequest
 from tunga_utils.hubspot_utils import create_hubspot_engagement
@@ -81,15 +82,18 @@ def send_contact_request_email(instance):
     instance = clean_instance(instance, ContactRequest)
 
     if instance.body:
-        subject = "New email from Tunga"
-        to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
-        template_prefix = 'tunga/email/contact_message'
-        ctx = {
-            'email': instance.email,
-            'message': instance.body
-        }
-    else:
+        merge_vars = [
+            mandrill_utils.create_merge_var('full_name', instance.fullname),
+            mandrill_utils.create_merge_var('email', instance.email),
+            mandrill_utils.create_merge_var('message', instance.body),
+        ]
 
+        mandrill_utils.send_email(
+            '73_Platform-guest-emails',
+            TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS,
+            merge_vars=merge_vars
+        )
+    else:
         subject = "New {} Request".format(instance.item and 'Offer' or 'Contact')
         msg_suffix = 'wants to know more about Tunga.'
         if instance.item:
@@ -105,8 +109,7 @@ def send_contact_request_email(instance):
                 msg_suffix
             )
         }
-        template_prefix = 'tunga/email/contact_request_message'
 
-    if send_mail(subject, template_prefix, to, ctx):
-        instance.email_sent_at = datetime.datetime.utcnow()
-        instance.save()
+        if send_mail(subject, 'tunga/email/contact_request_message', to, ctx):
+            instance.email_sent_at = datetime.datetime.utcnow()
+            instance.save()
