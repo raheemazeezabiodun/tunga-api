@@ -32,7 +32,7 @@
                                 {% if location == "europe" %}
                                     <br/>
                                     VAT no: {{ invoice.client.profile.vat_number | default:'' }}
-                                {% elif location == "world" %}
+                                {% elif location == "world" and invoice.client.profile.vat_number %}
                                     <br/>
                                     VAT no: {{ invoice.client.profile.vat_number | default:'' }}
                                 {% endif %}
