@@ -13,13 +13,13 @@ from tunga_profiles.models import Skill
 
 @python_2_unicode_compatible
 class SkillPage(models.Model):
-    keyword = models.CharField(max_length=100, primary_key=True, verbose_name='URL')
-    skill = models.ForeignKey(Skill, on_delete=models.DO_NOTHING)
+    keyword = models.CharField(max_length=100, primary_key=True, verbose_name='URL (slug)')
+    skill = models.ForeignKey(Skill, on_delete=models.DO_NOTHING, blank=True, null=True)
     welcome_header = models.CharField(max_length=70, verbose_name='Welcome Header H1')
-    welcome_sub_header = models.CharField(max_length=150, verbose_name='Welcome Subheader')
+    welcome_sub_header = models.TextField(verbose_name='Welcome Subheader')
     welcome_cta = models.CharField(max_length=50)
     pitch_header = models.CharField(max_length=100)
-    pitch_body = models.CharField(max_length=450)
+    pitch_body = models.TextField()
     pitch_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
     content_header = models.CharField(max_length=100)
     content_sub_header = models.CharField(max_length=100, blank=True, null=True)
