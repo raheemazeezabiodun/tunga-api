@@ -14,6 +14,7 @@ from tunga_profiles.models import Skill
 @python_2_unicode_compatible
 class SkillPage(models.Model):
     keyword = models.CharField(max_length=100, primary_key=True, verbose_name='URL (slug)')
+    meta_keywords = models.CharField(max_length=200, blank=True, null=True)
     skill = models.ForeignKey(Skill, on_delete=models.DO_NOTHING, blank=True, null=True)
     welcome_header = models.CharField(max_length=70, verbose_name='Welcome Header H1')
     welcome_sub_header = models.TextField(verbose_name='Welcome Subheader')
@@ -21,6 +22,7 @@ class SkillPage(models.Model):
     pitch_header = models.CharField(max_length=100)
     pitch_body = models.TextField()
     pitch_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
+    pitch_image_alt_text = models.CharField(max_length=100, blank=True, null=True)
     content_header = models.CharField(max_length=100)
     content_sub_header = models.CharField(max_length=100, blank=True, null=True)
     content = models.TextField(blank=True, null=True, verbose_name='Content')
@@ -28,7 +30,7 @@ class SkillPage(models.Model):
     story_body_two = models.TextField(blank=True, null=True, verbose_name='Content 2')
     story_body_three = models.TextField(blank=True, null=True, verbose_name='Content 3')
     story_interlude_one_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
-    story_interlude_one_text = models.CharField(max_length=200)
+    story_interlude_one_text = models.CharField(max_length=200, blank=True, null=True)
     story_interlude_one_cta = models.CharField(max_length=30, blank=True, null=True)
     story_interlude_two_image = models.ImageField(upload_to='pages/uploads/%Y/%m/%d', blank=True, null=True)
     story_interlude_two_text = models.CharField(max_length=200, blank=True, null=True)
