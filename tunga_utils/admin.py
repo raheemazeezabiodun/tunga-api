@@ -48,7 +48,7 @@ class ContactRequestAdmin(admin.ModelAdmin):
 
 
 @admin.register(SiteMeta)
-class SiteMetaAdmin(admin.ModelAdmin):
+class SiteMetaAdmin(AdminAutoCreatedBy):
     list_display = ('meta_key', 'meta_value', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('meta_key',)
