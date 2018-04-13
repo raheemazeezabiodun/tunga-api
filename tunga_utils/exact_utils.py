@@ -1,19 +1,36 @@
 import base64
+from ConfigParser import NoOptionError
 
 from exactonline.api import ExactApi
 from exactonline.exceptions import ObjectDoesNotExist
 from exactonline.resource import POST
-from exactonline.storage import IniStorage
+from exactonline.storage import IniStorage, ExactOnlineConfig
 
 from tunga.settings import BASE_DIR, EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
     EXACT_JOURNAL_CLIENT_SALES, EXACT_JOURNAL_DEVELOPER_SALES, EXACT_JOURNAL_DEVELOPER_PURCHASE, \
     EXACT_PAYMENT_CONDITION_CODE_14_DAYS, EXACT_VAT_CODE_NL, EXACT_VAT_CODE_WORLD, EXACT_GL_ACCOUNT_CLIENT_FEE, \
     EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE
 from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL
+from tunga_utils.models import SiteMeta
+
+
+class ExactStorage(ExactOnlineConfig):
+
+    def get_meta_key(self, section, option):
+        return 'exact.{}.{}'.format(section, option)
+
+    def get(self, section, option):
+        try:
+            return SiteMeta.objects.get(meta_key=self.get_meta_key(section, option))
+        except:
+            raise NoOptionError()
+
+    def set(self, section, option, value):
+        SiteMeta.objects.create(meta_key=self.get_meta_key(section, option), meta_value=value)
 
 
 def get_api():
-    storage = IniStorage(BASE_DIR + '/tunga/exact.ini')
+    storage = ExactStorage()
     return ExactApi(storage=storage)
 
 

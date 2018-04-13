@@ -140,8 +140,19 @@ class Rating(models.Model):
         unique_together = ('content_type', 'object_id', 'criteria', 'created_by')
 
 
-def generate_excerpt(source):
-    try:
-        return strip_tags(re.sub(r'<br\s*/>', '\n', source)).strip()
-    except:
-        return None
+@python_2_unicode_compatible
+class SiteMeta(models.Model):
+    meta_key = models.CharField(max_length=200)
+    meta_value = models.TextField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, blank=True, null=True,
+        on_delete=models.DO_NOTHING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.meta_key, self.meta_value)
+
+    class Meta:
+        ordering = ['created_at']

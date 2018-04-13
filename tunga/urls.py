@@ -92,7 +92,7 @@ urlpatterns = [
     url(r'^accounts/slack/connect/callback/$', slack_connect_callback, name="slack-connect-callback"),
     url(r'^accounts/harvest/connect/callback/$', harvest_connect_callback, name="harvest-connect-callback"),
     url(r'^accounts/github/connect/callback/$', github_connect_callback, name="github-connect-callback"),
-    url(r'^accounts/exact/connect/callback/$', exact_connect_callback, name="github-connect-callback"),
+    url(r'^accounts/exact/connect/callback/$', exact_connect_callback, name="exact-connect-callback"),
     url(r'^accounts/', include('allauth.urls')),
     url(r'api/', include(router.urls)),
     url(r'^api/auth/register/account-confirm-email/(?P<key>\w+)/$', ConfirmEmailView.as_view(),
