@@ -1990,11 +1990,12 @@ class TaskInvoice(models.Model):
 
         # Developer invoicing Tunga
         amount_details['invoice_tunga'] = self.version > 1 and round_decimal(amount_details['developer'],
-                                                                             2) or round_decimal(fee_portion_dev, 2)
-        amount_details['total_invoice_tunga'] = round_decimal(amount_details['developer'], 2)
+                                                                             2) or round_decimal(Decimal(self.task.tunga_ratio_dev) * fee_portion_dev, 2)
+        amount_details['total_invoice_tunga'] = round_decimal(amount_details['invoice_tunga'] + amount_details['processing'], 2)
 
         # Tunga invoicing Developer
         amount_details['invoice_developer'] = round_decimal(Decimal(self.task.tunga_ratio_dev) * fee_portion_dev, 2)
+
         amount_details['total_invoice_developer'] = round_decimal(
             amount_details['invoice_developer'] + amount_details['processing'], 2)
 
