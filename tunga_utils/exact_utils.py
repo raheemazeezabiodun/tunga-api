@@ -9,8 +9,8 @@ from exactonline.storage import IniStorage, ExactOnlineConfig
 from tunga.settings import BASE_DIR, EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
     EXACT_JOURNAL_CLIENT_SALES, EXACT_JOURNAL_DEVELOPER_SALES, EXACT_JOURNAL_DEVELOPER_PURCHASE, \
     EXACT_PAYMENT_CONDITION_CODE_14_DAYS, EXACT_VAT_CODE_NL, EXACT_VAT_CODE_WORLD, EXACT_GL_ACCOUNT_CLIENT_FEE, \
-    EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE
-from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL
+    EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE, EXACT_VAT_CODE_EUROPE
+from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL, VAT_LOCATION_EUROPE
 from tunga_utils.models import SiteMeta
 
 
@@ -34,14 +34,14 @@ def get_api():
     return ExactApi(storage=storage)
 
 
-def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, vat_location=None):
+def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=None):
     """
     :param task: parent task for the invoice
     :param user: Tunga user related to the invoice e.g a client or a developer
     :param invoice_type: type of invoice e.g 'client', 'developer', 'tunga'
     :param invoice_file: generated file object for the invoice
     :param amount:
-    :param vat_amount:
+    :param vat_location: NL, europe or world
     :return:
     """
     exact_api = get_api()
@@ -100,6 +100,11 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, v
     ))
 
     if invoice_type == 'client':
+        vat_code = EXACT_VAT_CODE_WORLD
+        if vat_location == VAT_LOCATION_NL:
+            vat_code = EXACT_VAT_CODE_NL
+        elif vat_location == VAT_LOCATION_EUROPE:
+            vat_code = EXACT_VAT_CODE_EUROPE
         exact_api.restv1(POST(
             'salesentry/SalesEntries',
             dict(
@@ -112,16 +117,16 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, v
                 Journal=EXACT_JOURNAL_CLIENT_SALES,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                VATAmountDC=vat_amount,
-                VATAmountFC=vat_amount,
+                #VATAmountDC=vat_amount,
+                #VATAmountFC=vat_amount,
                 YourRef=invoice_number,
                 SalesEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
                         GLAccount=EXACT_GL_ACCOUNT_CLIENT_FEE,
-                        VATAmountFC=vat_amount,
-                        VATCode=vat_location == VAT_LOCATION_NL and EXACT_VAT_CODE_NL or EXACT_VAT_CODE_WORLD,
+                        #VATAmountFC=vat_amount,
+                        VATCode=vat_code
                     )
                 ],
                 PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
@@ -140,15 +145,15 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, v
                 Journal=EXACT_JOURNAL_DEVELOPER_PURCHASE,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                VATAmountDC=vat_amount,
-                VATAmountFC=vat_amount,
+                VATAmountDC=0,
+                VATAmountFC=0,
                 YourRef=invoice_number,
                 PurchaseEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
                         GLAccount=EXACT_GL_ACCOUNT_DEVELOPER_FEE,
-                        VATAmountFC=vat_amount
+                        VATAmountFC=0
                     )
                 ],
                 PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
@@ -167,15 +172,15 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_amount, v
                 Journal=EXACT_JOURNAL_DEVELOPER_SALES,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                VATAmountDC=vat_amount,
-                VATAmountFC=vat_amount,
+                VATAmountDC=0,
+                VATAmountFC=0,
                 YourRef=invoice_number,
                 SalesEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
                         GLAccount=EXACT_GL_ACCOUNT_TUNGA_FEE,
-                        VATAmountFC=vat_amount
+                        VATAmountFC=0
                     )
                 ],
                 PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS

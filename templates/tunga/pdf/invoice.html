@@ -92,7 +92,7 @@
                                     {% if invoice_type == "client" %}
                                         {{ invoice.amount.invoice_client | floatformat:2 }}
                                     {% elif invoice_type == "developer" %}
-                                        {{ invoice.amount.invoice_developer | floatformat:2 }}
+                                        {{ developer_info.amount.invoice_developer | floatformat:2 }}
                                     {% elif invoice_type == "tunga" %}
                                         {{ developer_info.amount.invoice_tunga | floatformat:2 }}
                                     {% endif %}

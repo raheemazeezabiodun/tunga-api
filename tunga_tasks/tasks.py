@@ -706,8 +706,8 @@ def sync_exact_invoices(task):
         ).write_pdf()
         exact_utils.upload_invoice(
             task, client, 'client', invoice_file_client,
-            float(invoice.amount.get('total_invoice_client', 0)),
-            float(invoice.amount.get('vat_amount', 0))
+            float(invoice.amount.get('total_invoice_client_plus_tax', 0)),
+            vat_location=invoice.vat_location_client
         )
 
     participation_shares = task.get_participation_shares()
@@ -728,7 +728,7 @@ def sync_exact_invoices(task):
         ).write_pdf()
         exact_utils.upload_invoice(
             task, dev, 'tunga', invoice_file_tunga,
-            float(amount_details('total_invoice_tunga', 0)), 0
+            float(amount_details('total_invoice_tunga', 0))
         )
 
         if invoice.version == 1:
@@ -741,5 +741,5 @@ def sync_exact_invoices(task):
             ).write_pdf()
             exact_utils.upload_invoice(
                 task, dev, 'developer', invoice_file_dev,
-                float(amount_details('total_invoice_developer', 0)), 0
+                float(amount_details('total_invoice_developer', 0))
             )
