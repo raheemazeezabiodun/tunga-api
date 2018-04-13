@@ -26,7 +26,7 @@ class ExactStorage(ExactOnlineConfig):
             raise NoOptionError()
 
     def set(self, section, option, value):
-        SiteMeta.objects.create(meta_key=self.get_meta_key(section, option), meta_value=value)
+        SiteMeta.objects.update_or_create(meta_key=self.get_meta_key(section, option), meta_value=value)
 
 
 def get_api():

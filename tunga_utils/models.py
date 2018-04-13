@@ -142,7 +142,7 @@ class Rating(models.Model):
 
 @python_2_unicode_compatible
 class SiteMeta(models.Model):
-    meta_key = models.CharField(max_length=200)
+    meta_key = models.CharField(max_length=200, unique=True)
     meta_value = models.TextField()
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, blank=True, null=True,
