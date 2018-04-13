@@ -21,7 +21,7 @@ class ExactStorage(ExactOnlineConfig):
 
     def get(self, section, option):
         try:
-            return SiteMeta.objects.get(meta_key=self.get_meta_key(section, option))['meta_value']
+            return SiteMeta.objects.get(meta_key=self.get_meta_key(section, option)).meta_value
         except:
             raise NoOptionError()
 
