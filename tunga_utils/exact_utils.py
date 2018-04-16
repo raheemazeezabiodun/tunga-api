@@ -4,9 +4,9 @@ from ConfigParser import NoOptionError
 from exactonline.api import ExactApi
 from exactonline.exceptions import ObjectDoesNotExist
 from exactonline.resource import POST
-from exactonline.storage import IniStorage, ExactOnlineConfig
+from exactonline.storage import ExactOnlineConfig
 
-from tunga.settings import BASE_DIR, EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
+from tunga.settings import EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
     EXACT_JOURNAL_CLIENT_SALES, EXACT_JOURNAL_DEVELOPER_SALES, EXACT_JOURNAL_DEVELOPER_PURCHASE, \
     EXACT_PAYMENT_CONDITION_CODE_14_DAYS, EXACT_VAT_CODE_NL, EXACT_VAT_CODE_WORLD, EXACT_GL_ACCOUNT_CLIENT_FEE, \
     EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE, EXACT_VAT_CODE_EUROPE
@@ -26,7 +26,7 @@ class ExactStorage(ExactOnlineConfig):
             raise NoOptionError()
 
     def set(self, section, option, value):
-        SiteMeta.objects.update_or_create(meta_key=self.get_meta_key(section, option), meta_value=value)
+        SiteMeta.objects.update_or_create(meta_key=self.get_meta_key(section, option), defaults=dict(meta_value=value))
 
 
 def get_api():
@@ -62,13 +62,14 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
         Name=user.display_name,
         Email=user.email,
         City=user.profile and user.profile.city_name or '',
-        Country=user.profile and user.profile.country.code or ''
+        Country=user.profile and user.profile.country.code or '',
     )
 
-    if invoice_type == 'tunga':
-        relation_dict['IsSupplier'] = True
-    else:
-        relation_dict['IsSales'] = True
+    if invoice_type in ['client', 'developer']:
+        relation_dict['Status'] = 'C'  # Is customer with no status
+
+    relation_dict['IsSales'] = False
+    relation_dict['IsSupplier'] = bool(invoice_type != 'client')
 
     if exact_user_id:
         exact_api.relations.update(exact_user_id, relation_dict)
@@ -113,23 +114,19 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
                 Description=task.summary,
                 Document=exact_document['ID'],
                 EntryDate=invoice.created_at.isoformat(),
-                GAccountAmountFC=amount,
                 Journal=EXACT_JOURNAL_CLIENT_SALES,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                #VATAmountDC=vat_amount,
-                #VATAmountFC=vat_amount,
                 YourRef=invoice_number,
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS,
                 SalesEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
                         GLAccount=EXACT_GL_ACCOUNT_CLIENT_FEE,
-                        #VATAmountFC=vat_amount,
                         VATCode=vat_code
                     )
-                ],
-                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+                ]
             )
         ))
     elif invoice_type == 'tunga':
@@ -141,22 +138,18 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
                 Description=task.summary,
                 Document=exact_document['ID'],
                 EntryDate=invoice.created_at.isoformat(),
-                GAccountAmountFC=amount,
                 Journal=EXACT_JOURNAL_DEVELOPER_PURCHASE,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                VATAmountDC=0,
-                VATAmountFC=0,
                 YourRef=invoice_number,
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS,
                 PurchaseEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
-                        GLAccount=EXACT_GL_ACCOUNT_DEVELOPER_FEE,
-                        VATAmountFC=0
+                        GLAccount=EXACT_GL_ACCOUNT_DEVELOPER_FEE
                     )
-                ],
-                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+                ]
             )
         ))
     elif invoice_type == 'developer':
@@ -168,21 +161,17 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
                 Description=task.summary,
                 Document=exact_document['ID'],
                 EntryDate=invoice.created_at.isoformat(),
-                GAccountAmountFC=amount,
                 Journal=EXACT_JOURNAL_DEVELOPER_SALES,
                 ReportingPeriod=invoice.created_at.month,
                 ReportingYear=invoice.created_at.year,
-                VATAmountDC=0,
-                VATAmountFC=0,
                 YourRef=invoice_number,
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS,
                 SalesEntryLines=[
                     dict(
                         AmountFC=amount,
                         Description=invoice_number,
-                        GLAccount=EXACT_GL_ACCOUNT_TUNGA_FEE,
-                        VATAmountFC=0
+                        GLAccount=EXACT_GL_ACCOUNT_TUNGA_FEE
                     )
-                ],
-                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS
+                ]
             )
         ))

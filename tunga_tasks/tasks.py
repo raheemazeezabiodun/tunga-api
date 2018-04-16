@@ -693,12 +693,12 @@ def update_multi_tasks(multi_task_key, distribute=False):
 
 
 @job
-def sync_exact_invoices(task):
+def sync_exact_invoices(task, invoice_types=('client', 'tunga', 'developer')):
     task = clean_instance(task, Task)
     invoice = task.invoice
     client = task.owner or task.user
 
-    if task.payment_method == TASK_PAYMENT_METHOD_STRIPE:
+    if 'client' in invoice_types and task.payment_method == TASK_PAYMENT_METHOD_STRIPE:
         # Only sync client invoices for Stripe payments
         invoice_file_client = HTML(
             string=process_invoices(task.id, invoice_types=['client'], user_id=client.id, is_admin=False),
@@ -720,18 +720,19 @@ def sync_exact_invoices(task):
 
         amount_details = invoice.get_amount_details(share=share_info['share'])
 
-        invoice_file_tunga = HTML(
-            string=process_invoices(
-                task.id, invoice_types=['tunga'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
-            ),
-            encoding='utf-8'
-        ).write_pdf()
-        exact_utils.upload_invoice(
-            task, dev, 'tunga', invoice_file_tunga,
-            float(amount_details('total_invoice_tunga', 0))
-        )
+        if 'tunga' in invoice_types:
+            invoice_file_tunga = HTML(
+                string=process_invoices(
+                    task.id, invoice_types=['tunga'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
+                ),
+                encoding='utf-8'
+            ).write_pdf()
+            exact_utils.upload_invoice(
+                task, dev, 'tunga', invoice_file_tunga,
+                float(amount_details.get('total_invoice_tunga', 0))
+            )
 
-        if invoice.version == 1:
+        if 'developer' in invoice_types and invoice.version == 1:
             # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
             invoice_file_dev = HTML(
                 string=process_invoices(
@@ -741,5 +742,5 @@ def sync_exact_invoices(task):
             ).write_pdf()
             exact_utils.upload_invoice(
                 task, dev, 'developer', invoice_file_dev,
-                float(amount_details('total_invoice_developer', 0))
+                float(amount_details.get('total_invoice_developer', 0))
             )
