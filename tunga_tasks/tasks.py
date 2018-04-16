@@ -272,12 +272,17 @@ def distribute_task_payment_payoneer(task):
     payments = get_task_payments(task)
     if not payments:
         # Create Bank or Payoneer payment
+
+        payment_received = task.pay_dev
+        if task.payment_method == TASK_PAYMENT_METHOD_BANK and not task.payment_withheld_tunga_fee:
+            payment_received = task.pay
+
         TaskPayment.objects.get_or_create(
             task=task,
             ref=task.payment_method == TASK_PAYMENT_METHOD_BANK and 'bank' or 'payoneer',
             payment_type=task.payment_method == TASK_PAYMENT_METHOD_BANK and TASK_PAYMENT_METHOD_BANK or TASK_PAYMENT_METHOD_PAYONEER,
             defaults=dict(
-                amount=Decimal(task.payment_method == TASK_PAYMENT_METHOD_BANK and task.pay or task.pay_dev),
+                amount=Decimal(payment_received),
                 amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
                 paid=True,
