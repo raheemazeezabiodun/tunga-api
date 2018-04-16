@@ -867,8 +867,8 @@ class Task(models.Model):
 
     @property
     def payment_withheld_tunga_fee(self):
-        if self.payment_method == TASK_PAYMENT_METHOD_STRIPE:
-            return self.withhold_tunga_fee_distribute
+        if self.payment_method == TASK_PAYMENT_METHOD_STRIPE and self.withhold_tunga_fee_distribute:
+            return True
         return self.withhold_tunga_fee
 
     def get_participation_shares(self, return_hash=False):
