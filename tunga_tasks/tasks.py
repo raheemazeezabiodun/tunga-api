@@ -264,7 +264,7 @@ def distribute_task_payment_payoneer(task):
     if not task.distribution_approved or not task.payment_approved:
         return
 
-    if task.pay_distributed:
+    if task.pay_distributed or task.payment_withheld_tunga_fee:
         return
 
     pay_description = task.summary
@@ -272,17 +272,12 @@ def distribute_task_payment_payoneer(task):
     payments = get_task_payments(task)
     if not payments:
         # Create Bank or Payoneer payment
-
-        payment_received = task.pay_dev
-        if task.payment_method == TASK_PAYMENT_METHOD_BANK and not task.payment_withheld_tunga_fee:
-            payment_received = task.pay
-
         TaskPayment.objects.get_or_create(
             task=task,
             ref=task.payment_method == TASK_PAYMENT_METHOD_BANK and 'bank' or 'payoneer',
             payment_type=task.payment_method == TASK_PAYMENT_METHOD_BANK and TASK_PAYMENT_METHOD_BANK or TASK_PAYMENT_METHOD_PAYONEER,
             defaults=dict(
-                amount=Decimal(payment_received),
+                amount=Decimal(task.payment_method == TASK_PAYMENT_METHOD_BANK and task.pay or task.pay_dev),
                 amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
                 paid=True,
@@ -711,7 +706,7 @@ def sync_exact_invoices(task, invoice_types=('client', 'tunga', 'developer')):
         ).write_pdf()
         exact_utils.upload_invoice(
             task, client, 'client', invoice_file_client,
-            float(invoice.amount.get('total_invoice_client_plus_tax', 0)),
+            float(invoice.amount.get('total_invoice_client', 0)),
             vat_location=invoice.vat_location_client
         )
 
