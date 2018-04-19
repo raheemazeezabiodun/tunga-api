@@ -1,9 +1,10 @@
 import base64
 from ConfigParser import NoOptionError
+from urllib import urlencode
 
 from exactonline.api import ExactApi
 from exactonline.exceptions import ObjectDoesNotExist
-from exactonline.resource import POST
+from exactonline.resource import POST, GET
 from exactonline.storage import ExactOnlineConfig
 
 from tunga.settings import EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_TYPE_SALES_INVOICE, \
@@ -47,8 +48,28 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
     exact_api = get_api()
     invoice = task.invoice
 
-    if invoice_type == 'type' and invoice.version == 1:
+    if invoice_type == 'tunga' and invoice.version == 1:
         # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
+        return
+
+    invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
+
+    existing_invoice_refs = None
+    if invoice_type in ['client', 'developer']:
+        existing_invoice_refs = exact_api.restv1(GET(
+            "salesentry/SalesEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}'".format(invoice_number)
+            }))
+        ))
+    elif invoice_type == 'tunga':
+        existing_invoice_refs = exact_api.restv1(GET(
+            "purchaseentry/PurchaseEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}'".format(invoice_number)
+            }))
+        ))
+
+    if existing_invoice_refs:
+        # Stop if entries with invoice ref already exist
         return
 
     exact_user_id = None
@@ -76,8 +97,6 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
     else:
         exact_user = exact_api.relations.create(relation_dict)
         exact_user_id = exact_user['ID']
-
-    invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
 
     exact_document = exact_api.restv1(POST(
         'documents/Documents',
