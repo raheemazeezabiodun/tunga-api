@@ -992,7 +992,7 @@ class ProgressEventViewSet(viewsets.ModelViewSet):
         return self.serializer_class
 
 
-class ProgressReportViewSet(viewsets.ModelViewSet):
+class ProgressReportViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
     """
     Progress Report Resource
     """

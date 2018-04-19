@@ -3,6 +3,7 @@ import re
 
 from django.core.exceptions import ValidationError
 
+from tunga.settings import UPLOAD_SIZE_LIMIT_MBS
 from tunga_utils.bitcoin_utils import is_valid_btc_address
 
 
@@ -29,3 +30,8 @@ def validate_btc_address_or_none(value):
         raise ValidationError(error_msg)
     if value is not None and not is_valid_btc_address(value):
         raise ValidationError(error_msg)
+
+
+def validate_file_size(value):
+    if value.size > UPLOAD_SIZE_LIMIT_MBS:
+        raise ValidationError('File is too large, uploads must not exceed 5 MB.')

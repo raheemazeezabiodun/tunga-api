@@ -205,7 +205,9 @@ class SimpleUploadSerializer(serializers.ModelSerializer):
 
 
 class UploadSerializer(SimpleUploadSerializer):
-    user = SimpleUserSerializer()
+    user = SimpleUserSerializer(
+        required=False, read_only=True, default=CreateOnlyCurrentUserDefault()
+    )
 
     class Meta(SimpleUploadSerializer.Meta):
         model = Upload

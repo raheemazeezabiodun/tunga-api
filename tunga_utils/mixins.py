@@ -1,6 +1,8 @@
 from django.utils import six
+from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 
+from tunga.settings import UPLOAD_SIZE_LIMIT_MBS
 from tunga_utils.models import Upload
 
 
@@ -20,6 +22,14 @@ class GetCurrentUserAnnotatedSerializerMixin(object):
 
 class SaveUploadsMixin(CreateModelMixin, UpdateModelMixin):
 
+    def create(self, request, *args, **kwargs):
+        self.validate_uploads()
+        return super(SaveUploadsMixin, self).create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self.validate_uploads()
+        return super(SaveUploadsMixin, self).update(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         instance = serializer.save()
         self.save_uploads(instance)
@@ -27,6 +37,15 @@ class SaveUploadsMixin(CreateModelMixin, UpdateModelMixin):
     def perform_update(self, serializer):
         instance = serializer.save()
         self.save_uploads(instance)
+
+    def validate_uploads(self):
+        uploads = self.request.FILES
+        if uploads:
+            for uploaded_file in six.itervalues(uploads):
+                if uploaded_file.size > UPLOAD_SIZE_LIMIT_MBS:
+                    raise ValidationError(
+                        {'uploads': 'File "{}" is too large, uploads must not exceed 5 MB.'.format(uploaded_file.name)}
+                    )
 
     def save_uploads(self, content_object):
         uploads = self.request.FILES

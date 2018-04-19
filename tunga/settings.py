@@ -241,6 +241,8 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 RQ_SHOW_ADMIN_LINK = True
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
+
 # Third Party
 SERIALIZATION_MODULES = {
     'xml': 'tagulous.serializers.xml_serializer',
@@ -455,6 +457,8 @@ RAVEN_CONFIG = {
     'dsn': '',  # Raven URL here
     # 'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
 }
+
+UPLOAD_SIZE_LIMIT_MBS = 5 * 1024 * 1024  # 5 MB
 
 try:
     from .env.local import *

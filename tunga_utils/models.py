@@ -16,7 +16,7 @@ from tunga import settings
 from tunga_utils.constants import USER_TYPE_DEVELOPER, RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
     RATING_CRITERIA_SPEED, MONTHS, CONTACT_REQUEST_ITEM_ONBOARDING, CONTACT_REQUEST_ITEM_PROJECT, \
     CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF
-from tunga_utils.validators import validate_year
+from tunga_utils.validators import validate_year, validate_file_size
 
 
 @python_2_unicode_compatible
@@ -56,7 +56,7 @@ class AbstractExperience(models.Model):
 
 @python_2_unicode_compatible
 class GenericUpload(models.Model):
-    file = models.FileField(verbose_name='Upload', upload_to='uploads/%Y/%m/%d')
+    file = models.FileField(verbose_name='Upload', upload_to='uploads/%Y/%m/%d', validators=[validate_file_size])
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name=_('content type'))
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
