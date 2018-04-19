@@ -999,15 +999,18 @@ def notify_new_task_invoice_admin_slack(instance):
         },
     ]
     if not instance.task.payment_approved:
+        task_approval_url = '{}edit/payment-approval/'.format(task_url)
         if instance.payment_method == TASK_PAYMENT_METHOD_BANK:
             attachments.append({
-                slack_utils.KEY_TITLE: 'No payment approval required.',
-                slack_utils.KEY_TEXT: 'Payment will be completed via bank transfer.',
+                slack_utils.KEY_TITLE: 'Review and approve payment.',
+                slack_utils.KEY_TITLE_LINK: task_approval_url,
+                slack_utils.KEY_TEXT: "Payment will be completed via bank transfer.\n "
+                                      "However, developer payments won't be distributed until the payment"
+                                      " is reviewed and approved.",
                 slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
                 slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
             })
         else:
-            task_approval_url = '{}edit/payment-approval/'.format(task_url)
             attachments.append({
                 slack_utils.KEY_TITLE: 'Review and approve payment.',
                 slack_utils.KEY_TITLE_LINK: task_approval_url,
