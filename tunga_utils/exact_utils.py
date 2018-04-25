@@ -35,43 +35,9 @@ def get_api():
     return ExactApi(storage=storage)
 
 
-def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=None):
-    """
-    :param task: parent task for the invoice
-    :param user: Tunga user related to the invoice e.g a client or a developer
-    :param invoice_type: type of invoice e.g 'client', 'developer', 'tunga'
-    :param invoice_file: generated file object for the invoice
-    :param amount:
-    :param vat_location: NL, europe or world
-    :return:
-    """
-    exact_api = get_api()
-    invoice = task.invoice
-
-    if invoice_type == 'tunga' and invoice.version == 1:
-        # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
-        return
-
-    invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
-
-    existing_invoice_refs = None
-    if invoice_type in ['client', 'developer']:
-        existing_invoice_refs = exact_api.restv1(GET(
-            "salesentry/SalesEntries?{}".format(urlencode({
-                '$filter': "YourRef eq '{}'".format(invoice_number)
-            }))
-        ))
-    elif invoice_type == 'tunga':
-        existing_invoice_refs = exact_api.restv1(GET(
-            "purchaseentry/PurchaseEntries?{}".format(urlencode({
-                '$filter': "YourRef eq '{}'".format(invoice_number),
-                '$top': 1
-            }))
-        ))
-
-    if existing_invoice_refs:
-        # Stop if entries with invoice ref already exist
-        return
+def get_account_guid(user, invoice_type, exact_api=None):
+    if not exact_api:
+        exact_api = get_api()
 
     exact_user_id = None
     try:
@@ -98,6 +64,60 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
     else:
         exact_user = exact_api.relations.create(relation_dict)
         exact_user_id = exact_user['ID']
+    return exact_user_id
+
+
+def get_entry(invoice_type, invoice_number, exact_user_id, exact_api=None):
+    if not exact_api:
+        exact_api = get_api()
+
+    existing_invoice_refs = None
+    select_param = "EntryID,EntryNumber,EntryDate,Created,Modified,YourRef," \
+                   "AmountDC,VATAmountDC,DueDate,Description,Journal,ReportingYear"
+
+    if invoice_type in ['client', 'developer']:
+        existing_invoice_refs = exact_api.restv1(GET(
+            "salesentry/SalesEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}' and Customer eq guid'{}'".format(invoice_number, exact_user_id),
+                '$select': '{},SalesEntryLines,Customer'.format(select_param)
+            }))
+        ))
+    elif invoice_type == 'tunga':
+        existing_invoice_refs = exact_api.restv1(GET(
+            "purchaseentry/PurchaseEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}' and Supplier eq guid'{}'".format(invoice_number, exact_user_id),
+                '$select': '{},PurchaseEntryLines,Supplier'.format(select_param)
+            }))
+        ))
+    return existing_invoice_refs
+
+
+def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=None):
+    """
+    :param task: parent task for the invoice
+    :param user: Tunga user related to the invoice e.g a client or a developer
+    :param invoice_type: type of invoice e.g 'client', 'developer', 'tunga'
+    :param invoice_file: generated file object for the invoice
+    :param amount:
+    :param vat_location: NL, europe or world
+    :return:
+    """
+    exact_api = get_api()
+    invoice = task.invoice
+
+    if invoice_type == 'tunga' and invoice.version == 1:
+        # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
+        return
+
+    invoice_number = invoice.invoice_id(invoice_type=invoice_type, user=user)
+
+    exact_user_id = get_account_guid(user, invoice_type, exact_api=exact_api)
+
+    existing_invoice_refs = get_entry(invoice_type, invoice_number, exact_user_id, exact_api=exact_api)
+
+    if existing_invoice_refs:
+        # Stop if entries with invoice ref already exist
+        return
 
     exact_document = exact_api.restv1(POST(
         'documents/Documents',
