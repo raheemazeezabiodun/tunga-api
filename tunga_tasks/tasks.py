@@ -26,7 +26,7 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     STATUS_INITIATED, APP_INTEGRATION_PROVIDER_HARVEST, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
     PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
     TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER, \
-    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, TASK_PAYMENT_METHOD_STRIPE
+    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, TASK_PAYMENT_METHOD_STRIPE, USER_TYPE_PROJECT_OWNER
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -693,13 +693,16 @@ def update_multi_tasks(multi_task_key, distribute=False):
 
 
 @job
-def sync_exact_invoices(task, invoice_types=('client', 'tunga', 'developer')):
+def sync_exact_invoices(task, invoice_types=('client', 'tunga', 'developer'), developers=None):
     task = clean_instance(task, Task)
     invoice = task.invoice
     client = task.owner or task.user
 
-    if 'client' in invoice_types and task.payment_method == TASK_PAYMENT_METHOD_STRIPE:
-        # Only sync client invoices for Stripe payments
+    admin_emails = ['david@tunga.io', 'bart@tunga.io', 'domieck@tunga.io']
+
+    if 'client' in invoice_types and task.paid and client.type == USER_TYPE_PROJECT_OWNER \
+            and client.email not in admin_emails:
+        # Only sync paid invoices whose project owner is not a Tunga admin
         invoice_file_client = HTML(
             string=process_invoices(task.id, invoice_types=['client'], user_id=client.id, is_admin=False),
             encoding='utf-8'
@@ -718,29 +721,33 @@ def sync_exact_invoices(task, invoice_types=('client', 'tunga', 'developer')):
         if participant.status != STATUS_ACCEPTED or share_info['share'] <= 0:
             continue
 
-        amount_details = invoice.get_amount_details(share=share_info['share'])
+        if developers and dev.id not in developers:
+            continue
 
-        if 'tunga' in invoice_types:
-            invoice_file_tunga = HTML(
-                string=process_invoices(
-                    task.id, invoice_types=['tunga'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
-                ),
-                encoding='utf-8'
-            ).write_pdf()
-            exact_utils.upload_invoice(
-                task, dev, 'tunga', invoice_file_tunga,
-                float(amount_details.get('total_invoice_tunga', 0))
-            )
+        if ParticipantPayment.objects.filter(participant=participant):
+            amount_details = invoice.get_amount_details(share=share_info['share'])
 
-        if 'developer' in invoice_types and invoice.version == 1:
-            # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
-            invoice_file_dev = HTML(
-                string=process_invoices(
-                    task.id, invoice_types=['developer'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
-                ),
-                encoding='utf-8'
-            ).write_pdf()
-            exact_utils.upload_invoice(
-                task, dev, 'developer', invoice_file_dev,
-                float(amount_details.get('total_invoice_developer', 0))
-            )
+            if 'tunga' in invoice_types:
+                invoice_file_tunga = HTML(
+                    string=process_invoices(
+                        task.id, invoice_types=['tunga'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
+                    ),
+                    encoding='utf-8'
+                ).write_pdf()
+                exact_utils.upload_invoice(
+                    task, dev, 'tunga', invoice_file_tunga,
+                    float(amount_details.get('total_invoice_tunga', 0))
+                )
+
+            if 'developer' in invoice_types and invoice.version == 1:
+                # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
+                invoice_file_dev = HTML(
+                    string=process_invoices(
+                        task.id, invoice_types=['developer'], user_id=dev.id, developer_ids=[dev.id], is_admin=False
+                    ),
+                    encoding='utf-8'
+                ).write_pdf()
+                exact_utils.upload_invoice(
+                    task, dev, 'developer', invoice_file_dev,
+                    float(amount_details.get('total_invoice_developer', 0))
+                )

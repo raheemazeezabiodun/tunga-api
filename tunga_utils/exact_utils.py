@@ -64,7 +64,8 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
     elif invoice_type == 'tunga':
         existing_invoice_refs = exact_api.restv1(GET(
             "purchaseentry/PurchaseEntries?{}".format(urlencode({
-                '$filter': "YourRef eq '{}'".format(invoice_number)
+                '$filter': "YourRef eq '{}'".format(invoice_number),
+                '$top': 1
             }))
         ))
 
