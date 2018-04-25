@@ -494,11 +494,17 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             if invoice_q_type in ['client', 'tunga', 'developer']:
                 invoice_types = [invoice_q_type]
             elif request.user.is_admin or request.user.is_developer:
-                invoice_types = [u'client', u'tunga', u'developer']
+                invoice_types = ['client', 'tunga', 'developer']
 
         if target_task:
-            rendered_html = process_invoices(pk, invoice_types=invoice_types, user_id=request.user.id,
-                                             is_admin=request.user.is_admin)
+            developer_ids = None
+            target_dev = int(request.query_params.get('developer', 0))
+            if target_dev:
+                developer_ids = [target_dev]
+            rendered_html = process_invoices(
+                pk, invoice_types=invoice_types, user_id=request.user.id,
+                developer_ids=developer_ids, is_admin=request.user.is_admin
+            )
             if rendered_html:
                 if request.accepted_renderer.format == 'html':
                     return HttpResponse(rendered_html)
