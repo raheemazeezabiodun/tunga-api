@@ -34,4 +34,7 @@ stripe==1.56.0
 mandrill==1.0.57
 exactonline==0.3.2
 honcho==1.0.1
+XlsxWriter==1.0.4
+flake8==3.5.0
+isort==4.3.4
 -e git+https://github.com/davidsemakula/python-harvest.git@2.1.0rc1#egg=python-harvest-redux
