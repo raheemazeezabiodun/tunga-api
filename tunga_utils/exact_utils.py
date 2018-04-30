@@ -105,7 +105,7 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
     exact_api = get_api()
     invoice = task.invoice
 
-    if invoice_type == 'tunga' and invoice.version == 1:
+    if invoice_type == 'developer' and invoice.version > 1:
         # Developer (tunga invoicing dev) invoices are only part of the old invoice scheme
         return
 
