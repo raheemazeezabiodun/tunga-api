@@ -27,6 +27,7 @@ Follow the following coding guidelines when contributing:
 * Follow the style guide defined in [.editorconfig](https://github.com/tunga-io/tunga-web/blob/master/.editorconfig)
 * Follow [PEP8](https://www.python.org/dev/peps/pep-0008/) for Python styling unless otherwise stated.
 * Follow Django conventions, best practices and style guides like keeping your code DRY, loosely coupled, modular and readable e.t.c. 
+
 Use the resources below to get yourself up to speed if necessary.
 https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/#model-style
 https://streamhacker.com/2011/01/03/django-application-conventions/
@@ -40,14 +41,23 @@ http://django-best-practices.readthedocs.io/en/latest/applications.html
 * Use [Django REST Swagger](https://github.com/marcgibbons/django-rest-swagger) to generate API docs.
 
 * The code base is loosely divided in appropriately named apps that manage specific entities and activites
+
 `tunga_auth` - manages simple user authentication
+
 `tunga_profiles` - manages user data that is not required for authentication
+
 `tunga_comments` - manages generic message carriers used on the platform by tasks
+
 `tunga_messages` - manages user to user messaging
+
 `tunga_pages` - manages custom pages like skill pages and blog posts
+
 `tunga_settings` - manages user settings
+
 `tunga_support` - manages user facing support documentation
+
 `tunga_tasks` - manages tasks/projects and related actions like task applications, task invitations and payments
+
 `tunga_utils` - manages generic entities that may be used by other apps to create a clearer dependency hierarchy
 
 * To override settings in `tunga/settings.py`, create a file `tunga/env/local.py` and keep it out of Git.
