@@ -9,10 +9,10 @@ def get_client():
     return MailChimp(MAILCHIMP_USERNAME, MAILCHIMP_API_KEY)
 
 
-def subscribe_new_user(email, **kwargs):
+def subscribe_new_user(email, list_id=MAILCHIMP_NEW_USER_LIST, **kwargs):
     client = get_client()
     client.lists.members.create_or_update(
-        list_id=MAILCHIMP_NEW_USER_LIST,
+        list_id=list_id,
         subscriber_hash=hashlib.md5(email).hexdigest(),
         data={
             'email_address': email,
