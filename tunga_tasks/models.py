@@ -14,6 +14,7 @@ from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKe
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Exists, OuterRef
 from django.db.models.aggregates import Min
 from django.db.models.query_utils import Q
 from django.template.defaultfilters import floatformat, truncatewords
@@ -506,8 +507,16 @@ class Task(models.Model):
 
     @property
     def subtask_participants_inclusive_filter(self):
-        return get_tunga_model('tunga_tasks.Participation').objects.filter(
-            (Q(task=self) | Q(task__parent=self))
+        return get_tunga_model('tunga_tasks.Participation').objects.annotate(
+            parent_participation=Exists(
+                get_tunga_model('tunga_tasks.Participation').objects.filter(
+                    task=self, user=OuterRef('user')
+                )
+            )
+        ).filter(
+            Q(task=self) | (
+                Q(task__parent=self) & Q(parent_participation=False)
+            )
         )
 
     def get_is_participant(self, user, active_only=True):
@@ -938,7 +947,7 @@ class Task(models.Model):
         if (self.invoice_date):
             days_ahead_14 = self.deadline + datetime.timedelta(days=day)
 
-            # Make a new date 
+            # Make a new date
             new_date = datetime.date(year=days_ahead_14.year, day=days_ahead_14.day, month=days_ahead_14.month)
 
             # Check if the new date corresponds with the original date.
