@@ -1,11 +1,11 @@
 argon2-cffi==16.2.*
 coinbase==2.*
-Django==1.10.*
+Django==1.11.*
 django-activity-stream==0.6.*
 django-allauth==0.31.*
 django-cors-headers==1.2.*
 django-countries==4.*
-django-filter==1.*
+django-filter==1.1.*
 django-hashers-passlib==0.3.*
 django-oauth-toolkit==0.12.*
 django-redis==4.*
@@ -29,12 +29,12 @@ premailer==3.0.*
 slacker==0.9.*
 apscheduler==3.3.*
 mailchimp3==2.*
-raven==6.0.0
+raven==6.*
 stripe==1.56.0
-mandrill==1.0.57
+mandrill==1.*
 exactonline==0.3.2
-honcho==1.0.1
-XlsxWriter==1.0.4
-flake8==3.5.0
-isort==4.3.4
+honcho==1.*
+XlsxWriter==1.*
+flake8==3.*
+isort==4.*
 -e git+https://github.com/davidsemakula/python-harvest.git@2.1.0rc1#egg=python-harvest-redux

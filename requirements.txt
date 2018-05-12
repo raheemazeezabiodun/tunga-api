@@ -23,7 +23,7 @@ django-allauth==0.31.0
 django-braces==1.11.0     # via django-oauth-toolkit
 django-cors-headers==1.2.2
 django-countries==4.2
-django-filter==1.0.1
+django-filter==1.1.0
 django-hashers-passlib==0.3
 django-oauth-toolkit==0.12.0
 django-redis==4.4.3
@@ -31,7 +31,7 @@ django-rest-auth==0.9.1
 django-rest-swagger==2.1.2
 django-rq==0.9.5
 django-tagulous==0.12.0
-Django==1.10.6            # via django-allauth, django-hashers-passlib, django-oauth-toolkit, django-rest-auth, django-rq
+Django==1.11.13           # via django-allauth, django-hashers-passlib, django-oauth-toolkit, django-rest-auth, django-rq
 djangorestframework-jwt==1.8.0
 djangorestframework==3.6.2
 docopt==0.4.0             # via mandrill
@@ -66,7 +66,7 @@ PyJWT==1.4.0              # via djangorestframework-jwt
 Pyphen==0.9.4             # via weasyprint
 python-dateutil==2.5.3
 python-openid==2.2.5      # via django-allauth
-pytz==2016.10             # via apscheduler, tzlocal
+pytz==2016.10             # via apscheduler, django, tzlocal
 raven==6.0.0
 redis==2.10.5             # via django-redis, rq
 requests-oauthlib==0.8.0  # via django-allauth
