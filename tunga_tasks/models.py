@@ -784,12 +784,12 @@ class Task(models.Model):
         return list(set([item.user for item in self.active_participation]))
 
     @property
-    def updates_participation(self):
+    def update_participation(self):
         return self.subtask_participants_inclusive_filter.filter(status=STATUS_ACCEPTED, updates_enabled=True)
 
     @property
-    def updates_participants(self):
-        return list(set([item.user for item in self.updates_participation]))
+    def update_participants(self):
+        return list(set([item.user for item in self.update_participation]))
 
     @property
     def admins(self):
@@ -1420,7 +1420,7 @@ class ProgressEvent(models.Model):
             else:
                 participants.append(self.task.user)
         else:
-            participants.extend(self.task.active_participants)
+            participants = self.task.update_participants
         return participants
 
     @property

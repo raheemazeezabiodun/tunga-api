@@ -75,7 +75,7 @@ def update_task_periodic_updates(task):
         # for sub-tasks, create all periodic updates on the project
         target_task = task.parent
 
-    if task.archived or target_task.closed or not target_task.updates_participants:
+    if task.archived or target_task.closed or not target_task.update_participants:
         # Only create schedule events for projects which aren't closed or deleted and have update participants
         return
 

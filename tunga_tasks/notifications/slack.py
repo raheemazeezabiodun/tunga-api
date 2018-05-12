@@ -603,7 +603,7 @@ def notify_missed_progress_event_slack(instance):
 
     is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
 
-    if instance.status != "missed":
+    if instance.task.archived or instance.status != "missed":
         return
 
     participants = instance.participants
@@ -638,7 +638,7 @@ def notify_missed_progress_event_slack(instance):
                         user.profile and user.profile.phone_number and '\n*Phone Number:* {}'.format(
                             user.profile.phone_number) or ''
                     ) for user in participants
-                    ]
+                ]
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_TUNGA
