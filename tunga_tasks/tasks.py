@@ -75,8 +75,8 @@ def update_task_periodic_updates(task):
         # for sub-tasks, create all periodic updates on the project
         target_task = task.parent
 
-    if target_task.closed or not target_task.updates_participants:
-        # Only create schedule events for projects which aren't
+    if task.archived or target_task.closed or not target_task.updates_participants:
+        # Only create schedule events for projects which aren't closed or deleted and have update participants
         return
 
     if target_task.update_interval and target_task.update_interval_units:
@@ -144,7 +144,7 @@ def update_task_pm_updates(task):
         # for sub-tasks, create all pm updates on the project
         target_task = task.parent
 
-    if target_task.closed or target_task.is_task or not target_task.approved or not target_task.pm:
+    if task.archived or target_task.closed or target_task.is_task or not target_task.approved or not target_task.pm:
         # only request pm updates for project which are approved and not closed
         return
 
@@ -201,9 +201,9 @@ def update_task_client_surveys(task):
         # for sub-tasks, create all surveys on the project
         target_task = task.parent
 
-    if target_task.closed or not (
+    if task.archived or target_task.closed or not (
             target_task.survey_client and target_task.approved and target_task.active_participants):
-        # only conduct survey for approved tasks that have been assigned devs and aren't closed
+        # only conduct survey for approved tasks that have been assigned devs and aren't closed or archived
         return
 
     if target_task.update_interval and target_task.update_interval_units:
