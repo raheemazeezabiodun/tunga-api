@@ -29,8 +29,7 @@ from weasyprint import HTML
 from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
-    SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, HARVEST_CLIENT_ID, \
-    HARVEST_CLIENT_SECRET, SOCIAL_CONNECT_CALLBACK
+    SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, SOCIAL_CONNECT_CALLBACK
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
 from tunga_auth.models import EmailVisitor, TungaUser
@@ -40,7 +39,7 @@ from tunga_auth.utils import get_session_task, get_session_visitor_email, create
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
-from tunga_utils import coinbase_utils, slack_utils, harvest_utils, exact_utils, payoneer_utils
+from tunga_utils import coinbase_utils, slack_utils, exact_utils, payoneer_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
     STATUS_DECLINED, STATUS_PENDING
@@ -229,9 +228,6 @@ def social_login_view(request, provider=None):
         elif provider == APP_INTEGRATION_PROVIDER_SLACK:
             redirect_uri = '%s://%s%s' % (request.scheme, request.get_host(), reverse('slack-connect-callback'))
             return redirect(slack_utils.get_authorize_url(redirect_uri))
-        if provider == APP_INTEGRATION_PROVIDER_HARVEST:
-            redirect_uri = '%s://%s%s' % (request.scheme, request.get_host(), reverse('harvest-connect-callback'))
-            return redirect(harvest_utils.get_authorize_url(redirect_uri))
 
     enabled_providers = [FacebookProvider.id, GoogleProvider.id, GitHubProvider.id, SlackProvider.id]
 
@@ -411,40 +407,6 @@ def slack_connect_callback(request):
                 token_info['bot_user_id'] = response['bot'].get('bot_user_id')
             save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_SLACK, token_info)
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_SLACK))
-
-
-def harvest_connect_callback(request):
-    code = request.GET.get('code', None)
-    redirect_uri = '%s://%s%s' % (request.scheme, request.get_host(), reverse(request.resolver_match.url_name))
-    r = requests.post(url=harvest_utils.get_token_url(), data={
-        'code': code,
-        'client_id': HARVEST_CLIENT_ID,
-        'client_secret': HARVEST_CLIENT_SECRET,
-        'redirect_uri': redirect_uri,
-        'grant_type': 'authorization_code'
-    })
-
-    if r.status_code == 200:
-        response = r.json()
-        defaults = {
-            'token': response['access_token'],
-            'token_secret': response['refresh_token'],
-            'extra': json.dumps(response)
-        }
-        AppIntegration.objects.update_or_create(
-            user=request.user, provider=APP_INTEGRATION_PROVIDER_HARVEST, defaults=defaults
-        )
-
-        task_id = get_session_task(request)
-        if task_id:
-            token_info = {
-                'token': response['access_token'],
-                'refresh_token': response['refresh_token'],
-                'token_extra': json.dumps(response)
-            }
-            save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_HARVEST, token_info)
-
-    return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_HARVEST))
 
 
 @api_view(http_method_names=['GET'])

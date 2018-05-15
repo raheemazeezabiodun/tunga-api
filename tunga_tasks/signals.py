@@ -18,9 +18,9 @@ from tunga_tasks.notifications.generic import notify_new_task, \
     notify_task_application_response, notify_new_progress_report
 from tunga_tasks.notifications.slack import notify_new_progress_report_slack
 from tunga_tasks.tasks import initialize_task_progress_events, update_task_periodic_updates, \
-    complete_harvest_integration, create_or_update_hubspot_deal_task
+    create_or_update_hubspot_deal_task
 from tunga_utils import hubspot_utils
-from tunga_utils.constants import APP_INTEGRATION_PROVIDER_HARVEST, STATUS_SUBMITTED, STATUS_APPROVED, STATUS_DECLINED, \
+from tunga_utils.constants import STATUS_SUBMITTED, STATUS_APPROVED, STATUS_DECLINED, \
     STATUS_ACCEPTED, STATUS_REJECTED, STATUS_INITIAL
 
 # Task
@@ -233,8 +233,7 @@ def activity_handler_integration_activity(sender, instance, created, **kwargs):
 
 @receiver(task_integration, sender=Integration)
 def activity_handler_task_integration(sender, integration, **kwargs):
-    if integration.provider == APP_INTEGRATION_PROVIDER_HARVEST:
-        complete_harvest_integration.delay(integration.id)
+    pass
 
 
 VERB_MAP_STATUS_CHANGE = {

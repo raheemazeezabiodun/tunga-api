@@ -45,8 +45,6 @@ def get_session_next_url(request, provider=None):
             provider_name = 'github'
         elif provider == APP_INTEGRATION_PROVIDER_SLACK:
             provider_name = 'slack'
-        elif provider == APP_INTEGRATION_PROVIDER_HARVEST:
-            provider_name = 'harvest'
         return '/task/%s/integrations/%s' % (task_id, provider_name)
     return '/'
 

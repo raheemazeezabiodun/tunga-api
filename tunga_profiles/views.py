@@ -23,10 +23,10 @@ from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, W
     DeveloperApplicationSerializer, DeveloperInvitationSerializer
 from tunga_tasks.models import Task
 from tunga_tasks.utils import get_integration_token
-from tunga_utils import github, harvest_utils, slack_utils
+from tunga_utils import github, slack_utils
 from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, CHANNEL_TYPE_SUPPORT, \
-    CHANNEL_TYPE_DIRECT, CHANNEL_TYPE_TOPIC, CHANNEL_TYPE_DEVELOPER, APP_INTEGRATION_PROVIDER_HARVEST, \
-    TASK_SCOPE_ONGOING, TASK_SCOPE_PROJECT, TASK_SOURCE_NEW_USER, STATUS_ACCEPTED, STATUS_INITIAL, STATUS_REJECTED
+    CHANNEL_TYPE_DIRECT, CHANNEL_TYPE_TOPIC, CHANNEL_TYPE_DEVELOPER, TASK_SCOPE_ONGOING, TASK_SCOPE_PROJECT, \
+    TASK_SOURCE_NEW_USER, STATUS_ACCEPTED, STATUS_INITIAL, STATUS_REJECTED
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -357,68 +357,5 @@ class SlackIntegrationView(views.APIView):
             if response:
                 return Response(response, status.HTTP_200_OK)
             return Response({'status': 'Failed'}, status.HTTP_400_BAD_REQUEST)
-
-        return Response({'status': 'Not implemented'}, status.HTTP_501_NOT_IMPLEMENTED)
-
-
-class HarvestAPIView(views.APIView):
-    """
-    Harvest API Resource
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, resource=None):
-        app_integration = get_integration_token(
-            request.user, APP_INTEGRATION_PROVIDER_HARVEST, task=request.GET.get('task')
-        )
-        if app_integration and app_integration.extra:
-            token = json.loads(app_integration.extra)
-
-            response = None
-            harvest_client = harvest_utils.get_api_client(token, user=request.user)
-
-            if resource == 'projects':
-                response = harvest_client.projects()
-            elif resource == 'tasks':
-                project_id = request.query_params.get('project', None)
-                if project_id:
-                    response = harvest_client.get_all_tasks_from_project(project_id)
-                else:
-                    response = harvest_client.tasks()
-            elif resource == 'task_assignments':
-                project_id = request.query_params.get('project', None)
-                if project_id:
-                    response = harvest_client.get_all_tasks_from_project(project_id)
-            return Response(
-                response and response.json() or {'status': 'Failed'},
-                response and response.status_code or status.HTTP_400_BAD_REQUEST
-            )
-
-        return Response({'status': 'Not implemented'}, status.HTTP_501_NOT_IMPLEMENTED)
-
-    def post(self, request, resource=None):
-        app_integration = get_integration_token(request.user, APP_INTEGRATION_PROVIDER_HARVEST, task=request.GET.get('task'))
-        if app_integration and app_integration.extra:
-            token = json.loads(app_integration.extra)
-            response = None
-            harvest_client = harvest_utils.get_api_client(token, user=request.user)
-
-            if resource == 'users':
-                harvest_client.create_user(request.data)
-            elif resource == 'entries':
-                harvest_client.add(request.data)
-            elif resource == 'projects':
-                harvest_client.create_project(**request.data)
-            elif resource == 'tasks':
-                project_id = request.query_params.get('project', None)
-                if project_id:
-                    harvest_client.create_task_to_project(project_id, **request.data)
-                else:
-                    harvest_client.create_task(**request.data)
-
-                    return Response(
-                        response and response.json() or {'status': 'Failed'},
-                        response and response.status_code or status.HTTP_400_BAD_REQUEST
-                    )
 
         return Response({'status': 'Not implemented'}, status.HTTP_501_NOT_IMPLEMENTED)

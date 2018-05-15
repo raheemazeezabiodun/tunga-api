@@ -25,14 +25,14 @@ from rest_framework_swagger.views import get_swagger_view
 
 from tunga_activity.views import ActionViewSet
 from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, social_login_view, coinbase_connect_callback, \
-    slack_connect_callback, harvest_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap, \
+    slack_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap, \
     payoneer_sign_up, payoneer_notification, exact_connect_callback
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap, BlogPostViewSet, BlogSitemap
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
-    HarvestAPIView, DeveloperInvitationViewSet
+    DeveloperInvitationViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, ProjectViewSet, \
@@ -90,7 +90,6 @@ urlpatterns = [
     url(r'^accounts/social/(?P<provider>\w+)/$', social_login_view, name="social-login-redirect"),
     url(r'^accounts/coinbase/login/callback/$', coinbase_connect_callback, name="coinbase-connect-callback"),
     url(r'^accounts/slack/connect/callback/$', slack_connect_callback, name="slack-connect-callback"),
-    url(r'^accounts/harvest/connect/callback/$', harvest_connect_callback, name="harvest-connect-callback"),
     url(r'^accounts/github/connect/callback/$', github_connect_callback, name="github-connect-callback"),
     url(r'^accounts/exact/connect/callback/$', exact_connect_callback, name="exact-connect-callback"),
     url(r'^accounts/', include('allauth.urls')),
@@ -113,7 +112,6 @@ urlpatterns = [
     url(r'^api/me/app/(?P<provider>\w+)/issues/$', IssueListView.as_view(), name="issue-list"),
     url(r'^api/me/app/slack/$', SlackIntegrationView.as_view(), name="slack-app"),
     url(r'^api/me/app/slack/(?P<resource>\w+)/$', SlackIntegrationView.as_view(), name="slack-app-resource"),
-    url(r'^api/me/app/harvest/(?P<resource>\w+)/$', HarvestAPIView.as_view(), name="harvest-app"),
     url(r'^api/hook/coinbase/$', coinbase_notification, name="coinbase-notification"),
     url(r'^api/hook/bitpesa/$', bitpesa_notification, name="bitpesa-notification"),
     url(r'^api/hook/slack/customer/$', slack_customer_notification, name="slack-customer-notification"),
