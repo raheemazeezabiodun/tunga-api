@@ -471,8 +471,7 @@ class Task(models.Model):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.id:
             if not self.approved:
-                if self.source == TASK_SOURCE_NEW_USER and self.scope == TASK_SCOPE_TASK and self.description and len(
-                        self.description.split(' ')) >= 15:
+                if self.pm or (self.source == TASK_SOURCE_NEW_USER and self.scope == TASK_SCOPE_TASK and self.description and len(self.description.split(' ')) >= 15):
                     self.approved = True
             if self.scope != TASK_SCOPE_TASK and self.pm_required and not self.payment_approved and not self.includes_pm_fee:
                 self.includes_pm_fee = True
@@ -487,7 +486,7 @@ class Task(models.Model):
             else:
                 # For authenticated users, approve tasks and projects that don't need a PM on creation
                 self.approved = bool(
-                    self.scope == TASK_SCOPE_TASK or (self.scope == TASK_SCOPE_PROJECT and not self.pm_required)
+                    self.pm or self.scope == TASK_SCOPE_TASK or (self.scope == TASK_SCOPE_PROJECT and not self.pm_required)
                 )
             self.includes_pm_fee = bool(self.scope != TASK_SCOPE_TASK and self.pm_required)
         super(Task, self).save(
