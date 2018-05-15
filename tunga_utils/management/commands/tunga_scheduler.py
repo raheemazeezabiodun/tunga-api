@@ -26,16 +26,11 @@ def send_message_emails():
     call_command('tunga_send_customer_emails')
 
 
-@scheduler.scheduled_job('interval', minutes=30)
+@scheduler.scheduled_job('interval', days=1)
 def invoice_reminder():
-    # Send new message emails for conversations
+    # Send unpaid invoice reminders
     call_command('tunga_invoice_reminder')
-
-
-@scheduler.scheduled_job('interval', hours=12)
-def invoice_reminder():
-    # Send email and slack for notification.
-    call_command('tunga_invoice_reminder_3_weeks')
+    call_command('tunga_invoice_reminder_escalated')
 
 
 class Command(BaseCommand):
