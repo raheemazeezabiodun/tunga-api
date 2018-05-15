@@ -142,7 +142,7 @@ def update_task_pm_updates(task):
         # for sub-tasks, create all pm updates on the project
         target_task = task.parent
 
-    if target_task.archived or target_task.closed or target_task.is_task or not target_task.approved or not target_task.pm:
+    if target_task.archived or target_task.closed or target_task.is_task or not target_task.pm:
         # only request pm updates for project which are approved and not closed
         return
 
