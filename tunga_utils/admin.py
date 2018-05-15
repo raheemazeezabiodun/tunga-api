@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tunga_utils.models import ContactRequest
+from tunga_utils.models import ContactRequest, SiteMeta
 
 
 class AdminAutoCreatedBy(admin.ModelAdmin):
@@ -42,6 +42,13 @@ class ReadOnlyModelAdmin(admin.ModelAdmin):
 
 @admin.register(ContactRequest)
 class ContactRequestAdmin(admin.ModelAdmin):
-    list_display = ('email', 'item', 'created_at')
+    list_display = ('fullname', 'email', 'item', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('email',)
+    search_fields = ('email', 'fullname')
+
+
+@admin.register(SiteMeta)
+class SiteMetaAdmin(AdminAutoCreatedBy):
+    list_display = ('meta_key', 'meta_value', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('meta_key',)

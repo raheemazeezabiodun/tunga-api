@@ -8,6 +8,7 @@ from django_rq.decorators import job
 from premailer import premailer
 
 from tunga.settings import DEFAULT_FROM_EMAIL, TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS, EMAIL_SUBJECT_PREFIX
+from tunga_utils import mandrill_utils
 from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.models import ContactRequest
 from tunga_utils.hubspot_utils import create_hubspot_engagement
@@ -80,21 +81,35 @@ def send_mail(subject, template_prefix, to_emails, context, bcc=None, cc=None, *
 def send_contact_request_email(instance):
     instance = clean_instance(instance, ContactRequest)
 
-    subject = "New {} Request".format(instance.item and 'Offer' or 'Contact')
-    msg_suffix = 'wants to know more about Tunga.'
-    if instance.item:
-        item_name = instance.get_item_display()
-        subject = '%s (%s)' % (subject, item_name)
-        msg_suffix = 'requested for "%s"' % item_name
-    to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
+    if instance.body:
+        merge_vars = [
+            mandrill_utils.create_merge_var('full_name', instance.fullname),
+            mandrill_utils.create_merge_var('email', instance.email),
+            mandrill_utils.create_merge_var('message', instance.body),
+        ]
 
-    ctx = {
-        'email': instance.email,
-        'message': '%s %s ' % (
-            instance.email,
-            msg_suffix
+        mandrill_utils.send_email(
+            '73_Platform-guest-emails',
+            TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS,
+            merge_vars=merge_vars
         )
-    }
-    if send_mail(subject, 'tunga/email/contact_request_message', to, ctx):
-        instance.email_sent_at = datetime.datetime.utcnow()
-        instance.save()
+    else:
+        subject = "New {} Request".format(instance.item and 'Offer' or 'Contact')
+        msg_suffix = 'wants to know more about Tunga.'
+        if instance.item:
+            item_name = instance.get_item_display()
+            subject = '%s (%s)' % (subject, item_name)
+            msg_suffix = 'requested for "%s"' % item_name
+        to = TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS
+
+        ctx = {
+            'email': instance.email,
+            'message': '%s %s ' % (
+                instance.email,
+                msg_suffix
+            )
+        }
+
+        if send_mail(subject, 'tunga/email/contact_request_message', to, ctx):
+            instance.email_sent_at = datetime.datetime.utcnow()
+            instance.save()

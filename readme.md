@@ -14,9 +14,6 @@ python manage.py initial_tunga_integration_events
 2. Install [Redis](https://redis.io/)
 3. Install [WeazyPrint](http://weasyprint.org/) (PDF generation)
 
-# Coding Guide
-* Built with [Django](https://www.djangoproject.com/) and [Django REST framework](http://www.django-rest-framework.org/)
-
 # Development
 1. run these commands from project root
 ```
@@ -43,7 +40,7 @@ Install [Ansible](https://www.ansible.com/)
 2. Run the following commands
 ```
 cd .ansible
-ansible-playbook deploy.yml -i env/test
+ansible-playbook deploy.yml -i env/sandbox
 ```
 
 ## Production

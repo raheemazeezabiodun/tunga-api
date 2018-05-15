@@ -1,2 +1,0 @@
-[apiservers]
-api_test ansible_ssh_host=test.tunga.io ansible_ssh_port=54892

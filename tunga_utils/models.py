@@ -16,7 +16,7 @@ from tunga import settings
 from tunga_utils.constants import USER_TYPE_DEVELOPER, RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
     RATING_CRITERIA_SPEED, MONTHS, CONTACT_REQUEST_ITEM_ONBOARDING, CONTACT_REQUEST_ITEM_PROJECT, \
     CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF
-from tunga_utils.validators import validate_year
+from tunga_utils.validators import validate_year, validate_file_size
 
 
 @python_2_unicode_compatible
@@ -56,7 +56,7 @@ class AbstractExperience(models.Model):
 
 @python_2_unicode_compatible
 class GenericUpload(models.Model):
-    file = models.FileField(verbose_name='Upload', upload_to='uploads/%Y/%m/%d')
+    file = models.FileField(verbose_name='Upload', upload_to='uploads/%Y/%m/%d', validators=[validate_file_size])
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name=_('content type'))
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -101,11 +101,13 @@ class ContactRequest(models.Model):
         max_length=50, choices=CONTACT_REQUEST_ITEM_CHOICES, blank=True, null=True,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in CONTACT_REQUEST_ITEM_CHOICES])
     )
+    fullname = models.CharField(max_length=50, blank=True, null=True)
+    body = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     email_sent_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return '%s on %s' % (self.email, self.created_at)
+        return '{} on {}'.format(self.email, self.created_at)
 
 
 RATING_CRITERIA_CHOICES = (
@@ -138,8 +140,19 @@ class Rating(models.Model):
         unique_together = ('content_type', 'object_id', 'criteria', 'created_by')
 
 
-def generate_excerpt(source):
-    try:
-        return strip_tags(re.sub(r'<br\s*/>', '\n', source)).strip()
-    except:
-        return None
+@python_2_unicode_compatible
+class SiteMeta(models.Model):
+    meta_key = models.CharField(max_length=200, unique=True)
+    meta_value = models.TextField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, blank=True, null=True,
+        on_delete=models.DO_NOTHING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{} - {}'.format(self.meta_key, self.meta_value)
+
+    class Meta:
+        ordering = ['created_at']

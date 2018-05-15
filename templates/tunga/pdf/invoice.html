@@ -28,9 +28,13 @@
                                         {% if invoice.client.profile.postal_code and invoice.client.profile.city %}
                                             , {% endif %}{{ invoice.client.profile.city | default:'' }}<br/>
                                 {{ invoice.client.profile.country_name | default:'' }}
+                                
                                 {% if location == "europe" %}
-                                <br/>
-                                VAT no: {{ invoice.client.profile.vat_number | default:'' }}
+                                    <br/>
+                                    VAT no: {{ invoice.client.profile.vat_number | default:'' }}
+                                {% elif location == "world" and invoice.client.profile.vat_number %}
+                                    <br/>
+                                    VAT no: {{ invoice.client.profile.vat_number | default:'' }}
                                 {% endif %}
                             </div>
 
@@ -84,14 +88,7 @@
                             <tr>
                                 <td>{% if invoice_type == "developer" %}Tunga fee for {% endif %}{{ invoice.title }}</td>
                                 <td>
-                                    {{ invoice.amount.currency | safe }}
-                                    {% if invoice_type == "client" %}
-                                        {{ invoice.amount.invoice_client | floatformat:2 }}
-                                    {% elif invoice_type == "developer" %}
-                                        {{ invoice.amount.invoice_developer | floatformat:2 }}
-                                    {% elif invoice_type == "tunga" %}
-                                        {{ developer_info.amount.invoice_tunga | floatformat:2 }}
-                                    {% endif %}
+                                    {{ invoice.amount.currency | safe }}{% if invoice_type == "client" %}{{ invoice.amount.invoice_client | floatformat:2 }}{% elif invoice_type == "developer" %}{{ developer_info.amount.invoice_developer | floatformat:2 }}{% elif invoice_type == "tunga" %}{{ developer_info.amount.invoice_tunga | floatformat:2 }}{% endif %}
                                 </td>
                             </tr>
 
@@ -101,12 +98,7 @@
                             <tr class="top-border">
                                 <td>Payment costs</td>
                                 <td>
-                                    {{ invoice.amount.currency | safe }}
-                                    {% if invoice_type == "client" %}
-                                        {{ invoice.amount.processing | floatformat:2 }}
-                                    {% else %}
-                                        {{ developer_info.amount.processing | floatformat:2 }}
-                                    {% endif %}
+                                    {{ invoice.amount.currency | safe }}{% if invoice_type == "client" %}{{ invoice.amount.processing | floatformat:2 }}{% else %}{{ developer_info.amount.processing | floatformat:2 }}{% endif %}
                                 </td>
                             </tr>
                             {% endif %}
@@ -114,16 +106,8 @@
                             <tr class="top-border">
                                 <td>Subtotal</td>
                                 <td>
-                                    {{ invoice.amount.currency | safe }}
-                                    {% if invoice_type == "client" %}
-                                        {{ invoice.amount.total_invoice_client | floatformat:2 }}
-                                    {% elif invoice_type == "developer" %}
-                                        {{ developer_info.amount.total_invoice_developer | floatformat:2 }}
-                                    {% elif invoice_type == "tunga" %}
-                                        {{ developer_info.amount.total_invoice_tunga | floatformat:2 }}
-                                    {% else %}
-                                        {{ developer_info.amount.total | floatformat:2 }}
-                                    {% endif %}</td>
+                                    {{ invoice.amount.currency | safe }}{% if invoice_type == "client" %}{{ invoice.amount.total_invoice_client | floatformat:2 }}{% elif invoice_type == "developer" %}{{ developer_info.amount.total_invoice_developer | floatformat:2 }}{% elif invoice_type == "tunga" %}{{ developer_info.amount.total_invoice_tunga | floatformat:2 }}{% else %}{{ developer_info.amount.total | floatformat:2 }}{% endif %}
+                                </td>
                             </tr>
 
                             <tr class="top-border">
@@ -132,26 +116,14 @@
                                     0{% endif %}%
                                 </td>
                                 <td>
-                                    {{ invoice.amount.currency | safe }}
-                                    {% if invoice_type == "client" %}
-                                        {{ invoice.amount.vat_amount | floatformat:2 }}
-                                    {% else %}
-                                        0
-                                    {% endif %}
+                                    {{ invoice.amount.currency | safe }}{% if invoice_type == "client" %}{{ invoice.amount.vat_amount | floatformat:2 }}{% else %}0{% endif %}
                                 </td>
                             </tr>
 
                             <tr class="top-border">
                                 <th>Total</th>
                                 <th>
-                                    {{ invoice.amount.currency | safe }}
-                                    {% if invoice_type == "client" %}
-                                        {{ invoice.amount.total_invoice_client_plus_tax | floatformat:2 }}
-                                    {% elif invoice_type == "developer" %}
-                                        {{ developer_info.amount.total_invoice_developer | floatformat:2 }}
-                                    {% elif invoice_type == "tunga" %}
-                                        {{ developer_info.amount.total_invoice_tunga | floatformat:2 }}
-                                    {% endif %}
+                                    {{ invoice.amount.currency | safe }}{% if invoice_type == "client" %}{{ invoice.amount.total_invoice_client_plus_tax | floatformat:2 }}{% elif invoice_type == "developer" %}{{ developer_info.amount.total_invoice_developer | floatformat:2 }}{% elif invoice_type == "tunga" %}{{ developer_info.amount.total_invoice_tunga | floatformat:2 }}{% endif %}
                                 </th>
                             </tr>
                         </table>

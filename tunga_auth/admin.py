@@ -56,7 +56,15 @@ class TungaUserAdmin(UserAdmin):
         pseudo_buffer = Echo()
         writer = csv.writer(pseudo_buffer)
 
+        query = dict()
+
         filter_type = request.GET.get('type__exact', None)
+        b = request.POST
+        for key in self.list_filter:
+            field_filter = '{}__exact'.format(key)
+            if field_filter in request.GET.keys():
+                query[field_filter] = request.GET.get(field_filter)
+        print(request.GET)
 
         report_header = [
             "First Name", "Last Name", "E-mail", "Phone Number", "User Type",
@@ -68,7 +76,7 @@ class TungaUserAdmin(UserAdmin):
             report_header.append("Company Reg. Number")
 
         report_rows = [report_header]
-        for user in queryset:
+        for user in self.model.objects.filter(**query):
             phone_number = user.profile and user.profile.phone_number or ""
             user_info = [
                 user.first_name and user.first_name.encode('utf-8') or '',

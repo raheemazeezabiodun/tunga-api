@@ -18,16 +18,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '!8g-9plb-5pa795jxv4@f18fu-+j^h2cyk_-?p%4s31eudmmr+'
 
-ALLOWED_HOSTS = ['tunga.io', 'web.tunga.io', 'www.tunga.io']
+ALLOWED_HOSTS = ["*", 'tunga.io', 'web.tunga.io', 'www.tunga.io']
 
 DEBUG = True
-    
+
 # Application definition
 
 INSTALLED_APPS = [
     # Default
     'django.contrib.admin',
-    #'django.contrib.auth',
+    # 'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -195,8 +195,8 @@ LOGIN_URL = '/'
 
 LOGIN_REDIRECT_URL = '/'
 
-EMAIL_SUBJECT_PREFIX = '[Tunga] '
-DEFAULT_FROM_EMAIL = 'hello@tunga.io'
+EMAIL_SUBJECT_PREFIX = '[Tunga Sandbox] '
+DEFAULT_FROM_EMAIL = None
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'localhost'
 EMAIL_USE_TLS = False
@@ -241,6 +241,7 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 RQ_SHOW_ADMIN_LINK = True
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # Third Party
 SERIALIZATION_MODULES = {
@@ -255,7 +256,7 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 ACCOUNT_SIGNUP_FORM_CLASS = 'tunga_auth.forms.SignupForm'
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/'
@@ -269,7 +270,7 @@ SOCIALACCOUNT_PROVIDERS = {
     'facebook': {
         'VERIFIED_EMAIL': True,
     },
-    'github' : {
+    'github': {
         'SCOPE': ['user:email']
     },
     'slack': {
@@ -282,7 +283,7 @@ OAUTH2_PROVIDER = {
     # this is the list of available scopes
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 120*24*60*60  # 120 days
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 120 * 24 * 60 * 60  # 120 days
 }
 
 REST_FRAMEWORK = {
@@ -317,19 +318,15 @@ REST_AUTH_REGISTER_SERIALIZERS = {
 
 SWAGGER_SETTINGS = {
     'is_authenticated': True,
-    #'is_superuser': True,
+    # 'is_superuser': True,
     'permission_denied_handler': 'tunga_utils.helpers.swagger_permission_denied_handler',
 }
 
-
 # Local
-TUNGA_NAME = 'Tunga'
-TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS = ['bart@tunga.io']
-TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS = ['bart@tunga.io', 'david@tunga.io', 'domieck@tunga.io', 'eric@tunga.io']
+TUNGA_CONTACT_REQUEST_EMAIL_RECIPIENTS = []
+TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS = []
 TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS = TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS
-TUNGA_SHARE_EMAIL = 'admin@tunga.io'
-TUNGA_SHARE_PERCENTAGE = 13
-TUNGA_URL = 'https://tunga.io'
+TUNGA_URL = 'http://sandbox.tunga.io'
 
 TUNGA_FEE_DEV = 19
 TUNGA_FEE_PM = 39
@@ -352,10 +349,10 @@ GITHUB_SCOPES = ['user:email', 'repo', 'admin:repo_hook', 'admin:org_hook']
 
 STRIPE_SECRET = ''
 
-COINBASE_API_KEY = ''
-COINBASE_API_SECRET = ''
-COINBASE_CLIENT_ID = ''
-COINBASE_CLIENT_SECRET = ''
+COINBASE_API_KEY = None
+COINBASE_API_SECRET = None
+COINBASE_CLIENT_ID = None
+COINBASE_CLIENT_SECRET = None
 COINBASE_SCOPES = ['wallet:accounts:read', 'wallet:addresses:create']
 COINBASE_BASE_URL = 'https://www.coinbase.com'
 COINBASE_BASE_API_URL = 'https://api.coinbase.com'
@@ -369,8 +366,8 @@ BITONIC_PAYMENT_COST_PERCENTAGE = 3
 
 BANK_TRANSFER_PAYMENT_COST_PERCENTAGE = 5.5
 
-BITPESA_API_KEY = ''
-BITPESA_API_SECRET = ''
+BITPESA_API_KEY = None
+BITPESA_API_SECRET = None
 BITPESA_API_URL = 'https://api.bitpesa.co/v1/'
 BITPESA_SENDER = None
 
@@ -421,7 +418,6 @@ HUBSPOT_DEFAULT_DEAL_PIPELINE = 'default'
 HUBSPOT_DEFAULT_DEAL_STAGE_NEW_USER = HUBSPOT_DEFAULT_DEAL_STAGE_MEMBER = 'appointmentscheduled'
 HUBSPOT_DOMIECK_OWNER_ID = ''
 
-
 MAILCHIMP_USERNAME = None
 MAILCHIMP_API_KEY = None
 MAILCHIMP_NEW_USER_LIST = None
@@ -432,38 +428,42 @@ MANDRILL_API_KEY = None
 MANDRILL_VAR_SUBJECT = 'subject'
 MANDRILL_VAR_FIRST_NAME = 'first_name'
 
-
 PAYONEER_USERNAME = None
 PAYONEER_PASSWORD = None
 PAYONEER_PARTNER_ID = None
 PAYONEER_API_URL = None
 
 EXACT_DIVISION_CODE = None
+
 EXACT_DOCUMENT_TYPE_SALES_INVOICE = None
 EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE = None
+
 EXACT_JOURNAL_CLIENT_SALES = None
 EXACT_JOURNAL_DEVELOPER_SALES = None
 EXACT_JOURNAL_DEVELOPER_PURCHASE = None
+
 EXACT_PAYMENT_CONDITION_CODE_14_DAYS = None
 EXACT_PAYMENT_CONDITION_CODE_30_DAYS = None
+
 EXACT_VAT_CODE_NL = None
 EXACT_VAT_CODE_EUROPE = None
 EXACT_VAT_CODE_WORLD = None
+
 EXACT_GL_ACCOUNT_CLIENT_FEE = None
 EXACT_GL_ACCOUNT_DEVELOPER_FEE = None
 EXACT_GL_ACCOUNT_TUNGA_FEE = None
-EXACT_GL_ACCOUNT_PAYMENT_COSTS = None
 
 RAVEN_CONFIG = {
     'dsn': '',  # Raven URL here
     # 'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),
 }
 
-try:
-    from .env.dev import *
-except ImportError:
-    from .env.production import *
+UPLOAD_SIZE_LIMIT_MBS = 5 * 1024 * 1024  # 5 MB
 
+try:
+    from .env.local import *
+except ImportError:
+    pass
 
 if DEBUG:
     for template_engine in TEMPLATES:

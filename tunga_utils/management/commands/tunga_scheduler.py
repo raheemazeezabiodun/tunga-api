@@ -26,6 +26,19 @@ def send_message_emails():
     call_command('tunga_send_customer_emails')
 
 
+@scheduler.scheduled_job('interval', days=1)
+def invoice_reminder():
+    # Send unpaid invoice reminders
+    call_command('tunga_invoice_reminder')
+    call_command('tunga_invoice_reminder_escalated')
+
+
+@scheduler.scheduled_job('interval', days=1)
+def exact_sync():
+    # Sync invoices with exact
+    call_command('tunga_exact_sync')
+
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):

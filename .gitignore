@@ -3,7 +3,7 @@
 .vs_code
 static/
 media/
-tunga/*/local*.py
+tunga/env/local*.py
 *.sqlite*
 *.ini
 

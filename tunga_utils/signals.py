@@ -18,6 +18,5 @@ def activity_handler_new_contact_request(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Upload)
 def activity_handler_new_upload(sender, instance, created, **kwargs):
-    t = get_content_type_for_model(Task)
     if created and instance.content_type in [get_content_type_for_model(Channel), get_content_type_for_model(Task)]:
         action.send(instance.user, verb=verbs.UPLOAD, action_object=instance, target=instance.content_object)

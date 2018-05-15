@@ -9,15 +9,26 @@
         repo: '{{ repo }}'
         dest: '{{ checkout_path}}'
         version: '{{ branch }}'
+    - name: make sure server root exists
+      file: path='{{ server_root }}' state=directory
     - name: copy files to server root
       shell: 'rsync -av -R * {{ server_root }}'
       args:
         chdir: '{{ checkout_path }}'
     - name: copy local settings
       shell: 'cp ~/deploy/local_{{ target_environment }}.py {{ server_root }}tunga/env/local.py'
-    - name: remove dev config in production
-      file: path='{{ server_root }}tunga/env/dev.py' state=absent
-      when: target_environment == 'production'
+    - name: copy files to server root
+      shell: 'rsync -av -R * {{ server_root }}'
+      args:
+        chdir: '{{ server_root }}'
+    - name: remove .pyc files apps
+      shell: find tunga_* -name "*.pyc" -delete
+      args:
+        chdir: '{{ server_root }}'
+    - name: remove .pyc files project
+      shell: find tunga -name "*.pyc" -delete
+      args:
+        chdir: '{{ server_root }}'
     - name: install python dependencies
       pip:
         requirements: '{{ server_root }}requirements.txt'

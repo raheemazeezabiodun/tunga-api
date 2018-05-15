@@ -13,6 +13,7 @@ from tunga_utils import bitcoin_utils, coinbase_utils
 from tunga_utils.constants import PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_BTC_WALLET, BTC_WALLET_PROVIDER_COINBASE, \
     USER_TYPE_DEVELOPER, USER_TYPE_PROJECT_OWNER, USER_TYPE_PROJECT_MANAGER, USER_SOURCE_DEFAULT, \
     USER_SOURCE_TASK_WIZARD, STATUS_INITIAL, STATUS_APPROVED, STATUS_DECLINED, STATUS_PENDING
+from tunga_utils.validators import validate_file_size
 
 USER_TYPE_CHOICES = (
     (USER_TYPE_DEVELOPER, 'Developer'),
@@ -36,7 +37,7 @@ PAYONEER_STATUS_CHOICES = (
 class TungaUser(AbstractUser):
     type = models.IntegerField(choices=USER_TYPE_CHOICES, blank=True, null=True)
     is_internal = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='photos/%Y/%m/%d', blank=True, null=True)
+    image = models.ImageField(upload_to='photos/%Y/%m/%d', blank=True, null=True, validators=[validate_file_size])
     verified = models.BooleanField(default=False)
     pending = models.BooleanField(default=True)
     source = models.IntegerField(choices=USER_SOURCE_CHOICES, default=USER_SOURCE_DEFAULT)

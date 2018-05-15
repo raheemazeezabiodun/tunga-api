@@ -1022,7 +1022,7 @@ def notify_parties_of_low_rating_email(instance):
 
 
 @job
-def notify_new_task_invoice_client_email(instance):
+def notify_new_task_invoice_client_email(instance, template_name='69-invoice'):
     instance = clean_instance(instance, TaskInvoice)
 
     to = [instance.user.email]
@@ -1052,12 +1052,12 @@ def notify_new_task_invoice_client_email(instance):
     attachments = [
         dict(
             content=pdf_file_contents,
-            name='Invoice - {}'.format(instance.task.summary),
+            name='Invoice - {}.pdf'.format(instance.task.summary),
             type='application/pdf'
         )
     ]
 
-    mandrill_response = mandrill_utils.send_email('69-invoice', to, merge_vars=merge_vars, attachments=attachments)
+    mandrill_response = mandrill_utils.send_email(template_name, to, merge_vars=merge_vars, attachments=attachments)
     if mandrill_response:
         mandrill_utils.log_emails.delay(mandrill_response, to, deal_ids=[instance.task.hubspot_deal_id])
 

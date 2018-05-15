@@ -603,7 +603,7 @@ def notify_missed_progress_event_slack(instance):
 
     is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
 
-    if instance.status != "missed":
+    if instance.task.archived or instance.status != "missed":
         return
 
     participants = instance.participants
@@ -638,7 +638,7 @@ def notify_missed_progress_event_slack(instance):
                         user.profile and user.profile.phone_number and '\n*Phone Number:* {}'.format(
                             user.profile.phone_number) or ''
                     ) for user in participants
-                    ]
+                ]
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_TUNGA
@@ -999,15 +999,18 @@ def notify_new_task_invoice_admin_slack(instance):
         },
     ]
     if not instance.task.payment_approved:
+        task_approval_url = '{}edit/payment-approval/'.format(task_url)
         if instance.payment_method == TASK_PAYMENT_METHOD_BANK:
             attachments.append({
-                slack_utils.KEY_TITLE: 'No payment approval required.',
-                slack_utils.KEY_TEXT: 'Payment will be completed via bank transfer.',
+                slack_utils.KEY_TITLE: 'Review and approve payment.',
+                slack_utils.KEY_TITLE_LINK: task_approval_url,
+                slack_utils.KEY_TEXT: "Payment will be completed via bank transfer.\n "
+                                      "However, developer payments won't be distributed until the payment"
+                                      " is reviewed and approved.",
                 slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
                 slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
             })
         else:
-            task_approval_url = '{}edit/payment-approval/'.format(task_url)
             attachments.append({
                 slack_utils.KEY_TITLE: 'Review and approve payment.',
                 slack_utils.KEY_TITLE_LINK: task_approval_url,

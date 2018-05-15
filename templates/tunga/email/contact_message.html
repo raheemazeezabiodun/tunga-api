@@ -1,0 +1,14 @@
+{% extends "tunga/email/content.html" %}
+{% load i18n %}
+{% block email_header %}
+    New email from Tunga.
+{% endblock %}
+{% block email_content %}
+    <p>{{ fullname }} said:</p>
+    <p>{{ message }}</p>
+{% endblock %}
+
+{% block signature %}
+    <p>Kind regards,</p>
+    <p>The Tunga Bot</p>
+{% endblock %}
