@@ -1,5 +1,4 @@
 import base64
-from ConfigParser import NoOptionError
 from urllib import urlencode
 
 from exactonline.api import ExactApi
@@ -24,7 +23,7 @@ class ExactStorage(ExactOnlineConfig):
         try:
             return SiteMeta.objects.get(meta_key=self.get_meta_key(section, option)).meta_value
         except:
-            raise NoOptionError()
+            return None
 
     def set(self, section, option, value):
         SiteMeta.objects.update_or_create(meta_key=self.get_meta_key(section, option), defaults=dict(meta_value=value))
