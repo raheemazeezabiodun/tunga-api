@@ -1467,7 +1467,7 @@ class ProgressReport(models.Model):
 
     # Deliverables
     rate_deliverables = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(10)], blank=True, null=True
+        validators=[MinValueValidator(1), MaxValueValidator(5)], blank=True, null=True
     )
 
     # Deadline Info
@@ -1485,7 +1485,7 @@ class ProgressReport(models.Model):
     # Clients only
     deliverable_satisfaction = models.NullBooleanField(blank=True, null=True)
     rate_communication = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(10)], blank=True, null=True
+        validators=[MinValueValidator(1), MaxValueValidator(5)], blank=True, null=True
     )
     pm_communication = models.NullBooleanField(blank=True, null=True)
 
