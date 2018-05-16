@@ -1130,7 +1130,7 @@ class ProgressReportSerializer(
                     )
                 ]
             )
-            rate_deliverables_schema = ('rate_deliverables', range(1, 6))  # 1...5
+            rate_deliverables_schema = ('rate_deliverables', list(range(1, 6)))  # 1...5
 
             if current_user.is_developer:
                 required_fields = [

@@ -249,7 +249,7 @@ class APITaskTestCase(APITestCase):
 
         # Devs can't create reports with invalid values
         dev_report_invalid = copy(dev_report)
-        dev_report_invalid.update(dict(status='bad_status', percentage=101, rate_deliverables=100))
+        dev_report_invalid.update(dict(status='bad_status', percentage=101, rate_deliverables=6))
         response = self.client.post(url, dev_report_invalid)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue('status' in response.data)
