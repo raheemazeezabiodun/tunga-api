@@ -18,7 +18,8 @@ from tunga_tasks import slugs
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, ProgressEvent, ProgressReport, \
     Project, IntegrationMeta, Integration, IntegrationEvent, IntegrationActivity, TASK_PAYMENT_METHOD_CHOICES, \
     Estimate, Quote, WorkActivity, WorkPlan, AbstractEstimate, TaskPayment, ParticipantPayment, \
-    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint, TaskDocument
+    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint, TaskDocument, PROGRESS_REPORT_STATUS_CHOICES, \
+    PROGRESS_REPORT_STUCK_REASON_CHOICES
 from tunga_tasks.signals import application_response, participation_response, task_applications_closed, task_closed, \
     task_integration, estimate_created, estimate_status_changed, quote_status_changed, quote_created, task_approved, \
     task_call_window_scheduled, task_fully_saved, task_details_completed, task_owner_added, task_payment_approved
@@ -27,13 +28,14 @@ from tunga_utils import coinbase_utils, bitcoin_utils
 from tunga_utils.constants import PROGRESS_EVENT_TYPE_MILESTONE, USER_TYPE_PROJECT_OWNER, USER_SOURCE_TASK_WIZARD, \
     TASK_SCOPE_ONGOING, VISIBILITY_CUSTOM, TASK_SCOPE_TASK, TASK_SCOPE_PROJECT, TASK_SOURCE_NEW_USER, STATUS_INITIAL, \
     STATUS_ACCEPTED, STATUS_APPROVED, STATUS_DECLINED, STATUS_REJECTED, STATUS_SUBMITTED, \
-    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
+    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STATUS_STUCK
 from tunga_utils.helpers import clean_meta_value
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, SkillSerializer, \
     CreateOnlyCurrentUserDefault, SimpleUserSerializer, UploadSerializer, DetailAnnotatedModelSerializer, \
     SimpleRatingSerializer, InvoiceUserSerializer, TaskInvoiceSerializer, SimpleUploadSerializer
+from tunga_utils.validators import validate_field_schema
 
 
 class SimpleProjectSerializer(ContentTypeAnnotatedModelSerializer):
@@ -1095,7 +1097,10 @@ class ProgressReportDetailsSerializer(serializers.ModelSerializer):
         fields = ('event',)
 
 
-class ProgressReportSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSerializer):
+class ProgressReportSerializer(
+    ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSerializer,
+    GetCurrentUserAnnotatedSerializerMixin
+):
     user = SimpleUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     status_display = serializers.CharField(required=False, read_only=True, source='get_status_display')
     stuck_reason_display = serializers.CharField(required=False, read_only=True, source='get_stuck_reason_display')
@@ -1106,6 +1111,78 @@ class ProgressReportSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnota
         exclude = ()
         read_only_fields = ('created_at',)
         details_serializer = ProgressReportDetailsSerializer
+
+    def validate(self, attrs):
+        errors = dict()
+
+        current_user = self.get_current_user()
+        if current_user.is_authenticated():
+            BOOLEANS = (True, False)
+            required_fields = []
+
+            status_schema = (
+                'status', [status_item[0] for status_item in PROGRESS_REPORT_STATUS_CHOICES],
+                [
+                    (
+                        [PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STATUS_STUCK],
+                        'stuck_reason',
+                        [stuck_reason_item[0] for stuck_reason_item in PROGRESS_REPORT_STUCK_REASON_CHOICES]
+                    )
+                ]
+            )
+            rate_deliverables_schema = ('rate_deliverables', range(1, 6))  # 1...5
+
+            if current_user.is_developer:
+                required_fields = [
+                    status_schema,
+                    'started_at', 'percentage', 'accomplished',
+                    rate_deliverables_schema,
+                    'todo',
+                    'next_deadline',
+                    (
+                        'next_deadline_meet', BOOLEANS,
+                        [
+                            (False, 'next_deadline_fail_reason')
+                        ]
+                    )
+                ]
+            elif current_user.is_project_manager:
+                required_fields = [
+                    status_schema,
+                    (
+                        'last_deadline_met', BOOLEANS,
+                        [
+                            (False, 'deadline_miss_communicated', BOOLEANS),
+                            (False, 'deadline_report')
+                        ]
+                    ),
+                    'percentage', 'accomplished', 'todo',
+                    'next_deadline',
+                    (
+                        'next_deadline_meet', BOOLEANS,
+                        [
+                            (False, 'next_deadline_fail_reason')
+                        ]
+                    ),
+                    'team_appraisal'
+                ]
+            elif current_user.is_project_owner:
+                required_fields = [
+                    (
+                        'last_deadline_met', BOOLEANS,
+                        [
+                            (False, 'deadline_miss_communicated', BOOLEANS)
+                        ]
+                    ),
+                    ('deliverable_satisfaction', BOOLEANS),
+                    rate_deliverables_schema
+                ]
+
+            errors.update(validate_field_schema(required_fields, attrs, raise_exception=False))
+
+        if errors:
+            raise ValidationError(errors)
+        return attrs
 
 
 class NestedIntegrationMetaSerializer(serializers.ModelSerializer):
