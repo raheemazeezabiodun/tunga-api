@@ -1,5 +1,5 @@
 import base64
-from urllib import urlencode
+from six.moves.urllib_parse import urlencode
 
 from exactonline.api import ExactApi
 from exactonline.exceptions import ObjectDoesNotExist

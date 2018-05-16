@@ -2,7 +2,7 @@
 
 import datetime
 from decimal import Decimal
-from urllib import urlencode, quote_plus
+from six.moves.urllib_parse import urlencode, quote_plus
 
 import django_rq
 from allauth.socialaccount.providers.github.provider import GitHubProvider

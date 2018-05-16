@@ -74,7 +74,7 @@ requests==2.10.0
 rest-framework-generic-relations==1.1.0
 rq==0.6.0                 # via django-rq
 simplejson==3.10.0        # via django-rest-swagger
-six==1.10.0               # via apscheduler, argon2-cffi, coinbase, django-oauth-toolkit, django-rest-auth, html5lib, python-dateutil
+six==1.10.0
 slacker==0.9.30
 stripe==1.56.0
 tinycss==0.3              # via weasyprint

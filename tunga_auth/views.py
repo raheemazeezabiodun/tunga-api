@@ -1,7 +1,7 @@
 import datetime
 import json
 import re
-from urllib import quote_plus, urlencode
+from six.moves.urllib_parse import urlencode, quote_plus
 
 import requests
 from allauth.socialaccount.providers.facebook.provider import FacebookProvider
