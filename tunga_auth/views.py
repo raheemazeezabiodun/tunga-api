@@ -409,8 +409,6 @@ def slack_connect_callback(request):
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_SLACK))
 
 
-@api_view(http_method_names=['GET'])
-@permission_classes([AllowAny])
 def exact_connect_callback(request):
     code = request.GET.get('code', None)
     if code:
