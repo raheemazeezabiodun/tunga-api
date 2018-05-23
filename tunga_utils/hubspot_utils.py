@@ -126,6 +126,9 @@ def create_hubspot_deal_property(name, label, description, group_name, property_
 
 
 def create_or_update_hubspot_deal(task, trials=0, **kwargs):
+    if task.archived:
+        return None
+    
     properties = []
     associatedVids = []
 
