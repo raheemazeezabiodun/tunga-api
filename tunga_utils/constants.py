@@ -19,6 +19,10 @@ CURRENCY_UGX = 'UGX'
 CURRENCY_TZS = 'TZS'
 CURRENCY_NGN = 'NGN'
 
+CURRENCY_CHOICES_EUR_ONLY = (
+    (CURRENCY_EUR, 'EUR'),
+)
+
 # BTC Wallets
 BTC_WALLET_PROVIDER_COINBASE = 'coinbase'
 
@@ -179,6 +183,16 @@ SKILL_TYPE_STORAGE = 'storage'
 SKILL_TYPE_API = 'api'
 SKILL_TYPE_OTHER = 'other'
 
+SKILL_TYPE_CHOICES = (
+    (SKILL_TYPE_LANGUAGE, 'Language'),
+    (SKILL_TYPE_FRAMEWORK, 'Framework'),
+    (SKILL_TYPE_PLATFORM, 'Platform'),
+    (SKILL_TYPE_LIBRARY, 'Library'),
+    (SKILL_TYPE_STORAGE, 'Storage Engine'),
+    (SKILL_TYPE_API, 'API'),
+    (SKILL_TYPE_OTHER, 'Other')
+)
+
 # File types
 DOC_ESTIMATE = 'estimate'
 DOC_PROPOSAL = 'proposal'
@@ -193,3 +207,25 @@ DOC_OTHER = 'other'
 VAT_LOCATION_NL = 'NL'
 VAT_LOCATION_EUROPE = 'europe'
 VAT_LOCATION_WORLD = 'world'
+
+# Project Types
+PROJECT_TYPE_WEB = 'web'
+PROJECT_TYPE_MOBILE = 'mobile'
+PROJECT_TYPE_OTHER = 'other'
+
+PROJECT_TYPE_CHOICES = (
+    (PROJECT_TYPE_WEB, 'Web'),
+    (PROJECT_TYPE_MOBILE, 'Mobile'),
+    (PROJECT_TYPE_OTHER, 'Other')
+)
+
+# Project Types
+PROJECT_DURATION_2_WEEKS = '2w'
+PROJECT_DURATION_6_MONTHS = '6m'
+PROJECT_DURATION_PERMANENT = 'permanent'
+
+PROJECT_EXPECTED_DURATION_CHOICES = (
+    (PROJECT_DURATION_2_WEEKS, '2 Weeks'),
+    (PROJECT_DURATION_6_MONTHS, '6 Months'),
+    (PROJECT_DURATION_PERMANENT, 'Permanent')
+)
