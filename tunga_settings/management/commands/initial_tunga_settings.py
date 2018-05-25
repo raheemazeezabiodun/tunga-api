@@ -61,6 +61,15 @@ class Command(BaseCommand):
             # Payments
             {'slug': slugs.PAYMENT_REQUEST_EMAIL, 'name': 'Payment requests', 'default_value': True},
             {'slug': slugs.PAYMENT_UPDATE_EMAIL, 'name': 'Payment updates', 'default_value': True},
+
+            # Emails
+            {'slug': slugs.NEWSLETTER_EMAIL, 'name': 'Newsletters', 'default_value': False},
+            {'slug': slugs.EVENT_EMAIL, 'name': 'Events', 'default_value': False},
+
+            # Payments
+            {'slug': slugs.COOKIE_PERFORMANCE_FUNCTIONALITY, 'name': 'Performance and Functionality Cookies', 'default_value': True},
+            {'slug': slugs.COOKIE_ANALYTICS_CUSTOMIZATION, 'name': 'Analytics and Customization Cookies', 'default_value': True},
+            {'slug': slugs.COOKIE_TARGETING_ADVERTISING, 'name': 'Targeting and Advertising Cookies', 'default_value': True},
         ]
 
         num_created = 0

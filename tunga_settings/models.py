@@ -25,7 +25,7 @@ class Setting(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '%s - %s' % (self.slug, self.name)
+        return self.name
 
     class Meta:
         abstract = True

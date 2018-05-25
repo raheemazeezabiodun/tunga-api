@@ -29,3 +29,12 @@ TASK_ACTIVITY_UPDATE_EMAIL = 'task_activity_update_email'
 # Payments
 PAYMENT_REQUEST_EMAIL = 'payment_request_email'
 PAYMENT_UPDATE_EMAIL = 'payment_update_email'
+
+# Email campaigns
+NEWSLETTER_EMAIL = 'newsletter_email'
+EVENT_EMAIL = 'event_email'
+
+# Cookies
+COOKIE_PERFORMANCE_FUNCTIONALITY = 'cookie_performance_functionality'
+COOKIE_ANALYTICS_CUSTOMIZATION = 'cookie_analytics_customization'
+COOKIE_TARGETING_ADVERTISING = 'cookie_targeting_advertising'

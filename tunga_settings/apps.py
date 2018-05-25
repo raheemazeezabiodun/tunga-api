@@ -5,3 +5,4 @@ from django.apps import AppConfig
 
 class TungaSettingsConfig(AppConfig):
     name = 'tunga_settings'
+    verbose_name = 'User Settings'
