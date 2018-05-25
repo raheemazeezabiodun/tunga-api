@@ -1,10 +1,17 @@
 from django.contrib import admin
 
-from tunga_settings.models import UserSwitchSetting
+from tunga_settings.models import UserSwitchSetting, SwitchSetting
 
 
 @admin.register(UserSwitchSetting)
-class MessageAdmin(admin.ModelAdmin):
+class UserSwitchSettingAdmin(admin.ModelAdmin):
     list_display = ('user', 'setting', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('body',)
+    search_fields = ('user',)
+
+
+@admin.register(SwitchSetting)
+class SwitchSettingAdmin(admin.ModelAdmin):
+    list_display = ('slug', 'name', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name',)

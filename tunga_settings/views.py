@@ -23,7 +23,7 @@ class UserSettingsView(generics.GenericAPIView):
         else:
             return None
 
-    def _unauthorized_response(self):
+    def __unauthorized_response(self):
         return Response(
             {'status': 'Unauthorized', 'message': 'You are not logged in'},
             status=status.HTTP_401_UNAUTHORIZED
@@ -32,7 +32,7 @@ class UserSettingsView(generics.GenericAPIView):
     def get(self, request):
         user = self.get_object()
         if user is None:
-            return self._unauthorized_response()
+            return self.__unauthorized_response()
         switches = UserSwitchSetting.objects.filter(user=user)
         visibility = UserVisibilitySetting.objects.filter(user=user)
         settings = {'switches': switches, 'visibility': visibility}
@@ -42,7 +42,7 @@ class UserSettingsView(generics.GenericAPIView):
     def put(self, request):
         user = self.get_object()
         if user is None:
-            return self._unauthorized_response()
+            return self.__unauthorized_response()
 
         switches = request.data.get('switches', None)
         visibility = request.data.get('visibility', None)

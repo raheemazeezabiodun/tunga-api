@@ -23,8 +23,10 @@ NEW_TASK_APPLICATION_EMAIL = 'new_task_application_email'
 TASK_APPLICATION_RESPONSE_EMAIL = 'task_application_response_email'
 NEW_TASK_INVITATION_EMAIL = 'new_task_invitation_email'
 TASK_INVITATION_RESPONSE_EMAIL = 'task_invitation_response_email'
-TASK_PROGRESS_REPORT_REMINDER_EMAIL = 'task_progress_report_reminder_email'
 TASK_ACTIVITY_UPDATE_EMAIL = 'task_activity_update_email'
+TASK_PROGRESS_REPORT_REMINDER_EMAIL = 'task_progress_report_reminder_email'
+NEW_TASK_PROGRESS_REPORT_EMAIL = 'new_task_progress_report_email'
+TASK_SURVEY_REMINDER_EMAIL = 'task_survey_reminder_email'
 
 # Payments
 PAYMENT_REQUEST_EMAIL = 'payment_request_email'

@@ -56,6 +56,16 @@ class Command(BaseCommand):
                 'name': 'Reminders about upcoming reports for milestones and scheduled updates',
                 'default_value': True
             },
+            {
+                'slug': slugs.TASK_SURVEY_REMINDER_EMAIL,
+                'name': 'Reminders about upcoming project surveys',
+                'default_value': True
+            },
+            {
+                'slug': slugs.NEW_TASK_PROGRESS_REPORT_EMAIL,
+                'name': 'Notifications about new progress reports',
+                'default_value': True
+            },
             {'slug': slugs.TASK_ACTIVITY_UPDATE_EMAIL, 'name': 'Task activity updates', 'default_value': True},
 
             # Payments
