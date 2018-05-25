@@ -30,6 +30,7 @@ from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, socia
 from tunga_comments.views import CommentViewSet
 from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_notification
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap, BlogPostViewSet, BlogSitemap
+from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet
@@ -76,6 +77,8 @@ router.register(r'skill-page', SkillPageViewSet)
 router.register(r'skill-approval', SkillsApprovalViewSet)
 router.register(r'blog', BlogPostViewSet)
 router.register(r'task-document', TaskDocumentViewSet)
+router.register(r'invoices', InvoiceViewSet)
+router.register(r'payments', PaymentViewSet)
 
 # Dictionary containing your sitemap classes
 sitemaps = {

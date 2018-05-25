@@ -66,7 +66,7 @@ class Payment(models.Model):
 
     @property
     def type(self):
-        if self.invoice.user.is_developer():
+        if self.invoice.user.is_developer() or self.invoice.user.is_project_manager():
             return "sale"
         elif self.invoice.user.is_project_owner():
             return "purchase"
