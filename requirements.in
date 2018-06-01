@@ -39,3 +39,4 @@ flake8==3.*
 isort==4.*
 beautifulsoup4==4.*
 six==1.*
+slackdown==0.0.3

@@ -75,6 +75,7 @@ rest-framework-generic-relations==1.1.0
 rq==0.6.0                 # via django-rq
 simplejson==3.10.0        # via django-rest-swagger
 six==1.10.0
+slackdown==0.0.3
 slacker==0.9.30
 stripe==1.56.0
 tinycss==0.3              # via weasyprint
