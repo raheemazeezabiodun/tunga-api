@@ -37,12 +37,14 @@ class Command(BaseCommand):
         """
         # command to run: python manage.py tunga_exact_sync
 
-        past_by_2_days = datetime.datetime.utcnow() - relativedelta(days=2)
+        past_by_2_days = datetime.datetime.utcnow() - relativedelta(days=7)
 
         tasks = Task.objects.filter(
             (
-                Q(paid=True) |
-                Q(pay_distributed=True) |
+                (
+                    Q(paid=True) |
+                    (Q(paid_at__gt=past_by_2_days) | Q(paid_at__isnull=True))
+                ) |
                 (
                     Q(taskpayment__participantpayment__isnull=False) &
                     Q(taskpayment__participantpayment__created_at__gt=past_by_2_days)
@@ -55,7 +57,7 @@ class Command(BaseCommand):
                 )
             ),
             closed=True
-        )
+        ).distinct()
 
         for idx, task in enumerate(tasks):
             if not task.invoice:
@@ -93,4 +95,5 @@ class Command(BaseCommand):
                 invoice_types = list(set(invoice_types))
 
             sync_exact_invoices(task, invoice_types=invoice_types, developers=developers)
+
 
