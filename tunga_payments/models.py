@@ -21,7 +21,7 @@ class Invoice(models.Model):
         (INVOICE_TYPE_DEVELOPER, 'Developer'),
     )
 
-    project = models.ForeignKey(to=Project)
+    project = models.ForeignKey(to=Project, related_name='invoices_project', on_delete=models.DO_NOTHING)
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='invoices_user', on_delete=models.DO_NOTHING)
     type = models.CharField(max_length=150, choices=type_choices)
     amount = models.IntegerField()

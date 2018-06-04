@@ -7,7 +7,7 @@ class InvoiceSerializer(ModelSerializer):
     class Meta:
         model = Invoice
         fields = ('id', 'project', 'user', 'type', 'amount', 'currency', 'tax_rate',
-                  'processing_fee', 'created_by', 'number', 'batch_ref')
+                  'processing_fee', 'created_by', 'number', 'batch_ref', 'tax_amount', 'paid')
 
 
 class PaymentSerializer(ModelSerializer):
