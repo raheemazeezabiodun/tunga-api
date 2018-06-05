@@ -5,6 +5,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from dry_rest_permissions.generics import allow_staff_or_superuser
 from six import python_2_unicode_compatible
 
 from tunga import settings
@@ -45,6 +46,34 @@ class Invoice(models.Model):
         else:
             return False
 
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return request.user == self.user
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_owner
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_create_permission(request):
+        return request.user.is_project_owner
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_update_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.user
+
     def __str__(self):
         return "%s Paid: %s" % (self.project.title, self.paid)
 
@@ -75,3 +104,31 @@ class Payment(models.Model):
 
     def __str__(self):
         return "%s Amount: %s" % (self.invoice.project.title, self.amount)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return request.user == self.user
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_owner
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_create_permission(request):
+        return request.user.is_project_owner
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_update_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.user
