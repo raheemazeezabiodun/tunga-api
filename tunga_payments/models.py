@@ -34,17 +34,11 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     number = models.CharField(max_length=150)
     batch_ref = models.CharField(max_length=150, default=uuid.uuid4)
+    paid = models.BooleanField(default=False)
 
     @property
     def tax_amount(self):
         return (self.amount * self.tax_rate) / 100
-
-    @property
-    def paid(self):
-        if Payment.objects.filter(invoice_id=self.id).exists():
-            return True
-        else:
-            return False
 
     @staticmethod
     @allow_staff_or_superuser
@@ -104,6 +98,12 @@ class Payment(models.Model):
 
     def __str__(self):
         return "%s Amount: %s" % (self.invoice.project.title, self.amount)
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.invoice:
+            self.invoice.paid = True
+            self.invoice.save()
+        super(Payment, self).save(force_insert, force_update, using, update_fields)
 
     @staticmethod
     @allow_staff_or_superuser
