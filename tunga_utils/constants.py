@@ -77,6 +77,12 @@ STATUS_DECLINED = 'declined'
 STATUS_CANCELED = 'canceled'
 STATUS_RETRY = 'retry'
 
+REQUEST_STATUS_CHOICES = (
+    (STATUS_INITIAL, 'Initial'),
+    (STATUS_ACCEPTED, 'Accepted'),
+    (STATUS_REJECTED, 'Rejected')
+)
+
 # Request Statuses
 REQUEST_STATUS_INITIAL = 0
 REQUEST_STATUS_ACCEPTED = 1

@@ -81,7 +81,7 @@ UPDATE_SCHEDULE_CHOICES = (
 @python_2_unicode_compatible
 class Project(models.Model):
     # This model is deprecated ... the task model is now used for both tasks and projects
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='projects_created', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='legacy_projects_created', on_delete=models.DO_NOTHING)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     deadline = models.DateTimeField(blank=True, null=True)
