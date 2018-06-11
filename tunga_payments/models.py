@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 import uuid
 
 from django.contrib.auth.models import User
@@ -9,9 +10,9 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 from six import python_2_unicode_compatible
 
 from tunga import settings
-from tunga_projects.models import Project
+from tunga_projects.models import Project, Participation
 from tunga_utils.constants import TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, TASK_PAYMENT_METHOD_BITCOIN, \
-    TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_CLIENT, INVOICE_TYPE_TUNGA, INVOICE_TYPE_DEVELOPER
+    TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_CLIENT, INVOICE_TYPE_TUNGA, INVOICE_TYPE_DEVELOPER, STATUS_ACCEPTED
 
 
 @python_2_unicode_compatible
@@ -32,9 +33,17 @@ class Invoice(models.Model):
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='invoices_created_by',
                                    on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
+    approved = models.CharField(max_length=150, choices=type_choices, null=True, blank=True)
     number = models.CharField(max_length=150)
     batch_ref = models.CharField(max_length=150, default=uuid.uuid4)
     paid = models.BooleanField(default=False)
+    paid_at = models.DateTimeField(null=True, blank=True, )
+    title = models.CharField(max_length=150, null=True, blank=True, )
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not self.title:
+            self.title = self.project.title
+        super(Invoice, self).save(force_insert, force_update, using, update_fields)
 
     @property
     def tax_amount(self):
@@ -47,7 +56,17 @@ class Invoice(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return request.user == self.user
+        if request.user == self.user or request.user == self.invoice.project.owner:
+            return True
+        elif request.user.is_project_manager and self.invoice.project.pm == request.user:
+            return True
+        elif request.user.is_admin:
+            return True
+        elif request.user.is_developer and Participation.objects.filter(user=request.user, project=self.invoice.project,
+                                                                        status=STATUS_ACCEPTED).count() > 0:
+            return True
+        else:
+            return False
 
     @staticmethod
     @allow_staff_or_superuser
@@ -102,17 +121,27 @@ class Payment(models.Model):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.invoice:
             self.invoice.paid = True
+            self.invoice.paid_at = datetime.datetime.now()
             self.invoice.save()
         super(Payment, self).save(force_insert, force_update, using, update_fields)
 
-    @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
         return True
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return request.user == self.user
+        if request.user == self.user or request.user == self.invoice.project.owner:
+            return True
+        elif request.user.is_project_manager and self.invoice.project.pm == request.user:
+            return True
+        elif request.user.is_admin:
+            return True
+        elif request.user.is_developer and Participation.objects.filter(user=request.user, project=self.invoice.project,
+                                                                        status=STATUS_ACCEPTED).count() > 0:
+            return True
+        else:
+            return False
 
     @staticmethod
     @allow_staff_or_superuser
