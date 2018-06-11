@@ -19,6 +19,13 @@ class InvoiceViewSet(ModelViewSet):
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS
 
+    def get_serializer(self, *args, **kwargs):
+        if "data" in kwargs:
+            data = kwargs["data"]
+            if isinstance(data, list):
+                kwargs["many"] = True
+        return super(InvoiceViewSet, self).get_serializer(*args, **kwargs)
+
 
 class PaymentViewSet(ModelViewSet):
     serializer_class = PaymentSerializer
