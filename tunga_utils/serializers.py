@@ -6,7 +6,7 @@ from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 from rest_framework.fields import SkipField
 
-from tunga_profiles.models import Skill, City, UserProfile, Education, Work, Connection, BTCWallet
+from tunga_profiles.models import Skill, City, UserProfile, Education, Work, Connection, BTCWallet, Company
 from tunga_profiles.utils import profile_check
 from tunga_tasks.models import TaskInvoice
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
@@ -105,6 +105,19 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
+        exclude = ('user',)
+
+
+class SimpleCompanySerializer(serializers.ModelSerializer):
+    city = serializers.CharField()
+    skills = SkillSerializer(many=True)
+    country = CountryField()
+    country_name = serializers.CharField()
+    location = serializers.CharField()
+    skills_details = SkillsDetailsSerializer()
+
+    class Meta:
+        model = Company
         exclude = ('user',)
 
 

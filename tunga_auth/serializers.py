@@ -23,7 +23,7 @@ from tunga_profiles.models import Connection, DeveloperApplication, UserProfile,
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
 from tunga_utils.serializers import SimpleProfileSerializer, SimpleUserSerializer, SimpleWorkSerializer, \
-    SimpleEducationSerializer, SimpleConnectionSerializer
+    SimpleEducationSerializer, SimpleConnectionSerializer, SimpleCompanySerializer
 
 
 class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixin):
@@ -33,6 +33,7 @@ class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixi
     is_project_owner = serializers.BooleanField(read_only=True, required=False)
     is_project_manager = serializers.BooleanField(read_only=True, required=False)
     profile = SimpleProfileSerializer(read_only=True, required=False)
+    company = SimpleCompanySerializer(read_only=True, required=False)
     work = SimpleWorkSerializer(many=True, source='work_set', read_only=True, required=False)
     education = SimpleEducationSerializer(many=True, source='education_set', read_only=True, required=False)
     can_connect = serializers.SerializerMethodField(read_only=True, required=False)
