@@ -18,9 +18,10 @@ from tunga_messages.utils import channel_new_messages_filter
 from tunga_profiles.filterbackends import ConnectionFilterBackend
 from tunga_profiles.filters import EducationFilter, WorkFilter, ConnectionFilter, DeveloperApplicationFilter, \
     DeveloperInvitationFilter
-from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation
+from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation, \
+    Company
 from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, WorkSerializer, ConnectionSerializer, \
-    DeveloperApplicationSerializer, DeveloperInvitationSerializer
+    DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer
 from tunga_tasks.models import Task
 from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
@@ -43,6 +44,24 @@ class ProfileView(generics.CreateAPIView, generics.RetrieveUpdateDestroyAPIView)
         if user is not None and user.is_authenticated():
             try:
                 return user.userprofile
+            except:
+                pass
+        return None
+
+
+class CompanyView(generics.CreateAPIView, generics.RetrieveUpdateDestroyAPIView):
+    """
+    User Company Info Resource
+    """
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+
+    def get_object(self):
+        user = self.request.user
+        if user is not None and user.is_authenticated():
+            try:
+                return user.company
             except:
                 pass
         return None

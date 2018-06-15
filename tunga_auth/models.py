@@ -135,6 +135,13 @@ class TungaUser(AbstractUser):
             return None
 
     @property
+    def company(self):
+        try:
+            return self.company
+        except:
+            return None
+
+    @property
     def payment_method(self):
         if not self.profile:
             return None

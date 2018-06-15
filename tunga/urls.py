@@ -32,7 +32,7 @@ from tunga_messages.views import MessageViewSet, ChannelViewSet, slack_customer_
 from tunga_pages.views import SkillPageViewSet, SkillPagesSitemap, BlogPostViewSet, BlogSitemap
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
-    DeveloperInvitationViewSet
+    DeveloperInvitationViewSet, CompanyView
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, ProjectViewSet, \
@@ -106,6 +106,7 @@ urlpatterns = [
     url(r'^api/me/account/', AccountInfoView.as_view(), name='account-info'),
     url(r'^api/me/user/', UserDetailsView.as_view(), name='user-info'),
     url(r'^api/me/profile/', ProfileView.as_view(), name='profile-info'),
+    url(r'^api/me/company/', CompanyView.as_view(), name='company-info'),
     url(r'^api/me/settings/', UserSettingsView.as_view(), name='user-settings'),
     url(r'^api/me/notification/', NotificationView.as_view(), name='user-notifications'),
     url(r'^api/me/app/(?P<provider>\w+)/repos/$', RepoListView.as_view(), name="repo-list"),

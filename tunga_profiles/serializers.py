@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation, \
-    Skill
+    Skill, Company
 from tunga_profiles.notifications import send_developer_invited_email
 from tunga_profiles.signals import user_profile_updated
 from tunga_utils.constants import PAYMENT_METHOD_MOBILE_MONEY, PAYMENT_METHOD_BTC_ADDRESS, SKILL_TYPE_OTHER
@@ -108,6 +108,96 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
                 user.first_name = first_name or user.first_name
                 user.last_name = last_name or user.last_name
                 user.save()
+
+    def save_skills(self, profile, skills):
+        if skills is not None:
+            profile.skills = skills
+            profile.save()
+
+    def save_city(self, profile, city):
+        if city:
+            profile.city = city
+            profile.save()
+
+    def save_skill_categories(self, skill_categories):
+        if skill_categories is not None:
+            for category in skill_categories:
+                if category is not SKILL_TYPE_OTHER:
+                    for skill in skill_categories[category]:
+                        try:
+                            Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
+                        except:
+                            pass
+
+
+class CompanyDetailsSerializer(SimpleProfileSerializer):
+    user = SimpleUserSerializer()
+
+    skills_details = SkillsDetailsSerializer()
+
+    class Meta:
+        model = Company
+        fields = ('user', 'city', 'skills', 'skills_details')
+
+
+class CompanySerializer(DetailAnnotatedModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    first_name = serializers.CharField(required=False, write_only=True, max_length=20)
+    last_name = serializers.CharField(required=False, write_only=True, max_length=20)
+    city = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    skills = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    skills_details = SkillsDetailsSerializer(required=False, allow_null=True)
+    skill_categories = serializers.JSONField(required=False, write_only=True)
+    country = CountryField(required=False)
+
+    class Meta:
+        model = Company
+        exclude = ()
+        details_serializer = CompanyDetailsSerializer
+
+    def validate(self, attrs):
+        payment_method = attrs.get('payment_method', None)
+        if payment_method == PAYMENT_METHOD_MOBILE_MONEY:
+            mobile_money_cc = attrs.get('mobile_money_cc', None)
+            mobile_money_number = attrs.get('mobile_money_number', None)
+            if not mobile_money_cc:
+                raise ValidationError({'mobile_money_cc': 'Enter the country code for your mobile number'})
+            if not mobile_money_number:
+                raise ValidationError({'mobile_money_number': 'Enter your mobile money number'})
+        elif payment_method == PAYMENT_METHOD_BTC_ADDRESS:
+            if not attrs.get('btc_address', None):
+                raise ValidationError({'btc_address': 'Enter a bitcoin address'})
+        return attrs
+
+    def save_profile(self, validated_data, instance=None):
+        skills = None
+        city = None
+        skill_categories = None
+
+        if 'skills' in validated_data:
+            skills = validated_data.pop('skills')
+        if 'city' in validated_data:
+            city = validated_data.pop('city')
+        if 'skill_categories' in validated_data:
+            skill_categories = validated_data.pop('skill_categories')
+
+        if instance:
+            initial_skills = [skill.name for skill in instance.skills.all()]
+            list.sort(initial_skills)
+            instance = super(CompanySerializer, self).update(instance, validated_data)
+        else:
+            instance = super(CompanySerializer, self).create(validated_data)
+        self.save_skills(instance, skills)
+        self.save_city(instance, city)
+        self.save_skill_categories(skill_categories)
+
+        return instance
+
+    def create(self, validated_data):
+        return self.save_profile(validated_data)
+
+    def update(self, instance, validated_data):
+        return self.save_profile(validated_data, instance)
 
     def save_skills(self, profile, skills):
         if skills is not None:
