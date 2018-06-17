@@ -69,7 +69,7 @@ class SimpleBTCWalletSerializer(serializers.ModelSerializer):
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
-    company = serializers.CharField(read_only=True, required=False, source='userprofile.company')
+    company = serializers.SerializerMethodField(required=False, read_only=True)
     can_contribute = serializers.SerializerMethodField(required=False, read_only=True)
 
     class Meta:
@@ -83,6 +83,15 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
     def get_can_contribute(self, obj):
         return profile_check(obj)
+
+    def get_company(self, obj):
+        try:
+            if obj.company:
+                return obj.company.name
+        except:
+            if obj.profile:
+                return obj.profile.company
+        return
 
 
 class SkillsDetailsSerializer(serializers.Serializer):

@@ -69,7 +69,7 @@ class VerifyUserView(views.APIView):
                 {'status': 'Unauthorized', 'message': 'You are not logged in'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-        serializer = SimpleUserSerializer(user)
+        serializer = UserSerializer(user)
         return Response(serializer.data)
 
 
