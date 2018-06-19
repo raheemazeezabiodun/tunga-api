@@ -34,9 +34,11 @@ from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet, CompanyView
+from tunga_projects.views import ProjectViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
-from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, ProjectViewSet, \
+from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, \
+    ProjectViewSet as LegacyProjectViewSet, \
     ProgressReportViewSet, ProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
@@ -49,7 +51,8 @@ router = DefaultRouter()
 router.register(r'user', UserViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
-router.register(r'project', ProjectViewSet)
+router.register(r'projects', ProjectViewSet)
+router.register(r'project', LegacyProjectViewSet)
 router.register(r'work', WorkViewSet)
 router.register(r'task', TaskViewSet)
 router.register(r'application', ApplicationViewSet)

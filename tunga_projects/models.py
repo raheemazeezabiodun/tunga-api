@@ -44,6 +44,9 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ['-created_at']
+
 
 @python_2_unicode_compatible
 class Participation(models.Model):
