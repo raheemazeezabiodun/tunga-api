@@ -56,13 +56,15 @@ class Invoice(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        if request.user == self.user or request.user == self.invoice.project.owner:
+        if request.user == self.user or request.user == self.project.owner:
             return True
-        elif request.user.is_project_manager and self.invoice.project.pm == request.user:
+        elif request.user.is_project_manager and self.project.pm == request.user:
+            return True
+        elif request.user.is_project_manager and self.project.user == request.user:
             return True
         elif request.user.is_admin:
             return True
-        elif request.user.is_developer and Participation.objects.filter(user=request.user, project=self.invoice.project,
+        elif request.user.is_developer and Participation.objects.filter(user=request.user, project=self.project,
                                                                         status=STATUS_ACCEPTED).count() > 0:
             return True
         else:
@@ -70,22 +72,22 @@ class Invoice(models.Model):
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_write_permission(request):
-        return request.user.is_project_owner
+    def has_write_permission(self):
+        return False
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_create_permission(request):
-        return request.user.is_project_owner
+    def has_create_permission(self):
+        return False
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_update_permission(request):
+    def has_update_permission(self):
         return True
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
-        return request.user == self.user
+        return False
 
     def __str__(self):
         return "%s Paid: %s" % (self.project.title, self.paid)
@@ -125,15 +127,18 @@ class Payment(models.Model):
             self.invoice.save()
         super(Payment, self).save(force_insert, force_update, using, update_fields)
 
+    @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
         return True
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        if request.user == self.user or request.user == self.invoice.project.owner:
+        if request.user == self.user or request.user == self.project.owner:
             return True
         elif request.user.is_project_manager and self.invoice.project.pm == request.user:
+            return True
+        elif request.user.is_project_manager and self.invoice.project.user == request.user:
             return True
         elif request.user.is_admin:
             return True
@@ -145,19 +150,19 @@ class Payment(models.Model):
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_write_permission(request):
-        return request.user.is_project_owner
+    def has_write_permission(self):
+        return False
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_create_permission(request):
-        return request.user.is_project_owner
+    def has_create_permission(self):
+        return False
 
     @staticmethod
     @allow_staff_or_superuser
-    def has_update_permission(request):
+    def has_update_permission(self):
         return True
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
-        return request.user == self.user
+        return False
