@@ -2,12 +2,11 @@
 from __future__ import unicode_literals
 
 import tagulous.models
-from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from tunga import settings
-from tunga_skills.models import Skill
+from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES
 from tunga_utils.models import Rating
@@ -44,6 +43,9 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 @python_2_unicode_compatible
