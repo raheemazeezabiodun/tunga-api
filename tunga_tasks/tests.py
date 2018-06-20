@@ -221,6 +221,12 @@ class APITaskTestCase(APITestCase):
         response = self.client.post(url, dev_report)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+        # Devs can create reports with percentage completed as zero
+        dev_report_zero = copy(dev_report)
+        dev_report_zero['percentage'] = 0
+        response = self.client.post(url, dev_report_zero)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
         # Devs can't create reports with missing conditional values
         dev_report_conditionals_missing = copy(dev_report)
         dev_report_conditionals_missing.update(

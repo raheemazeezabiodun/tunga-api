@@ -8,6 +8,8 @@ from weasyprint import HTML
 from tunga.settings import TUNGA_URL, TUNGA_STAFF_LOW_LEVEL_UPDATE_EMAIL_RECIPIENTS, \
     TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS, \
     MANDRILL_VAR_FIRST_NAME
+from tunga_settings.slugs import TASK_SURVEY_REMINDER_EMAIL, NEW_TASK_PROGRESS_REPORT_EMAIL
+from tunga_settings.utils import check_switch_setting
 from tunga_tasks.background import process_invoices
 from tunga_tasks.models import Task, Quote, Estimate, Participation, Application, ProgressEvent, ProgressReport, \
     TaskInvoice
@@ -484,6 +486,9 @@ def remind_progress_event_email(instance):
     if is_client_report and not owner:
         return
 
+    if is_client_report and not check_switch_setting(owner, TASK_SURVEY_REMINDER_EMAIL):
+        return
+
     subject = is_client_report and "Weekly Survey" or "Upcoming {} Update".format(
         instance.task.is_task and 'Task' or 'Project')
 
@@ -533,13 +538,20 @@ def notify_new_progress_report_email(instance):
         instance.user.display_name, is_client_report and "Weekly Survey" or "Progress Report"
     )
 
-    to = is_pm_or_client_report and TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS or [instance.event.task.user.email]
+    to = is_pm_or_client_report and TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS or []
     if is_dev_report:
-        if instance.event.task.owner:
+        if instance.event.task.owner and check_switch_setting(instance.event.task.owner, NEW_TASK_PROGRESS_REPORT_EMAIL):
             to.append(instance.event.task.owner.email)
+        elif instance.event.task.user and check_switch_setting(instance.event.task.user, NEW_TASK_PROGRESS_REPORT_EMAIL):
+            to.append(instance.event.task.user.email)
         admins = instance.event.task.admins
         if admins:
             to.extend([user.email for user in admins])
+
+    if not to:
+        # Should have some recipients
+        return
+
     ctx = {
         'owner': instance.event.task.owner or instance.event.task.user,
         'reporter': instance.user,

@@ -42,7 +42,7 @@ from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationView
     ProgressReportViewSet, ProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
-    TaskDocumentViewSet, InvoiceFiltering, InvoicePayment
+    TaskDocumentViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file
 
 api_schema_view = get_swagger_view(title='Tunga API')
@@ -133,8 +133,6 @@ urlpatterns = [
     url(r'^api/docs/', api_schema_view),
     url(r'^api/payoneer/ipcn/callback/', payoneer_notification, name="payoneer-ipcn-status"),
     url(r'^api/payoneer/', payoneer_sign_up, name="payoneer"),
-    url(r'^api/invoices/filtered/', InvoiceFiltering.as_view(), name="invoice_filtering"),
-    url(r'^api/invoices/pay/', InvoicePayment.as_view(), name="invoice_payments"),
     url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, name='password_reset_confirm'),
     url(r'^$', router.get_api_root_view(), name='backend-root'),

@@ -89,6 +89,38 @@ class AccountInfoView(generics.RetrieveUpdateAPIView):
         else:
             return None
 
+    @detail_route(
+        methods=['post'], url_path='deactivate',
+        renderer_classes=[PDFRenderer, StaticHTMLRenderer],
+        permission_classes=[IsAuthenticated]
+    )
+    def deactivate(self, request):
+        user = self.get_object()
+        if not user:
+            return Response(
+                {'status': 'Unauthorized', 'message': 'You are not an email visitor'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        user.is_active = True
+        user.save()
+        serializer = self.get_serializer(instance=user)
+        return Response(serializer.data)
+
+    @detail_route(
+        methods=['post'], url_path='download',
+        renderer_classes=[PDFRenderer, StaticHTMLRenderer],
+        permission_classes=[AllowAny]
+    )
+    def download(self, request):
+        visitor = self.get_object()
+        if not visitor:
+            return Response(
+                {'status': 'Unauthorized', 'message': 'You are not an email visitor'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        serializer = self.get_serializer(instance=visitor)
+        return Response(serializer.data)
+
 
 class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """
