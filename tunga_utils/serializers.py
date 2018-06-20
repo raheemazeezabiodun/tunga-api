@@ -36,6 +36,40 @@ class ContentTypeAnnotatedModelSerializer(serializers.ModelSerializer):
         return ContentType.objects.get_for_model(self.Meta.model).id
 
 
+class NestedModelSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        return self.save_override(validated_data)
+
+    def update(self, instance, validated_data):
+        return self.save_override(validated_data, instance=instance)
+
+    def save_override(self, validated_data, instance=None):
+        nested_models = []
+        for attribute_key in self.initial_data.keys():
+            # loop through initial data because we need to support readonly fields (only way to bypass write validation)
+            save_method = getattr(self, 'save_nested_{}'.format(attribute_key), None)
+            if save_method:
+                attribute_value = self.initial_data.get(attribute_key, None)
+                if attribute_value:
+                    nested_models.append((save_method, attribute_value))
+                    if attribute_key in validated_data:
+                        # remove attribute from validated data if it exists
+                        validated_data.pop(attribute_key)
+
+        if instance:
+            instance = super(NestedModelSerializer, self).update(instance, validated_data)
+        else:
+            instance = super(NestedModelSerializer, self).create(validated_data)
+
+        for attribute_details in nested_models:
+            save_method = attribute_details[0]
+            attribute_value = attribute_details[1]
+            if save_method and attribute_value:
+                save_method(attribute_value, instance)
+        return instance
+
+
 class DetailAnnotatedModelSerializer(serializers.ModelSerializer):
     details = serializers.SerializerMethodField(read_only=True, required=False)
 
