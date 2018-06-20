@@ -1135,7 +1135,9 @@ class ProgressReportSerializer(
             if current_user.is_developer:
                 required_fields = [
                     status_schema,
-                    'started_at', 'percentage', 'accomplished',
+                    'started_at',
+                    ('percentage', list(range(0, 101))),  # 0...100
+                    'accomplished',
                     rate_deliverables_schema,
                     'todo',
                     'next_deadline',
