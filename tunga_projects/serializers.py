@@ -8,16 +8,16 @@ from tunga_projects.models import Project, Participation, Document
 from tunga_utils.constants import STATUS_INITIAL
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, SimpleUserSerializer, \
-    CreateOnlyCurrentUserDefault, SkillSerializer, NestedModelSerializer, SimplestUserSerializer
+    CreateOnlyCurrentUserDefault, SkillSerializer, NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer
 
 
-class SimpleProjectSerializer(ContentTypeAnnotatedModelSerializer):
+class SimpleProjectSerializer(SimpleModelSerializer):
     class Meta:
         model = Project
         fields = ('id', 'title', 'description')
 
 
-class SimpleParticipationSerializer(ContentTypeAnnotatedModelSerializer):
+class SimpleParticipationSerializer(SimpleModelSerializer):
     user = SimplestUserSerializer()
 
     class Meta:
@@ -25,7 +25,7 @@ class SimpleParticipationSerializer(ContentTypeAnnotatedModelSerializer):
         exclude = ('project',)
 
 
-class SimpleDocumentSerializer(ContentTypeAnnotatedModelSerializer):
+class SimpleDocumentSerializer(SimpleModelSerializer):
     created_by = SimplestUserSerializer()
     download_url = serializers.CharField(read_only=True)
 

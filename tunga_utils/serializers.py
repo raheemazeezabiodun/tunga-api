@@ -29,6 +29,16 @@ class CreateOnlyCurrentUserDefault(serializers.CurrentUserDefault):
         return None
 
 
+class SimpleModelSerializer(serializers.ModelSerializer):
+
+    def to_internal_value(self, data):
+        object_id = data.get('id', None)
+        if object_id:
+            return self.Meta.model.objects.get(pk=object_id)
+        else:
+            return super(SimpleModelSerializer, self).to_internal_value(data)
+
+
 class ContentTypeAnnotatedModelSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField(read_only=True, required=False)
 
@@ -102,9 +112,9 @@ class SimpleBTCWalletSerializer(serializers.ModelSerializer):
         exclude = ('token', 'token_secret')
 
 
-class SimplestUserSerializer(serializers.ModelSerializer):
+class SimplestUserSerializer(SimpleModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
-    
+
     class Meta:
         model = get_user_model()
         fields = (
@@ -120,7 +130,6 @@ class SimplestUserSerializer(serializers.ModelSerializer):
             if obj.profile:
                 return obj.profile.company
         return
-
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
