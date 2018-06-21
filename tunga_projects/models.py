@@ -100,6 +100,28 @@ class Participation(models.Model):
         unique_together = ('user', 'project')
         verbose_name_plural = 'participation'
 
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.project.has_object_read_permission(request)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_manager or request.user.is_project_owner
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        allowed_users = [self.created_by, self.user, self.project.user]
+        for user in [self.project.owner, self.project.pm]:
+            if user:
+                allowed_users.append(user)
+        return request.user in allowed_users
+
 
 @python_2_unicode_compatible
 class Document(models.Model):
