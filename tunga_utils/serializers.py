@@ -103,7 +103,8 @@ class SimpleBTCWalletSerializer(serializers.ModelSerializer):
 
 
 class SimplestUserSerializer(serializers.ModelSerializer):
-
+    company = serializers.SerializerMethodField(required=False, read_only=True)
+    
     class Meta:
         model = get_user_model()
         fields = (
@@ -119,6 +120,7 @@ class SimplestUserSerializer(serializers.ModelSerializer):
             if obj.profile:
                 return obj.profile.company
         return
+
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
