@@ -5,9 +5,9 @@ from dry_rest_permissions.generics import DRYObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from tunga_projects.filters import ProjectFilter, DocumentFilter
-from tunga_projects.models import Project, Document
-from tunga_projects.serializers import ProjectSerializer, DocumentSerializer
+from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationFilter
+from tunga_projects.models import Project, Document, Participation
+from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -19,6 +19,17 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = ProjectFilter
+    filter_backends = DEFAULT_FILTER_BACKENDS
+
+
+class ParticipationViewSet(ModelViewSet):
+    """
+    Participation Resource
+    """
+    queryset = Participation.objects.all()
+    serializer_class = ParticipationSerializer
+    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+    filter_class = ParticipationFilter
     filter_backends = DEFAULT_FILTER_BACKENDS
 
 

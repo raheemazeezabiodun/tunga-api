@@ -34,7 +34,9 @@ class SimpleDocumentSerializer(ContentTypeAnnotatedModelSerializer):
         exclude = ('project',)
 
 
-class ProjectSerializer(NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
+class ProjectSerializer(
+    NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin, ContentTypeAnnotatedModelSerializer
+):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     skills = SkillSerializer(required=False, read_only=True, many=True)
     participation = SimpleParticipationSerializer(required=False, read_only=True, many=True, source='participation_set')
@@ -82,7 +84,18 @@ class ProjectSerializer(NestedModelSerializer, GetCurrentUserAnnotatedSerializer
                     Document.objects.create(**doc_data)
 
 
-class DocumentSerializer(serializers.ModelSerializer):
+class ParticipationSerializer(ContentTypeAnnotatedModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    project = SimpleProjectSerializer()
+    user = SimplestUserSerializer()
+
+    class Meta:
+        model = Participation
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class DocumentSerializer(ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer(required=False, read_only=True)
 

@@ -34,10 +34,10 @@ from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet, CompanyView
-from tunga_projects.views import ProjectViewSet, DocumentViewSet
+from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
-from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, \
+from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet as LegacyParticipationViewSet, TimeEntryViewSet, \
     ProjectViewSet as LegacyProjectViewSet, \
     ProgressReportViewSet, ProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
@@ -48,20 +48,22 @@ from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts
 api_schema_view = get_swagger_view(title='Tunga API')
 
 router = DefaultRouter()
-# v3
+# v3 routes
+router.register(r'users', UserViewSet)
 router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'invoices', InvoiceViewSet)
 router.register(r'payments', PaymentViewSet)
+router.register(r'participation', ParticipationViewSet)
 
-# Legacy
+# Legacy routes
 router.register(r'user', UserViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
 router.register(r'project', LegacyProjectViewSet)
 router.register(r'task', TaskViewSet)
 router.register(r'application', ApplicationViewSet)
-router.register(r'participation', ParticipationViewSet)
+router.register(r'participation', LegacyParticipationViewSet)
 router.register(r'estimate', EstimateViewSet)
 router.register(r'quote', QuoteViewSet)
 router.register(r'sprint', SprintViewSet)

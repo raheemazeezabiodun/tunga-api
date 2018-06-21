@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Q
 
-from tunga_projects.models import Project, Document
+from tunga_projects.models import Project, Document, Participation
 from tunga_utils.filters import GenericDateFilterSet
 
 
@@ -19,6 +19,15 @@ class ProjectFilter(GenericDateFilterSet):
 
     def filter_owner(self, queryset, name, value):
         return queryset.filter(Q(owner=value) | Q(user=value))
+
+
+class ParticipationFilter(GenericDateFilterSet):
+
+    class Meta:
+        model = Participation
+        fields = (
+            'project', 'created_by'
+        )
 
 
 class DocumentFilter(GenericDateFilterSet):
