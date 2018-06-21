@@ -102,6 +102,25 @@ class SimpleBTCWalletSerializer(serializers.ModelSerializer):
         exclude = ('token', 'token_secret')
 
 
+class SimplestUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = (
+            'id', 'username', 'first_name', 'last_name', 'display_name', 'short_name', 'type',
+            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'verified', 'company', 'avatar_url'
+        )
+
+    def get_company(self, obj):
+        try:
+            if obj.company:
+                return obj.company.name
+        except:
+            if obj.profile:
+                return obj.profile.company
+        return
+
+
 class SimpleUserSerializer(serializers.ModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
     can_contribute = serializers.SerializerMethodField(required=False, read_only=True)

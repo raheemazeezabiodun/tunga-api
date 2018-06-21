@@ -34,7 +34,7 @@ from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet, CompanyView
-from tunga_projects.views import ProjectViewSet
+from tunga_projects.views import ProjectViewSet, DocumentViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet, TimeEntryViewSet, \
@@ -48,12 +48,17 @@ from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts
 api_schema_view = get_swagger_view(title='Tunga API')
 
 router = DefaultRouter()
+# v3
+router.register(r'projects', ProjectViewSet)
+router.register(r'documents', DocumentViewSet)
+router.register(r'invoices', InvoiceViewSet)
+router.register(r'payments', PaymentViewSet)
+
+# Legacy
 router.register(r'user', UserViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
-router.register(r'projects', ProjectViewSet)
 router.register(r'project', LegacyProjectViewSet)
-router.register(r'work', WorkViewSet)
 router.register(r'task', TaskViewSet)
 router.register(r'application', ApplicationViewSet)
 router.register(r'participation', ParticipationViewSet)
@@ -80,8 +85,6 @@ router.register(r'skill-page', SkillPageViewSet)
 router.register(r'skill-approval', SkillsApprovalViewSet)
 router.register(r'blog', BlogPostViewSet)
 router.register(r'task-document', TaskDocumentViewSet)
-router.register(r'invoices', InvoiceViewSet)
-router.register(r'payments', PaymentViewSet)
 
 # Dictionary containing your sitemap classes
 sitemaps = {

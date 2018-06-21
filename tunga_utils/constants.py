@@ -199,7 +199,7 @@ SKILL_TYPE_CHOICES = (
     (SKILL_TYPE_OTHER, 'Other')
 )
 
-# File types
+# Document types
 DOC_ESTIMATE = 'estimate'
 DOC_PROPOSAL = 'proposal'
 DOC_PLANNING = 'planning'
@@ -207,6 +207,16 @@ DOC_REQUIREMENTS = 'requirements'
 DOC_WIREFRAMES = 'wireframes'
 DOC_TIMELINE = 'timeline'
 DOC_OTHER = 'other'
+
+PROJECT_DOCUMENT_CHOICES = (
+    (DOC_ESTIMATE, 'Estimate'),
+    (DOC_PROPOSAL, 'Proposal'),
+    (DOC_PLANNING, 'Planning'),
+    (DOC_REQUIREMENTS, 'Requirements Document'),
+    (DOC_WIREFRAMES, 'Wireframes'),
+    (DOC_TIMELINE, 'Timeline'),
+    (DOC_OTHER, 'Other')
+)
 
 
 # VAT Locations

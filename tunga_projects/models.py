@@ -10,7 +10,7 @@ from tunga import settings
 from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
-    STATUS_ACCEPTED
+    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES
 from tunga_utils.models import Rating
 
 
@@ -35,8 +35,9 @@ class Project(models.Model):
     deadline = models.DateTimeField(blank=True, null=True)
     client_survey_enabled = models.BooleanField(default=True)
     pm_updates_enabled = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     archived = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     archived_at = models.DateTimeField(blank=True, null=True)
 
     participants = models.ManyToManyField(
@@ -98,3 +99,47 @@ class Participation(models.Model):
     class Meta:
         unique_together = ('user', 'project')
         verbose_name_plural = 'participation'
+
+
+@python_2_unicode_compatible
+class Document(models.Model):
+    project = models.ForeignKey(Project)
+    type = models.CharField(choices=PROJECT_DOCUMENT_CHOICES, max_length=30)
+    url = models.URLField(blank=True, null=True)
+    file = models.FileField(verbose_name='Upload', upload_to='documents/%Y/%m/%d', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} | {}'.format(self.file_type, self.project)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.project.has_object_read_permission(request)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_manager or request.user.is_project_owner
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.created_by
+
+    @property
+    def download_url(self):
+        if self.file:
+            return self.file.url
+        elif self.url:
+            return self.url
+        return None

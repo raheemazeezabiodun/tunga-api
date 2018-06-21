@@ -2170,7 +2170,7 @@ class TaskDocument(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.event.has_object_read_permission(request)
+        return self.task.has_object_read_permission(request)
 
     @staticmethod
     @allow_staff_or_superuser
