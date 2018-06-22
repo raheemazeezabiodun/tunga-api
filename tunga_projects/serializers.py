@@ -97,7 +97,7 @@ class ParticipationSerializer(ContentTypeAnnotatedModelSerializer):
 
 class DocumentSerializer(ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    project = SimpleProjectSerializer(required=False, read_only=True)
+    project = SimpleProjectSerializer()
 
     class Meta:
         model = Document
