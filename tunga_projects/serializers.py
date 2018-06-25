@@ -1,5 +1,5 @@
-from copy import copy
 import datetime
+from copy import copy
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -7,8 +7,9 @@ from rest_framework import serializers
 from tunga_projects.models import Project, Participation, Document
 from tunga_utils.constants import STATUS_INITIAL
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
-from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, SimpleUserSerializer, \
-    CreateOnlyCurrentUserDefault, SkillSerializer, NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer
+from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateOnlyCurrentUserDefault, \
+    NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer, \
+    SimpleSkillSerializer
 
 
 class SimpleProjectSerializer(SimpleModelSerializer):
@@ -18,6 +19,7 @@ class SimpleProjectSerializer(SimpleModelSerializer):
 
 
 class SimpleParticipationSerializer(SimpleModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     user = SimplestUserSerializer()
 
     class Meta:
@@ -26,7 +28,7 @@ class SimpleParticipationSerializer(SimpleModelSerializer):
 
 
 class SimpleDocumentSerializer(SimpleModelSerializer):
-    created_by = SimplestUserSerializer()
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     download_url = serializers.CharField(read_only=True)
 
     class Meta:
@@ -38,9 +40,9 @@ class ProjectSerializer(
     NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin, ContentTypeAnnotatedModelSerializer
 ):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    skills = SkillSerializer(required=False, read_only=True, many=True)
-    participation = SimpleParticipationSerializer(required=False, read_only=True, many=True, source='participation_set')
-    documents = SimpleDocumentSerializer(required=False, read_only=True, many=True, source='document_set')
+    skills = SimpleSkillSerializer(required=False, read_only=True, many=True)
+    participation = SimpleParticipationSerializer(required=False, many=True, source='participation_set')
+    documents = SimpleDocumentSerializer(required=False, many=True, source='document_set')
 
     class Meta:
         model = Project
@@ -67,21 +69,6 @@ class ProjectSerializer(
 
                 Participation.objects.update_or_create(
                     project=instance, user=item['user'], defaults=defaults)
-
-    def save_nested_documents(self, data, instance):
-        if data:
-            for item in data:
-                doc_data = copy(item)
-                doc_data['project'] = instance
-
-                current_user = self.get_current_user()
-                if current_user and current_user.is_authenticated() and current_user != item.get('user', None):
-                    doc_data['created_by'] = current_user
-
-                if id in doc_data:
-                    Document.objects.filter(pk=doc_data[id]).update(**doc_data)
-                else:
-                    Document.objects.create(**doc_data)
 
 
 class ParticipationSerializer(ContentTypeAnnotatedModelSerializer):

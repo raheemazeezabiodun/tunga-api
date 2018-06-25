@@ -10,7 +10,7 @@ from tunga import settings
 from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
-    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES
+    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER
 from tunga_utils.models import Rating
 
 
@@ -126,16 +126,17 @@ class Participation(models.Model):
 @python_2_unicode_compatible
 class Document(models.Model):
     project = models.ForeignKey(Project)
-    type = models.CharField(choices=PROJECT_DOCUMENT_CHOICES, max_length=30)
+    type = models.CharField(choices=PROJECT_DOCUMENT_CHOICES, max_length=30, default=DOC_OTHER)
     url = models.URLField(blank=True, null=True)
     file = models.FileField(verbose_name='Upload', upload_to='documents/%Y/%m/%d', blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return '{} | {}'.format(self.file_type, self.project)
+        return '{} | {}'.format(self.type, self.project)
 
     class Meta:
         ordering = ['-created_at']

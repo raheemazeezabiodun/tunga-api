@@ -38,6 +38,24 @@ class SimpleModelSerializer(serializers.ModelSerializer):
         else:
             return super(SimpleModelSerializer, self).to_internal_value(data)
 
+    def create(self, validated_data):
+        return self.simple_save_override(validated_data)
+
+    def update(self, instance, validated_data):
+        return self.simple_save_override(validated_data, instance=instance)
+
+    def simple_save_override(self, validated_data, instance=None):
+        object_id = None
+        if instance:
+            object_id = instance.id
+        elif id in validated_data:
+            object_id = validated_data[id]
+        if object_id:
+            instance = self.Meta.model.objects.filter(pk=object_id).update(**validated_data)
+        else:
+            instance = self.Meta.model.objects.create(**validated_data)
+        return instance
+
 
 class ContentTypeAnnotatedModelSerializer(serializers.ModelSerializer):
     content_type = serializers.SerializerMethodField(read_only=True, required=False)
@@ -49,34 +67,88 @@ class ContentTypeAnnotatedModelSerializer(serializers.ModelSerializer):
 class NestedModelSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
-        return self.save_override(validated_data)
+        return self.nested_save_override(validated_data)
 
     def update(self, instance, validated_data):
-        return self.save_override(validated_data, instance=instance)
+        return self.nested_save_override(validated_data, instance=instance)
 
-    def save_override(self, validated_data, instance=None):
-        nested_models = []
-        for attribute_key in self.initial_data.keys():
-            # loop through initial data because we need to support readonly fields (only way to bypass write validation)
-            save_method = getattr(self, 'save_nested_{}'.format(attribute_key), None)
+    def nested_save_override(self, validated_data, instance=None):
+        nested_method_models = []
+        nested_data = []
+
+        field_source_map = dict()
+        for field_key in self.get_fields():
+            field_value = self.get_fields().get(field_key, None)
+            if field_value:
+                source = getattr(field_value, 'source', None)
+                if source:
+                    field_source_map[source] = field_key
+
+        for attribute_key in self.validated_data.keys():
+            clean_attribute_key = field_source_map.get(attribute_key, attribute_key)
+            save_method = getattr(self, 'save_nested_{}'.format(clean_attribute_key), None)
+            attribute_value = self.validated_data.get(attribute_key, None)
             if save_method:
-                attribute_value = self.initial_data.get(attribute_key, None)
+                # Filter nested save model data
                 if attribute_value:
-                    nested_models.append((save_method, attribute_value))
-                    if attribute_key in validated_data:
-                        # remove attribute from validated data if it exists
-                        validated_data.pop(attribute_key)
+                    nested_method_models.append((save_method, attribute_value))
+
+                # remove attribute from validated data if it exists
+                validated_data.pop(attribute_key)
+            elif type(attribute_value) in [dict, list]:
+                # Filter nested data
+                serializer_field = self.get_fields().get(clean_attribute_key, None)
+                if serializer_field:
+                    serializer_field_child = getattr(serializer_field, 'child', None)
+
+                    if serializer_field_child:
+                        serializer_class = serializer_field_child.__class__
+                    else:
+                        serializer_class = serializer_field.__class__
+
+                    if serializer_class:
+                        fk_keys = []
+                        if serializer_class.Meta and serializer_class.Meta.model and self.Meta and self.Meta.model:
+                            for model_field in serializer_class.Meta.model._meta.get_fields():
+                                if model_field.related_model == self.Meta.model:
+                                    fk_keys.append(model_field.name)
+                        if type(attribute_value) is list:
+                            for single_attribute_value in attribute_value:
+                                nested_data.append((clean_attribute_key, single_attribute_value, serializer_class, fk_keys))
+                        else:
+                            nested_data.append((clean_attribute_key, attribute_value, serializer_class, fk_keys))
+
+                # remove attribute from validated data to prevent writable nested non readonly fields error
+                validated_data.pop(attribute_key)
 
         if instance:
             instance = super(NestedModelSerializer, self).update(instance, validated_data)
         else:
             instance = super(NestedModelSerializer, self).create(validated_data)
 
-        for attribute_details in nested_models:
-            save_method = attribute_details[0]
-            attribute_value = attribute_details[1]
-            if save_method and attribute_value:
-                save_method(attribute_value, instance)
+        try:
+            # Saving nested values is best effort
+            for attribute_details in nested_method_models:
+                save_method = attribute_details[0]
+                attribute_value = attribute_details[1]
+                if save_method and attribute_value:
+                    save_method(attribute_value, instance)
+
+            for (k, v, s, r) in nested_data:
+                v = dict(v)
+                if r:
+                    for related_key in r:
+                        v[related_key] = instance
+                if s.Meta.model:
+                    if id in v:
+                        instance = s.Meta.model.objects.filter(pk=v[id]).update(**v)
+                    else:
+                        instance = s.Meta.model.objects.create(**v)
+                else:
+                    serializer = s(data=v, **dict(context=self.context))
+                    serializer.save()
+        except:
+            pass
         return instance
 
 
@@ -92,6 +164,13 @@ class DetailAnnotatedModelSerializer(serializers.ModelSerializer):
                 return self.Meta.details_serializer(obj).data
         except AttributeError:
             return None
+
+
+class SimpleSkillSerializer(SimpleModelSerializer):
+
+    class Meta:
+        model = Skill
+        fields = ('id', 'name', 'slug', 'type')
 
 
 class SkillSerializer(serializers.ModelSerializer):

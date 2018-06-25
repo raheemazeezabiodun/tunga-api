@@ -6,8 +6,8 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
-from six import python_2_unicode_compatible
 
 from tunga import settings
 from tunga_projects.models import Project, Participation
