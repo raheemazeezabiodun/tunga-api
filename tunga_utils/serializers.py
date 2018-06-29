@@ -141,9 +141,9 @@ class NestedModelSerializer(serializers.ModelSerializer):
                         v[related_key] = instance
                 if s.Meta.model:
                     if id in v:
-                        instance = s.Meta.model.objects.filter(pk=v[id]).update(**v)
+                        s.Meta.model.objects.filter(pk=v[id]).update(**v)
                     else:
-                        instance = s.Meta.model.objects.create(**v)
+                        s.Meta.model.objects.create(**v)
                 else:
                     serializer = s(data=v, **dict(context=self.context))
                     serializer.save()
