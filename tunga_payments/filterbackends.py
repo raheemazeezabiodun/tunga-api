@@ -11,13 +11,12 @@ class InvoiceFilterBackend(DRYPermissionFiltersBase):
         return queryset.filter(
             Q(user=request.user) |
             Q(project__user=request.user) |
-            Q(pm__user=request.user) |
-            Q(owner__user=request.user) |
+            Q(project__pm=request.user) |
+            Q(project__owner=request.user) |
             (
-                Q(task__participation__user=request.user) &
-                Q(task__participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
+                Q(project__participation__user=request.user) &
+                Q(project__participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
             )
-
         )
 
 
@@ -26,12 +25,12 @@ class PaymentFilterBackend(DRYPermissionFiltersBase):
     def filter_list_queryset(self, request, queryset, view):
         return queryset.filter(
             Q(user=request.user) |
-            Q(project__user=request.user) |
-            Q(pm__user=request.user) |
-            Q(owner__user=request.user) |
+            Q(invoice__user=request.user) |
+            Q(invoice__project__user=request.user) |
+            Q(invoice__project__pm=request.user) |
+            Q(invoice__project__owner=request.user) |
             (
-                Q(task__participation__user=request.user) &
-                Q(task__participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
+                Q(invoice__project__participation__user=request.user) &
+                Q(invoice__project__participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
             )
-
         )
