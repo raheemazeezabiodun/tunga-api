@@ -6,6 +6,7 @@ from dry_rest_permissions.generics import DRYPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from tunga_payments.filterbackends import InvoiceFilterBackend, PaymentFilterBackend
 from tunga_payments.filters import InvoiceFilter, PaymentFilter
 from tunga_payments.models import Invoice, Payment
 from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer
@@ -17,7 +18,7 @@ class InvoiceViewSet(ModelViewSet):
     queryset = Invoice.objects.all().order_by('id')
     permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = InvoiceFilter
-    filter_backends = DEFAULT_FILTER_BACKENDS
+    filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 
     def get_serializer(self, *args, **kwargs):
         if "data" in kwargs:
@@ -32,4 +33,4 @@ class PaymentViewSet(ModelViewSet):
     queryset = Payment.objects.all()
     permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = PaymentFilter
-    filter_backends = DEFAULT_FILTER_BACKENDS
+    filter_backends = DEFAULT_FILTER_BACKENDS + (PaymentFilterBackend,)
