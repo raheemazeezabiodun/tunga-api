@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 import tagulous.models
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -99,6 +100,12 @@ class Participation(models.Model):
     class Meta:
         unique_together = ('user', 'project')
         verbose_name_plural = 'participation'
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.status != STATUS_INITIAL and self.responded_at is None:
+            self.responded_at = datetime.datetime.utcnow()
+        super(Participation, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     @staticmethod
     @allow_staff_or_superuser

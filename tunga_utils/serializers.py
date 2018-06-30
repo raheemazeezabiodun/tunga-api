@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-
+from copy import copy
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.utils import six
 from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 from rest_framework.fields import SkipField
@@ -16,7 +17,7 @@ from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractEx
 class CreateOnlyCurrentUserDefault(serializers.CurrentUserDefault):
 
     def set_context(self, serializer_field):
-        self.is_update = serializer_field.parent.instance is not None
+        self.is_update = serializer_field.parent and serializer_field.parent.instance is not None
         super(CreateOnlyCurrentUserDefault, self).set_context(serializer_field)
 
     def __call__(self):
@@ -36,7 +37,19 @@ class SimpleModelSerializer(serializers.ModelSerializer):
         if object_id:
             return self.Meta.model.objects.get(pk=object_id)
         else:
-            return super(SimpleModelSerializer, self).to_internal_value(data)
+            rep = super(SimpleModelSerializer, self).to_internal_value(data)
+            for serializer_field, serializer_field_value in six.iteritems(self.get_fields()):
+                # Process missing default values for nested inserts during top level patch requests
+                default_value = getattr(serializer_field_value, 'default', None)
+                if serializer_field not in rep and default_value and default_value is not serializers.empty:
+                    if isinstance(default_value, object):
+                        # If default_value is a class based validator (e.g CurrentUserDefault), process value correctly
+                        default_validator = default_value
+                        default_validator.set_context(serializer_field_value.__class__(context=self.context))
+                        default_value = default_validator.__call__()
+                    if default_value:
+                        rep[serializer_field] = default_value
+            return rep
 
     def create(self, validated_data):
         return self.simple_save_override(validated_data)
@@ -112,6 +125,7 @@ class NestedModelSerializer(serializers.ModelSerializer):
                             for model_field in serializer_class.Meta.model._meta.get_fields():
                                 if model_field.related_model == self.Meta.model:
                                     fk_keys.append(model_field.name)
+                        default_values = []
                         if type(attribute_value) is list:
                             for single_attribute_value in attribute_value:
                                 nested_data.append((clean_attribute_key, single_attribute_value, serializer_class, fk_keys))

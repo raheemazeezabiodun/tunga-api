@@ -1,11 +1,6 @@
-import datetime
-from copy import copy
-
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from tunga_projects.models import Project, Participation, Document
-from tunga_utils.constants import STATUS_INITIAL
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateOnlyCurrentUserDefault, \
     NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer, \
@@ -54,24 +49,8 @@ class ProjectSerializer(
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
             instance.save()
 
-    def save_nested_participation(self, data, instance):
-        if data:
-            for item in data:
-                if 'status' in item and item.get('status', None) != STATUS_INITIAL:
-                    item['responded_at'] = datetime.datetime.utcnow()
-                if type(item['user']) is int:
-                    item['user'] = get_user_model().objects.get(pk=item['user'])
-                defaults = copy(item)
 
-                current_user = self.get_current_user()
-                if current_user and current_user.is_authenticated() and current_user != item.get('user', None):
-                    defaults['created_by'] = current_user
-
-                Participation.objects.update_or_create(
-                    project=instance, user=item['user'], defaults=defaults)
-
-
-class ParticipationSerializer(ContentTypeAnnotatedModelSerializer):
+class ParticipationSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
     user = SimplestUserSerializer()
@@ -82,7 +61,7 @@ class ParticipationSerializer(ContentTypeAnnotatedModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
-class DocumentSerializer(ContentTypeAnnotatedModelSerializer):
+class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
 
