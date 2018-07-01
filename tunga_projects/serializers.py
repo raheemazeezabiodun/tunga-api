@@ -64,6 +64,7 @@ class ParticipationSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
 class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
+    download_url = serializers.CharField(required=False, read_only=True)
 
     class Meta:
         model = Document
