@@ -6,63 +6,25 @@ from tunga_profiles.models import UserProfile, Education, Work, Connection, Deve
     Skill, Company
 from tunga_profiles.notifications import send_developer_invited_email
 from tunga_profiles.signals import user_profile_updated
-from tunga_utils.constants import PAYMENT_METHOD_MOBILE_MONEY, PAYMENT_METHOD_BTC_ADDRESS, SKILL_TYPE_OTHER
-from tunga_utils.serializers import SimpleProfileSerializer, CreateOnlyCurrentUserDefault, SimpleUserSerializer, AbstractExperienceSerializer, \
-    DetailAnnotatedModelSerializer, SimpleBTCWalletSerializer, SkillsDetailsSerializer
+from tunga_utils.constants import SKILL_TYPE_OTHER
+from tunga_utils.serializers import CreateOnlyCurrentUserDefault, AbstractExperienceSerializer, \
+    SkillsDetailsSerializer, SimplestUserSerializer, \
+    SimpleSkillSerializer, NestedModelSerializer, ContentTypeAnnotatedModelSerializer
 
 
-class ProfileDetailsSerializer(SimpleProfileSerializer):
-    user = SimpleUserSerializer()
-    btc_wallet = SimpleBTCWalletSerializer()
-    skills_details = SkillsDetailsSerializer()
-
-    class Meta:
-        model = UserProfile
-        fields = ('user', 'city', 'skills', 'btc_wallet', 'skills_details')
-
-
-class ProfileSerializer(DetailAnnotatedModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    first_name = serializers.CharField(required=False, write_only=True, max_length=20)
-    last_name = serializers.CharField(required=False, write_only=True, max_length=20)
+class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+    user = SimplestUserSerializer(required=False)
     city = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    skills = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    skills_details = SkillsDetailsSerializer(required=False, allow_null=True)
-    skill_categories = serializers.JSONField(required=False, write_only=True)
+    skills = SimpleSkillSerializer(required=False, many=True)
+    skills_details = SkillsDetailsSerializer(required=False, read_only=True)
     country = CountryField(required=False)
+    country_name = serializers.CharField(required=False, read_only=True)
 
     class Meta:
         model = UserProfile
-        exclude = ()
-        details_serializer = ProfileDetailsSerializer
+        fields = '__all__'
 
-    def validate(self, attrs):
-        payment_method = attrs.get('payment_method', None)
-        if payment_method == PAYMENT_METHOD_MOBILE_MONEY:
-            mobile_money_cc = attrs.get('mobile_money_cc', None)
-            mobile_money_number = attrs.get('mobile_money_number', None)
-            if not mobile_money_cc:
-                raise ValidationError({'mobile_money_cc': 'Enter the country code for your mobile number'})
-            if not mobile_money_number:
-                raise ValidationError({'mobile_money_number': 'Enter your mobile money number'})
-        elif payment_method == PAYMENT_METHOD_BTC_ADDRESS:
-            if not attrs.get('btc_address', None):
-                raise ValidationError({'btc_address': 'Enter a bitcoin address'})
-        return attrs
-
-    def save_profile(self, validated_data, instance=None):
-        user_data = self.get_user_data(validated_data)
-        skills = None
-        city = None
-        skill_categories = None
-
-        if 'skills' in validated_data:
-            skills = validated_data.pop('skills')
-        if 'city' in validated_data:
-            city = validated_data.pop('city')
-        if 'skill_categories' in validated_data:
-            skill_categories = validated_data.pop('skill_categories')
-
+    def nested_save_override(self, validated_data, instance=None):
         initial_bio = None
         initial_location = None
         initial_skills = None
@@ -72,13 +34,8 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
             initial_location = instance.location
             initial_skills = [skill.name for skill in instance.skills.all()]
             list.sort(initial_skills)
-            instance = super(ProfileSerializer, self).update(instance, validated_data)
-        else:
-            instance = super(ProfileSerializer, self).create(validated_data)
-        self.save_user_info(instance, user_data)
-        self.save_skills(instance, skills)
-        self.save_city(instance, city)
-        self.save_skill_categories(skill_categories)
+
+        instance = super(ProfileSerializer, self).nested_save_override(validated_data, instance=instance)
 
         final_skills = [skill.name for skill in instance.skills.all()]
         list.sort(final_skills)
@@ -86,138 +43,55 @@ class ProfileSerializer(DetailAnnotatedModelSerializer):
             user_profile_updated.send(sender=UserProfile, profile=instance)
         return instance
 
-    def create(self, validated_data):
-        return self.save_profile(validated_data)
-
-    def update(self, instance, validated_data):
-        return self.save_profile(validated_data, instance)
-
-    def get_user_data(self, validated_data):
-        user_data = dict()
-        for user_key in ['first_name', 'last_name']:
-            if user_key in validated_data:
-                user_data[user_key] = validated_data.pop(user_key)
-        return user_data
-
-    def save_user_info(self, instance, user_data):
+    def save_nested_user(self, data, instance):
         user = instance.user
         if user:
-            first_name = user_data.get('first_name')
-            last_name = user_data.get('last_name')
-            if first_name or last_name:
-                user.first_name = first_name or user.first_name
-                user.last_name = last_name or user.last_name
-                user.save()
+            user.first_name = data.get('first_name', user.first_name)
+            user.last_name = data.get('last_name', user.last_name)
+            image = data.get('image', None)
+            if image:
+                user.image = image
+            user.save()
 
-    def save_skills(self, profile, skills):
-        if skills is not None:
-            profile.skills = skills
-            profile.save()
+    def save_nested_skills(self, data, instance):
+        if data is not None:
+            instance.skills = ', '.join([skill.get('name', '') for skill in data])
+            instance.save()
 
-    def save_city(self, profile, city):
-        if city:
-            profile.city = city
-            profile.save()
+            for skill in data:
+                try:
+                    category = skill.get('type', None)
+                    if category:
+                        Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
+                except:
+                    pass
 
-    def save_skill_categories(self, skill_categories):
-        if skill_categories is not None:
-            for category in skill_categories:
-                if category is not SKILL_TYPE_OTHER:
-                    for skill in skill_categories[category]:
-                        try:
-                            Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
-                        except:
-                            pass
+    def save_nested_city(self, data, instance):
+        if data:
+            instance.city = data
+            instance.save()
 
 
-class CompanyDetailsSerializer(SimpleProfileSerializer):
-    user = SimpleUserSerializer()
-
-    skills_details = SkillsDetailsSerializer()
-
-    class Meta:
-        model = Company
-        fields = ('user', 'city', 'skills', 'skills_details')
-
-
-class CompanySerializer(DetailAnnotatedModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    first_name = serializers.CharField(required=False, write_only=True, max_length=20)
-    last_name = serializers.CharField(required=False, write_only=True, max_length=20)
+class CompanySerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+    user = SimplestUserSerializer(required=False, read_only=False)
     city = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    skills = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    skills_details = SkillsDetailsSerializer(required=False, allow_null=True)
-    skill_categories = serializers.JSONField(required=False, write_only=True)
+    skills = SimpleSkillSerializer(required=False, many=True)
     country = CountryField(required=False)
+    country_name = serializers.CharField(required=False, read_only=True)
 
     class Meta:
         model = Company
-        exclude = ()
-        details_serializer = CompanyDetailsSerializer
+        fields = '__all__'
 
-    def validate(self, attrs):
-        payment_method = attrs.get('payment_method', None)
-        if payment_method == PAYMENT_METHOD_MOBILE_MONEY:
-            mobile_money_cc = attrs.get('mobile_money_cc', None)
-            mobile_money_number = attrs.get('mobile_money_number', None)
-            if not mobile_money_cc:
-                raise ValidationError({'mobile_money_cc': 'Enter the country code for your mobile number'})
-            if not mobile_money_number:
-                raise ValidationError({'mobile_money_number': 'Enter your mobile money number'})
-        elif payment_method == PAYMENT_METHOD_BTC_ADDRESS:
-            if not attrs.get('btc_address', None):
-                raise ValidationError({'btc_address': 'Enter a bitcoin address'})
-        return attrs
+    def save_nested_skills(self, data, instance):
+        if data is not None:
+            instance.skills = ', '.join([skill.get('name', '') for skill in data])
+            instance.save()
 
-    def save_profile(self, validated_data, instance=None):
-        skills = None
-        city = None
-        skill_categories = None
-
-        if 'skills' in validated_data:
-            skills = validated_data.pop('skills')
-        if 'city' in validated_data:
-            city = validated_data.pop('city')
-        if 'skill_categories' in validated_data:
-            skill_categories = validated_data.pop('skill_categories')
-
-        if instance:
-            initial_skills = [skill.name for skill in instance.skills.all()]
-            list.sort(initial_skills)
-            instance = super(CompanySerializer, self).update(instance, validated_data)
-        else:
-            instance = super(CompanySerializer, self).create(validated_data)
-        self.save_skills(instance, skills)
-        self.save_city(instance, city)
-        self.save_skill_categories(skill_categories)
-
-        return instance
-
-    def create(self, validated_data):
-        return self.save_profile(validated_data)
-
-    def update(self, instance, validated_data):
-        return self.save_profile(validated_data, instance)
-
-    def save_skills(self, profile, skills):
-        if skills is not None:
-            profile.skills = skills
-            profile.save()
-
-    def save_city(self, profile, city):
-        if city:
-            profile.city = city
-            profile.save()
-
-    def save_skill_categories(self, skill_categories):
-        if skill_categories is not None:
-            for category in skill_categories:
-                if category is not SKILL_TYPE_OTHER:
-                    for skill in skill_categories[category]:
-                        try:
-                            Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
-                        except:
-                            pass
+    def save_nested_city(self, data, instance):
+        if data:
+            instance.city = data
+            instance.save()
 
 
 class EducationSerializer(AbstractExperienceSerializer):
@@ -232,22 +106,13 @@ class WorkSerializer(AbstractExperienceSerializer):
         model = Work
 
 
-class ConnectionDetailsSerializer(serializers.ModelSerializer):
-    from_user = SimpleUserSerializer()
-    to_user = SimpleUserSerializer()
+class ConnectionSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+    from_user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    to_user = SimplestUserSerializer(required=False, read_only=False)
 
     class Meta:
         model = Connection
-        fields = ('from_user', 'to_user')
-
-
-class ConnectionSerializer(DetailAnnotatedModelSerializer):
-    from_user = serializers.PrimaryKeyRelatedField(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-
-    class Meta:
-        model = Connection
-        exclude = ('created_at',)
-        details_serializer = ConnectionDetailsSerializer
+        fields = '__all__'
 
 
 class DeveloperApplicationSerializer(serializers.ModelSerializer):

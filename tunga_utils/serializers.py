@@ -125,7 +125,6 @@ class NestedModelSerializer(serializers.ModelSerializer):
                             for model_field in serializer_class.Meta.model._meta.get_fields():
                                 if model_field.related_model == self.Meta.model:
                                     fk_keys.append(model_field.name)
-                        default_values = []
                         if type(attribute_value) is list:
                             for single_attribute_value in attribute_value:
                                 nested_data.append((clean_attribute_key, single_attribute_value, serializer_class, fk_keys))
