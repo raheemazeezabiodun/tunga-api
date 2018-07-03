@@ -210,7 +210,7 @@ class SimplestUserSerializer(SimpleModelSerializer):
     class Meta:
         model = get_user_model()
         fields = (
-            'id', 'username', 'first_name', 'last_name', 'display_name', 'short_name', 'type',
+            'id', 'username', 'first_name', 'last_name', 'image', 'display_name', 'short_name', 'type',
             'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'verified', 'company', 'avatar_url'
         )
 
