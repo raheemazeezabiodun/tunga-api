@@ -48,6 +48,7 @@ class ProjectSerializer(
     skills = SimpleSkillSerializer(required=False, many=True)
     participation = SimpleParticipationSerializer(required=False, many=True, source='participation_set')
     documents = SimpleDocumentSerializer(required=False, many=True, source='document_set')
+    progress_events = SimpleProgressEventSerializer(required=False, many=True, source='progressevent_set')
 
     class Meta:
         model = Project
