@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import datetime
+
 import tagulous.models
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -11,7 +12,7 @@ from tunga import settings
 from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
-    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER
+    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES
 from tunga_utils.models import Rating
 
 
@@ -33,6 +34,7 @@ class Project(models.Model):
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default=PROJECT_TYPE_OTHER)
     expected_duration = models.CharField(max_length=20, choices=PROJECT_EXPECTED_DURATION_CHOICES, blank=True, null=True)
+    start_date = models.DateTimeField(blank=True, null=True)
     deadline = models.DateTimeField(blank=True, null=True)
     client_survey_enabled = models.BooleanField(default=True)
     pm_updates_enabled = models.BooleanField(default=True)
@@ -173,3 +175,47 @@ class Document(models.Model):
         elif self.url:
             return self.url
         return None
+
+
+@python_2_unicode_compatible
+class ProgressEvent(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    type = models.PositiveSmallIntegerField(
+        choices=PROGRESS_EVENT_TYPE_CHOICES, default=PROGRESS_EVENT_DEVELOPER,
+        help_text=','.join(['{} - {}'.format(item[0], item[1]) for item in PROGRESS_EVENT_TYPE_CHOICES])
+    )
+    due_at = models.DateTimeField()
+    title = models.CharField(max_length=200, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    last_reminder_at = models.DateTimeField(blank=True, null=True)
+    missed_notification_at = models.DateTimeField(blank=True, null=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='progress_events_created', blank=True, null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} | {} - {}'.format(self.type, self.project.title, self.due_at)
+
+    class Meta:
+        unique_together = ('project', 'type', 'due_at')
+        ordering = ['-due_at']
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.project.has_object_read_permission(request)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_owner or request.user.is_project_manager or request.user.is_project_owner
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.project.user or request.user == self.project.owner

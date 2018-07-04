@@ -1331,7 +1331,7 @@ class ProgressEvent(models.Model):
     due_at = models.DateTimeField()
     title = models.CharField(max_length=200, blank=True, null=True)
     description = models.CharField(max_length=1000, blank=True, null=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='progress_events_created', blank=True,
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='legacy_progress_events_created', blank=True,
                                    null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_reminder_at = models.DateTimeField(blank=True, null=True)
