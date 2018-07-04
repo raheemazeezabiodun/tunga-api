@@ -43,8 +43,8 @@ class ProjectSerializer(
     NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin, ContentTypeAnnotatedModelSerializer
 ):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    owner = SimplestUserSerializer(required=False)
-    pm = SimplestUserSerializer(required=False)
+    owner = SimplestUserSerializer(required=False, allow_null=True)
+    pm = SimplestUserSerializer(required=False, allow_null=True)
     skills = SimpleSkillSerializer(required=False, many=True)
     participation = SimpleParticipationSerializer(required=False, many=True, source='participation_set')
     documents = SimpleDocumentSerializer(required=False, many=True, source='document_set')
