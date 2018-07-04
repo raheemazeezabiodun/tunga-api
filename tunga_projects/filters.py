@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Q
 
-from tunga_projects.models import Project, Document, Participation
+from tunga_projects.models import Project, Document, Participation, ProgressEvent
 from tunga_utils.filters import GenericDateFilterSet
 
 
@@ -34,6 +34,15 @@ class DocumentFilter(GenericDateFilterSet):
 
     class Meta:
         model = Document
+        fields = (
+            'project', 'created_by'
+        )
+
+
+class ProgressEventFilter(GenericDateFilterSet):
+
+    class Meta:
+        model = ProgressEvent
         fields = (
             'project', 'created_by'
         )

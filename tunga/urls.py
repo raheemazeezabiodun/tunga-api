@@ -34,12 +34,12 @@ from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet, CompanyView
-from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet
+from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet, ProgressEventViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet as LegacyParticipationViewSet, TimeEntryViewSet, \
     ProjectViewSet as LegacyProjectViewSet, \
-    ProgressReportViewSet, ProgressEventViewSet, \
+    ProgressReportViewSet, ProgressEventViewSet as LegacyProgressEventViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
     TaskDocumentViewSet
@@ -50,28 +50,31 @@ api_schema_view = get_swagger_view(title='Tunga API')
 router = DefaultRouter()
 # v3 routes
 router.register(r'users', UserViewSet)
+router.register(r'me/education', EducationViewSet)
+router.register(r'me/work', WorkViewSet)
 router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'invoices', InvoiceViewSet)
 router.register(r'payments', PaymentViewSet)
 router.register(r'participation', ParticipationViewSet)
+router.register(r'payments', PaymentViewSet)
+router.register(r'progress-events', ProgressEventViewSet)
 
 # Legacy routes
-router.register(r'user', UserViewSet)
+#router.register(r'user', UserViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
-router.register(r'project', LegacyProjectViewSet)
-router.register(r'task', TaskViewSet)
-router.register(r'application', ApplicationViewSet)
-router.register(r'participation', LegacyParticipationViewSet)
+#router.register(r'project', LegacyProjectViewSet)
+#router.register(r'task', TaskViewSet)
+#router.register(r'application', ApplicationViewSet)
+#router.register(r'participation', LegacyParticipationViewSet)
 router.register(r'estimate', EstimateViewSet)
 router.register(r'quote', QuoteViewSet)
 router.register(r'sprint', SprintViewSet)
 router.register(r'time-entry', TimeEntryViewSet)
-router.register(r'progress-event', ProgressEventViewSet)
-router.register(r'progress-report', ProgressReportViewSet)
-router.register(r'me/education', EducationViewSet)
-router.register(r'me/work', WorkViewSet)
+#router.register(r'progress-event', LegacyProgressEventViewSet)
+#router.register(r'progress-report', ProgressReportViewSet)
+
 router.register(r'connection', ConnectionViewSet)
 router.register(r'comment', CommentViewSet)
 router.register(r'channel', ChannelViewSet)

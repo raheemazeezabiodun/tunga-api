@@ -5,9 +5,10 @@ from dry_rest_permissions.generics import DRYObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
-from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationFilter
-from tunga_projects.models import Project, Document, Participation
-from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer
+from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationFilter, ProgressEventFilter
+from tunga_projects.models import Project, Document, Participation, ProgressEvent
+from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
+    ProgressEventSerializer
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -41,4 +42,15 @@ class DocumentViewSet(ModelViewSet):
     serializer_class = DocumentSerializer
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = DocumentFilter
+    filter_backends = DEFAULT_FILTER_BACKENDS
+
+
+class ProgressEventViewSet(ModelViewSet):
+    """
+    Progress Event Resource
+    """
+    queryset = ProgressEvent.objects.all()
+    serializer_class = ProgressEventSerializer
+    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+    filter_class = ProgressEventFilter
     filter_backends = DEFAULT_FILTER_BACKENDS

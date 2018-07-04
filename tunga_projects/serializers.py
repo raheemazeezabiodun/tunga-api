@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from tunga_projects.models import Project, Participation, Document
+from tunga_projects.models import Project, Participation, Document, ProgressEvent
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateOnlyCurrentUserDefault, \
     NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer, \
@@ -28,6 +28,14 @@ class SimpleDocumentSerializer(SimpleModelSerializer):
 
     class Meta:
         model = Document
+        exclude = ('project',)
+
+
+class SimpleProgressEventSerializer(SimpleModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+
+    class Meta:
+        model = ProgressEvent
         exclude = ('project',)
 
 
@@ -70,5 +78,15 @@ class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSeriali
 
     class Meta:
         model = Document
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    project = SimpleProjectSerializer()
+
+    class Meta:
+        model = ProgressEvent
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
