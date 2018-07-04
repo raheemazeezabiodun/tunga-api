@@ -184,6 +184,10 @@ class SimpleSkillSerializer(SimpleModelSerializer):
     class Meta:
         model = Skill
         fields = ('id', 'name', 'slug', 'type')
+        read_only_fields = ('slug',)
+
+    def to_internal_value(self, data):
+        return data
 
 
 class SkillSerializer(serializers.ModelSerializer):

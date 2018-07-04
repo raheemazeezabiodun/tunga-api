@@ -62,7 +62,7 @@ class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
                 try:
                     category = skill.get('type', None)
                     if category:
-                        Skill.objects.filter(name=skill, type=SKILL_TYPE_OTHER).update(type=category)
+                        Skill.objects.filter(name=skill.get('name', ''), type=SKILL_TYPE_OTHER).update(type=category)
                 except:
                     pass
 
