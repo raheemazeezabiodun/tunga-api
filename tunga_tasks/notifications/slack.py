@@ -989,7 +989,7 @@ def notify_new_task_invoice_admin_slack(instance):
             slack_utils.KEY_TITLE_LINK: task_url,
             slack_utils.KEY_TEXT: 'Client: <{}|{}>\nFee: {}\nPayment Method: {}\n<{}|Download invoice>'.format(
                 client_url,
-                owner.display_name,
+                owner.display_name.encode('utf-8'),
                 instance.display_fee().encode('utf-8'),
                 instance.get_payment_method_display(),
                 invoice_url
