@@ -1,9 +1,10 @@
 import uuid
 
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, ListSerializer
+from rest_framework.serializers import ListSerializer
 
 from tunga_payments.models import Payment, Invoice
+from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedModelSerializer
 
 
 class InvoiceListSerializer(ListSerializer):
@@ -13,7 +14,7 @@ class InvoiceListSerializer(ListSerializer):
         return Invoice.objects.bulk_create(invoices)
 
 
-class InvoiceSerializer(ModelSerializer):
+class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     batch_ref = serializers.CharField(read_only=True)
 
     class Meta:
@@ -23,7 +24,7 @@ class InvoiceSerializer(ModelSerializer):
         list_serializer_class = InvoiceListSerializer
 
 
-class PaymentSerializer(ModelSerializer):
+class PaymentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     class Meta:
         model = Payment
         fields = ('id', 'invoice', 'amount', 'currency', 'payment_method',
