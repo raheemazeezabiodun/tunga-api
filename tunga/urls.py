@@ -61,6 +61,7 @@ router.register(r'payments', PaymentViewSet)
 router.register(r'activity', ActionViewSet)
 router.register(r'comments', CommentViewSet)
 router.register(r'messages', MessageViewSet)
+router.register(r'skills', SkillViewSet)
 
 # Legacy routes
 #router.register(r'user', UserViewSet)
