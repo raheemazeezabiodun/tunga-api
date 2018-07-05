@@ -10,7 +10,7 @@ class TungaProjectsConfig(AppConfig):
 
     def ready(self):
         from actstream import registry
-        from tunga_tasks import signals
+        from tunga_projects import signals
 
         registry.register(
             self.get_model('Project'), self.get_model('Participation'), self.get_model('Document'),

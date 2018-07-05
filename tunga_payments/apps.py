@@ -10,7 +10,7 @@ class TungaPaymentsConfig(AppConfig):
 
     def ready(self):
         from actstream import registry
-        from tunga_tasks import signals
+        from tunga_payments import signals
 
         registry.register(
             self.get_model('Invoice'), self.get_model('Payment')
