@@ -7,14 +7,17 @@ from tunga_comments.models import Comment
 from tunga_comments.serializers import CommentSerializer
 from tunga_messages.models import Message, Channel, ChannelUser
 from tunga_messages.serializers import MessageSerializer, ChannelSerializer, ChannelUserSerializer
+from tunga_payments.models import Invoice, Payment
+from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer
 from tunga_profiles.models import Connection
 from tunga_profiles.serializers import ConnectionSerializer
-from tunga_projects.models import Project
-from tunga_projects.serializers import ProjectSerializer
-from tunga_tasks.models import Task, Application, Participation, Integration, ProgressEvent, ProgressReport, \
+from tunga_projects.models import Project, Document, Participation, ProgressEvent
+from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
+    ProgressEventSerializer
+from tunga_tasks.models import Task, Application, Participation as LegacyParticipation, Integration, ProgressEvent as LegacyProgressEvent, ProgressReport, \
     IntegrationActivity, Estimate, Quote, Sprint
-from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializer, \
-    SimpleTaskSerializer, SimpleIntegrationSerializer, SimpleProgressEventSerializer, \
+from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializer as LegacyParticipationSerializer, \
+    SimpleTaskSerializer, SimpleIntegrationSerializer, SimpleProgressEventSerializer as LegacySimpleProgressEventSerializer, \
     SimpleProgressReportSerializer, SimpleIntegrationActivitySerializer, ProgressReportSerializer, \
     SimpleEstimateSerializer, SimpleQuoteSerializer, SimpleSprintSerializer
 from tunga_utils.models import Upload
@@ -38,15 +41,20 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         Connection: ConnectionSerializer(),
         Task: SimpleTaskSerializer(),
         Application: ApplicationSerializer(),
-        Participation: ParticipationSerializer(),
+        LegacyParticipation: LegacyParticipationSerializer(),
         Estimate: SimpleEstimateSerializer(),
         Quote: SimpleQuoteSerializer(),
         Sprint: SimpleSprintSerializer(),
-        ProgressEvent: SimpleProgressEventSerializer(),
+        LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
         ProgressReport: ProgressReportSerializer(),
         Integration: SimpleIntegrationSerializer(),
         IntegrationActivity: SimpleIntegrationActivitySerializer(),
-        Project: ProjectSerializer()
+        Project: ProjectSerializer(),
+        Document: DocumentSerializer(),
+        Participation: ParticipationSerializer(),
+        ProgressEvent: ProgressEventSerializer(),
+        Invoice: InvoiceSerializer(),
+        Payment: PaymentSerializer()
     }, source='action_object')
 
     class Meta:
@@ -77,11 +85,13 @@ class ActivitySerializer(SimpleActivitySerializer):
         Connection: ConnectionSerializer(),
         Task: SimpleTaskSerializer(),
         Application: ApplicationSerializer(),
-        Participation: ParticipationSerializer(),
-        ProgressEvent: SimpleProgressEventSerializer(),
+        LegacyParticipation: LegacyParticipationSerializer(),
+        LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
         ProgressReport: SimpleProgressReportSerializer(),
         Integration: SimpleIntegrationSerializer(),
-        IntegrationActivity: SimpleIntegrationActivitySerializer()
+        IntegrationActivity: SimpleIntegrationActivitySerializer(),
+        Project: ProjectSerializer(),
+        Invoice: InvoiceSerializer()
     })
 
     class Meta(SimpleActivitySerializer.Meta):
