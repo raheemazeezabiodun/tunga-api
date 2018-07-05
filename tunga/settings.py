@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'dry_rest_permissions',
     'django_rq',
     'raven.contrib.django.raven_compat',
+    'django_filters',
 
     # Social Auth Providers
     'allauth.socialaccount.providers.bitbucket_oauth2',
