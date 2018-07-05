@@ -1,12 +1,13 @@
 from rest_framework import serializers
 
 from tunga_comments.models import Comment
-from tunga_utils.serializers import CreateOnlyCurrentUserDefault, UploadSerializer, SimpleUserSerializer
+from tunga_utils.serializers import CreateOnlyCurrentUserDefault, UploadSerializer, SimplestUserSerializer
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = SimpleUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     uploads = UploadSerializer(read_only=True, required=False, many=True)
+    text_body = serializers.CharField(required=False, read_only=True)
     html_body = serializers.CharField(required=False, read_only=True)
 
     class Meta:

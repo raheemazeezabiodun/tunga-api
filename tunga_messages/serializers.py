@@ -8,11 +8,12 @@ from tunga_messages.models import Message, Channel, ChannelUser
 from tunga_messages.tasks import get_or_create_direct_channel
 from tunga_utils.constants import CHANNEL_TYPE_SUPPORT, CHANNEL_TYPE_DEVELOPER
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
-from tunga_utils.serializers import CreateOnlyCurrentUserDefault, SimpleUserSerializer, DetailAnnotatedModelSerializer, ContentTypeAnnotatedModelSerializer, UploadSerializer
+from tunga_utils.serializers import CreateOnlyCurrentUserDefault, SimpleUserSerializer, DetailAnnotatedModelSerializer, \
+    ContentTypeAnnotatedModelSerializer, UploadSerializer, SimplestUserSerializer
 
 
 class SimpleChannelSerializer(serializers.ModelSerializer):
-    created_by = SimpleUserSerializer()
+    created_by = SimplestUserSerializer()
 
     class Meta:
         model = Channel
@@ -60,7 +61,7 @@ class ChannelDetailsSerializer(serializers.ModelSerializer):
 
 
 class ChannelSerializer(DetailAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
-    created_by = SimpleUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     display_type = serializers.CharField(required=False, read_only=True, source='get_type_display')
     participants = serializers.PrimaryKeyRelatedField(
         required=True, many=True, queryset=get_user_model().objects.all()
@@ -174,10 +175,11 @@ class SenderSerializer(serializers.Serializer):
 
 
 class MessageSerializer(serializers.ModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
-    user = SimpleUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     excerpt = serializers.CharField(required=False, read_only=True)
     attachments = UploadSerializer(read_only=True, required=False, many=True)
     sender = SenderSerializer(read_only=True, required=False)
+    text_body = serializers.CharField(required=False, read_only=True)
     html_body = serializers.CharField(required=False, read_only=True)
 
     class Meta:
