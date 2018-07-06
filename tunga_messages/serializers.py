@@ -1,12 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.db.models.query_utils import Q
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from tunga_messages.utils import channel_activity_new_messages_filter
 from tunga_messages.models import Message, Channel, ChannelUser
 from tunga_messages.tasks import get_or_create_direct_channel
-from tunga_utils.constants import CHANNEL_TYPE_SUPPORT, CHANNEL_TYPE_DEVELOPER
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import CreateOnlyCurrentUserDefault, SimpleUserSerializer, DetailAnnotatedModelSerializer, \
     ContentTypeAnnotatedModelSerializer, UploadSerializer, SimplestUserSerializer

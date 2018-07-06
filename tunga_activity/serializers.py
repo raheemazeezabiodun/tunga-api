@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from generic_relations.relations import GenericRelatedField
 from rest_framework import serializers
 
+from tunga_activity.models import ActivityReadLog
 from tunga_comments.models import Comment
 from tunga_comments.serializers import CommentSerializer
 from tunga_messages.models import Message, Channel, ChannelUser
@@ -22,6 +23,13 @@ from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializ
     SimpleEstimateSerializer, SimpleQuoteSerializer, SimpleSprintSerializer
 from tunga_utils.models import Upload
 from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer
+
+
+class ActivityReadLogSerializer(serializers.Serializer):
+
+    class Meta:
+        model = ActivityReadLog
+        fields = '__all__'
 
 
 class LastReadActivitySerializer(serializers.Serializer):
