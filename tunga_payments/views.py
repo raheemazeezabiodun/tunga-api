@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import uuid
 
 from dry_rest_permissions.generics import DRYPermissions
+from rest_framework import status
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -36,7 +37,7 @@ class InvoiceViewSet(ModelViewSet):
         results = Invoice.objects.filter(batch_ref=group_batch_ref)
         output_serializer = InvoiceSerializer(results, many=True)
         data = output_serializer.data[:]
-        return Response(data)
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class PaymentViewSet(ModelViewSet):

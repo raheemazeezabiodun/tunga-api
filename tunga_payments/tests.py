@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
+
 from django.contrib.auth import get_user_model
 # Create your tests here.
 from django.test import RequestFactory
@@ -91,6 +93,65 @@ class APIInvoiceTestCase(APITestCase):
         self.client.force_authenticate(user=self.admin)
         response = self.client.post(url, invoice_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_bulk_invoice(self):
+        url = reverse('invoice-bulk-create-invoices')
+        data_outer = dict(
+            first_name='David', last_name='Semakula', email='guest@example.com',
+            type=TASK_TYPE_WEB, scope=TASK_SCOPE_PROJECT
+        )
+
+        project_data = {
+            "description": "Web test project",
+            "title": "Tunga Dev Phase 1",
+            "deadline": "2018-08-21T12:00",
+            "user": self.project_owner,
+        }
+        project = Project.objects.create(**project_data)
+
+        invoice_data = {
+            "processing_fee": 0,
+            "created_by": self.admin.id,
+            "number": "100001",
+            "project": {'id': project.id},
+            "currency": "EUR",
+            "amount": 1500,
+            "tax_rate": 12,
+            "user": {'id': self.project_owner.id},
+            "type": "tunga"
+        }
+        invoice_bulk = [invoice_data, invoice_data]
+        data_inner = dict(
+            title='Task 1', skills='Django, React.js',
+            type=TASK_TYPE_WEB, scope=TASK_SCOPE_TASK,
+            description='This is a sample task'
+        )
+
+        # Guests can fill the wizard
+        self.client.force_authenticate(user=None)
+        response = self.client.post(url, invoice_data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # Developer's can't create tasks
+        self.client.force_authenticate(user=self.developer)
+        response = self.client.post(url, invoice_bulk)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Project Owner's can't create tasks
+        self.client.force_authenticate(user=self.project_owner)
+        response = self.client.post(url, invoice_bulk)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # PM's can't create tasks
+        self.client.force_authenticate(user=self.project_manager)
+        response = self.client.post(url, invoice_bulk)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Admins can create tasks
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(url, invoice_bulk)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(json.loads(response.content)), len(invoice_bulk))
 
     def test_read_invoice(self):
         url = reverse('invoice-list')
