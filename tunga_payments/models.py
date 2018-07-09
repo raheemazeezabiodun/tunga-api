@@ -12,7 +12,8 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 from tunga import settings
 from tunga_projects.models import Project, Participation
 from tunga_utils.constants import TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, TASK_PAYMENT_METHOD_BITCOIN, \
-    TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_CLIENT, INVOICE_TYPE_TUNGA, INVOICE_TYPE_DEVELOPER, STATUS_ACCEPTED
+    TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_CLIENT, INVOICE_TYPE_TUNGA, INVOICE_TYPE_DEVELOPER, STATUS_ACCEPTED, \
+    STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING
 
 
 @python_2_unicode_compatible
@@ -21,6 +22,13 @@ class Invoice(models.Model):
         (INVOICE_TYPE_CLIENT, 'Client'),
         (INVOICE_TYPE_TUNGA, 'Tunga'),
         (INVOICE_TYPE_DEVELOPER, 'Developer'),
+    )
+
+    status_choices = (
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_CANCELED, 'Canceled')
+
     )
 
     project = models.ForeignKey(to=Project, related_name='invoices_project', on_delete=models.DO_NOTHING)
@@ -34,6 +42,7 @@ class Invoice(models.Model):
                                    on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
     approved = models.CharField(max_length=150, choices=type_choices, null=True, blank=True)
+    status = models.CharField(max_length=150, choices=status_choices, null=True, blank=True)
     number = models.CharField(max_length=150)
     batch_ref = models.CharField(max_length=150, default=uuid.uuid4)
     paid = models.BooleanField(default=False)
@@ -43,6 +52,11 @@ class Invoice(models.Model):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if not self.title:
             self.title = self.project.title
+        if not self.status:
+            if self.user.is_project_owner:
+                self.status = STATUS_APPROVED
+            elif self.user.is_developer:
+                self.status = STATUS_PENDING
         super(Invoice, self).save(force_insert, force_update, using, update_fields)
 
     @property
@@ -85,9 +99,10 @@ class Invoice(models.Model):
     def has_update_permission(self):
         return True
 
+    @staticmethod
     @allow_staff_or_superuser
-    def has_object_write_permission(self, request):
-        return False
+    def has_object_write_permission(self):
+        return True
 
     def __str__(self):
         return "%s Paid: %s" % (self.project.title, self.paid)

@@ -2,8 +2,12 @@
 from __future__ import unicode_literals
 
 # Create your views here.
+import uuid
+
 from dry_rest_permissions.generics import DRYPermissions
+from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from tunga_payments.filterbackends import InvoiceFilterBackend, PaymentFilterBackend
@@ -20,12 +24,19 @@ class InvoiceViewSet(ModelViewSet):
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 
-    def get_serializer(self, *args, **kwargs):
-        if "data" in kwargs:
-            data = kwargs["data"]
-            if isinstance(data, list):
-                kwargs["many"] = True
-        return super(InvoiceViewSet, self).get_serializer(*args, **kwargs)
+    @list_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
+                url_path='bulk', url_name='bulk-create-invoices')
+    def create_bulk_invoices(self, request, pk=None):
+        group_batch_ref = uuid.uuid4()
+        for list_invoices in request.data:
+            print(request.data)
+            serializer = InvoiceSerializer(data=list_invoices, context={'request': request})
+            if serializer.is_valid():
+                serializer.save(batch_ref=group_batch_ref)
+        results = Invoice.objects.filter(batch_ref=group_batch_ref)
+        output_serializer = InvoiceSerializer(results, many=True)
+        data = output_serializer.data[:]
+        return Response(data)
 
 
 class PaymentViewSet(ModelViewSet):

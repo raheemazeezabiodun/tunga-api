@@ -54,11 +54,11 @@ class APIInvoiceTestCase(APITestCase):
             "processing_fee": 0,
             "created_by": self.admin.id,
             "number": "100001",
-            "project": project.id,
+            "project": {'id': project.id},
             "currency": "EUR",
             "amount": 1500,
             "tax_rate": 12,
-            "user": self.project_owner.id,
+            "user": {'id': self.project_owner.id},
             "type": "tunga"
         }
         data_inner = dict(

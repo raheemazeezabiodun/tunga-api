@@ -36,7 +36,6 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     class Meta:
         model = Invoice
         fields = '__all__'
-        list_serializer_class = InvoiceListSerializer
 
 
 class PaymentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):

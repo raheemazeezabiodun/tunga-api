@@ -37,9 +37,7 @@ from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, Con
 from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet, ProgressEventViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
-from tunga_tasks.views import TaskViewSet, ApplicationViewSet, ParticipationViewSet as LegacyParticipationViewSet, TimeEntryViewSet, \
-    ProjectViewSet as LegacyProjectViewSet, \
-    ProgressReportViewSet, ProgressEventViewSet as LegacyProgressEventViewSet, \
+from tunga_tasks.views import TimeEntryViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
     TaskDocumentViewSet
@@ -64,25 +62,25 @@ router.register(r'messages', MessageViewSet)
 router.register(r'skills', SkillViewSet)
 
 # Legacy routes
-#router.register(r'user', UserViewSet)
+# router.register(r'user', UserViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
-#router.register(r'project', LegacyProjectViewSet)
-#router.register(r'task', TaskViewSet)
-#router.register(r'application', ApplicationViewSet)
-#router.register(r'participation', LegacyParticipationViewSet)
+# router.register(r'project', LegacyProjectViewSet)
+# router.register(r'task', TaskViewSet)
+# router.register(r'application', ApplicationViewSet)
+# router.register(r'participation', LegacyParticipationViewSet)
 router.register(r'estimate', EstimateViewSet)
 router.register(r'quote', QuoteViewSet)
 router.register(r'sprint', SprintViewSet)
 router.register(r'time-entry', TimeEntryViewSet)
-#router.register(r'progress-event', LegacyProgressEventViewSet)
-#router.register(r'progress-report', ProgressReportViewSet)
+# router.register(r'progress-event', LegacyProgressEventViewSet)
+# router.register(r'progress-report', ProgressReportViewSet)
 
 router.register(r'connection', ConnectionViewSet)
-#router.register(r'comment', CommentViewSet)
+# router.register(r'comment', CommentViewSet)
 router.register(r'channel', ChannelViewSet)
-#router.register(r'message', MessageViewSet)
-#router.register(r'activity', ActionViewSet)
+# router.register(r'message', MessageViewSet)
+# router.register(r'activity', ActionViewSet)
 router.register(r'skill', SkillViewSet)
 router.register(r'support/section', SupportSectionViewSet)
 router.register(r'support/page', SupportPageViewSet)
