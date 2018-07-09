@@ -149,7 +149,7 @@ class Payment(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        if request.user == self.user or request.user == self.project.owner:
+        if request.user == self.invoice.user or request.user == self.invoice.project.owner:
             return True
         elif request.user.is_project_manager and self.invoice.project.pm == request.user:
             return True
