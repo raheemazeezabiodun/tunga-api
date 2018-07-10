@@ -208,6 +208,28 @@ class SimpleBTCWalletSerializer(serializers.ModelSerializer):
         exclude = ('token', 'token_secret')
 
 
+class SkillsDetailsSerializer(serializers.Serializer):
+
+    def to_representation(self, instance):
+        json = dict()
+        for category in instance:
+            json[category] = SkillSerializer(instance=instance[category], many=True).data
+        return json
+
+
+class SimpleCompanySerializer(serializers.ModelSerializer):
+    city = serializers.CharField()
+    skills = SkillSerializer(many=True)
+    country = CountryField()
+    country_name = serializers.CharField()
+    location = serializers.CharField()
+    skills_details = SkillsDetailsSerializer()
+
+    class Meta:
+        model = Company
+        exclude = ('user',)
+
+
 class SimplestUserSerializer(SimpleModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
 
@@ -221,15 +243,14 @@ class SimplestUserSerializer(SimpleModelSerializer):
     def get_company(self, obj):
         try:
             if obj.company:
-                return obj.company.name
+                return SimpleCompanySerializer(instance=obj.company).data
         except:
             if obj.profile:
-                return obj.profile.company
+                return dict(name=obj.profile.company)
         return
 
 
-class SimpleUserSerializer(serializers.ModelSerializer):
-    company = serializers.SerializerMethodField(required=False, read_only=True)
+class SimpleUserSerializer(SimplestUserSerializer):
     can_contribute = serializers.SerializerMethodField(required=False, read_only=True)
 
     class Meta:
@@ -244,24 +265,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
     def get_can_contribute(self, obj):
         return profile_check(obj)
 
-    def get_company(self, obj):
-        try:
-            if obj.company:
-                return obj.company.name
-        except:
-            if obj.profile:
-                return obj.profile.company
-        return
-
-
-class SkillsDetailsSerializer(serializers.Serializer):
-
-    def to_representation(self, instance):
-        json = dict()
-        for category in instance:
-            json[category] = SkillSerializer(instance=instance[category], many=True).data
-        return json
-
 
 class SimpleProfileSerializer(serializers.ModelSerializer):
     city = serializers.CharField()
@@ -274,19 +277,6 @@ class SimpleProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        exclude = ('user',)
-
-
-class SimpleCompanySerializer(serializers.ModelSerializer):
-    city = serializers.CharField()
-    skills = SkillSerializer(many=True)
-    country = CountryField()
-    country_name = serializers.CharField()
-    location = serializers.CharField()
-    skills_details = SkillsDetailsSerializer()
-
-    class Meta:
-        model = Company
         exclude = ('user',)
 
 
