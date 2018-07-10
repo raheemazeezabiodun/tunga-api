@@ -230,6 +230,7 @@ class Company(models.Model):
     # Description
     name = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
 
     # Contact Info
     country = CountryField(blank=True, null=True)
@@ -240,16 +241,13 @@ class Company(models.Model):
     postal_address = models.CharField(max_length=100, blank=True, null=True)
     tel_number = models.CharField(max_length=15, blank=True, null=True)
 
-    # Professional Info
+    # Stack
     skills = tagulous.models.TagField(to=Skill, blank=True)
 
     # KYC
-    company = models.CharField(max_length=200, blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
     vat_number = models.CharField(max_length=50, blank=True, null=True)
     reg_no = models.CharField(max_length=50, blank=True, null=True)
-    reference_number = models.CharField(max_length=50, blank=True, null=True)
-    website = models.CharField(max_length=100, blank=True, null=True)
+    ref_no = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return self.user.get_short_name()
