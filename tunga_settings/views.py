@@ -23,6 +23,11 @@ class UserSettingsView(generics.GenericAPIView):
         else:
             return None
 
+    def __get_settings(self, user):
+        switches = UserSwitchSetting.objects.filter(user=user)
+        visibility = UserVisibilitySetting.objects.filter(user=user)
+        return {'switches': switches, 'visibility': visibility}
+
     def __unauthorized_response(self):
         return Response(
             {'status': 'Unauthorized', 'message': 'You are not logged in'},
@@ -33,13 +38,10 @@ class UserSettingsView(generics.GenericAPIView):
         user = self.get_object()
         if user is None:
             return self.__unauthorized_response()
-        switches = UserSwitchSetting.objects.filter(user=user)
-        visibility = UserVisibilitySetting.objects.filter(user=user)
-        settings = {'switches': switches, 'visibility': visibility}
-        serializer = UserSettingsSerializer(settings)
+        serializer = UserSettingsSerializer(self.__get_settings(user))
         return Response(serializer.data)
 
-    def put(self, request):
+    def patch(self, request):
         user = self.get_object()
         if user is None:
             return self.__unauthorized_response()
@@ -53,6 +55,6 @@ class UserSettingsView(generics.GenericAPIView):
 
         serializer = UserSettingsUpdateSerializer(data=settings, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        user_settings = serializer.save()
-        read_serializer = UserSettingsSerializer(user_settings)
+        serializer.save()
+        read_serializer = UserSettingsSerializer(self.__get_settings(user))
         return Response(read_serializer.data)
