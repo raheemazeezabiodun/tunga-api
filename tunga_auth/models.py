@@ -53,6 +53,7 @@ class TungaUser(AbstractUser):
         help_text=', '.join(['{} - {}'.format(item[0], item[1]) for item in PAYONEER_STATUS_CHOICES]),
         default=STATUS_INITIAL
     )
+    invoice_email = models.EmailField(blank=True, null=True)
 
     class Meta(AbstractUser.Meta):
         unique_together = ('email',)
