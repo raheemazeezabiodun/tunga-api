@@ -250,7 +250,8 @@ class SimplestUserSerializer(SimpleModelSerializer):
         return
 
 
-class SimpleUserSerializer(SimplestUserSerializer):
+class SimpleUserSerializer(serializers.ModelSerializer):
+    company = serializers.SerializerMethodField(required=False, read_only=True)
     can_contribute = serializers.SerializerMethodField(required=False, read_only=True)
 
     class Meta:
@@ -261,6 +262,15 @@ class SimpleUserSerializer(SimplestUserSerializer):
             'can_contribute', 'date_joined', 'agree_version', 'agreed_at', 'disagree_version', 'disagreed_at',
             'payoneer_signup_url', 'payoneer_status', 'exact_code', 'tax_location'
         )
+
+    def get_company(self, obj):
+        try:
+            if obj.company:
+                return SimpleCompanySerializer(instance=obj.company).data
+        except:
+            if obj.profile:
+                return dict(name=obj.profile.company)
+        return
 
     def get_can_contribute(self, obj):
         return profile_check(obj)

@@ -1,8 +1,12 @@
+from django.contrib.auth import get_user_model
+
 from tunga_profiles.models import AppIntegration
 from tunga_utils.constants import STATUS_APPROVED, STATUS_PENDING
+from tunga_utils.helpers import clean_instance
 
 
 def profile_check(user):
+    user = clean_instance(user, get_user_model())
     if not user.first_name or not user.last_name or not user.email or not user.profile:
         return False
 
