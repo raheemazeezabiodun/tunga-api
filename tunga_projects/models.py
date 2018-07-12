@@ -34,13 +34,19 @@ class Project(models.Model):
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default=PROJECT_TYPE_OTHER)
     expected_duration = models.CharField(max_length=20, choices=PROJECT_EXPECTED_DURATION_CHOICES, blank=True, null=True)
-    start_date = models.DateTimeField(blank=True, null=True)
-    deadline = models.DateTimeField(blank=True, null=True)
+
+    # State identifiers
     client_survey_enabled = models.BooleanField(default=True)
     pm_updates_enabled = models.BooleanField(default=True)
+    closed = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
+
+    # Significant event dates
+    start_date = models.DateTimeField(blank=True, null=True)
+    deadline = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    closed_at = models.DateTimeField(blank=True, null=True)
     archived_at = models.DateTimeField(blank=True, null=True)
 
     participants = models.ManyToManyField(
@@ -180,7 +186,8 @@ class Document(models.Model):
 @python_2_unicode_compatible
 class ProgressEvent(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    type = models.PositiveSmallIntegerField(
+    type = models.CharField(
+        max_length=50,
         choices=PROGRESS_EVENT_TYPE_CHOICES, default=PROGRESS_EVENT_DEVELOPER,
         help_text=','.join(['{} - {}'.format(item[0], item[1]) for item in PROGRESS_EVENT_TYPE_CHOICES])
     )

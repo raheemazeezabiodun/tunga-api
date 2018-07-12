@@ -10,7 +10,7 @@ from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateO
 class SimpleProjectSerializer(SimpleModelSerializer):
     class Meta:
         model = Project
-        fields = ('id', 'title', 'description')
+        fields = ('id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline')
 
 
 class SimpleParticipationSerializer(SimpleModelSerializer):
