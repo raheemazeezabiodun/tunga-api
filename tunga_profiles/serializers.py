@@ -83,6 +83,16 @@ class CompanySerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
         model = Company
         fields = '__all__'
 
+    def save_nested_user(self, data, instance):
+        user = instance.user
+        if user:
+            user.first_name = data.get('first_name', user.first_name)
+            user.last_name = data.get('last_name', user.last_name)
+            image = data.get('image', None)
+            if image:
+                user.image = image
+            user.save()
+
     def save_nested_skills(self, data, instance):
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
