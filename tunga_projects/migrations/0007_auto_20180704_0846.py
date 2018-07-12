@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             name='ProgressEvent',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.PositiveSmallIntegerField(choices=[(b'developer', b'Developer Update'), (b'pm', b'PM Report'), (b'client', b'Client Survey'), (b'milestone', b'Milestone'), (b'internal', b'Internal Milestone')], default=b'developer', help_text='developer - Developer Update,pm - PM Report,client - Client Survey,milestone - Milestone,internal - Internal Milestone')),
+                ('type', models.PositiveSmallIntegerField(choices=[(b'developer', b'Developer Update'), (b'pm', b'PM Report'), (b'client', b'Client Survey'), (b'milestone', b'Milestone'), (b'internal', b'Internal Milestone')], default=1, help_text='developer - Developer Update,pm - PM Report,client - Client Survey,milestone - Milestone,internal - Internal Milestone')),
                 ('due_at', models.DateTimeField()),
                 ('title', models.CharField(blank=True, max_length=200, null=True)),
                 ('description', models.TextField(blank=True, null=True)),
