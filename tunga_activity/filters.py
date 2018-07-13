@@ -2,6 +2,7 @@ import django_filters
 from actstream.models import Action
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 
 from tunga_activity import verbs
 from tunga_projects.models import Project
@@ -33,8 +34,9 @@ class ActionFilter(GenericDateFilterSet):
         )
 
     def filter_project(self, queryset, name, value):
+        project = Project.objects.get(pk=value)
         return queryset.filter(
-            target_content_type=ContentType.objects.get_for_model(Project), target_object_id=value
+            Q(projects=project) | Q(progress_events__project=project)
         )
 
 

@@ -15,11 +15,11 @@ from tunga_profiles.serializers import ConnectionSerializer
 from tunga_projects.models import Project, Document, Participation, ProgressEvent
 from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
     ProgressEventSerializer
-from tunga_tasks.models import Task, Application, Participation as LegacyParticipation, Integration, ProgressEvent as LegacyProgressEvent, ProgressReport, \
+from tunga_tasks.models import Task, Application, Participation as LegacyParticipation, Integration, ProgressEvent as LegacyProgressEvent, ProgressReport as LegacyProgressReport, \
     IntegrationActivity, Estimate, Quote, Sprint
 from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializer as LegacyParticipationSerializer, \
     SimpleTaskSerializer, SimpleIntegrationSerializer, SimpleProgressEventSerializer as LegacySimpleProgressEventSerializer, \
-    SimpleProgressReportSerializer, SimpleIntegrationActivitySerializer, ProgressReportSerializer, \
+    SimpleProgressReportSerializer as LegacySimpleProgressReportSerializer, SimpleIntegrationActivitySerializer, ProgressReportSerializer as LegacyProgressReportSerializer, \
     SimpleEstimateSerializer, SimpleQuoteSerializer, SimpleSprintSerializer
 from tunga_utils.models import Upload
 from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer
@@ -54,7 +54,7 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         Quote: SimpleQuoteSerializer(),
         Sprint: SimpleSprintSerializer(),
         LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
-        ProgressReport: ProgressReportSerializer(),
+        LegacyProgressReport: LegacyProgressReportSerializer(),
         Integration: SimpleIntegrationSerializer(),
         IntegrationActivity: SimpleIntegrationActivitySerializer(),
         Project: ProjectSerializer(),
@@ -92,7 +92,7 @@ class ActivitySerializer(SimpleActivitySerializer):
         Application: ApplicationSerializer(),
         LegacyParticipation: LegacyParticipationSerializer(),
         LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
-        ProgressReport: SimpleProgressReportSerializer(),
+        LegacyProgressReport: LegacySimpleProgressReportSerializer(),
         Integration: SimpleIntegrationSerializer(),
         IntegrationActivity: SimpleIntegrationActivitySerializer(),
         Project: ProjectSerializer(),
@@ -110,7 +110,7 @@ class ActivitySerializer(SimpleActivitySerializer):
         Application: ApplicationSerializer(),
         LegacyParticipation: LegacyParticipationSerializer(),
         LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
-        ProgressReport: SimpleProgressReportSerializer(),
+        LegacyProgressReport: LegacySimpleProgressReportSerializer(),
         Integration: SimpleIntegrationSerializer(),
         IntegrationActivity: SimpleIntegrationActivitySerializer(),
         Project: ProjectSerializer(),
@@ -131,7 +131,9 @@ class ActivitySerializer(SimpleActivitySerializer):
 
 def get_instance_type(instance):
     if instance:
-        return to_snake_case(str(type(instance).__name__))
+        instance_class = type(instance)
+        is_legacy = instance_class in [LegacyProgressEvent, LegacyProgressReport]
+        return to_snake_case(str('{}{}'.format(is_legacy and 'Legacy' or '', instance_class.__name__)))
     return None
 
 

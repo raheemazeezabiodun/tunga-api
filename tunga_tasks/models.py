@@ -1341,7 +1341,7 @@ class ProgressEvent(models.Model):
         Action,
         object_id_field='target_object_id',
         content_type_field='target_content_type',
-        related_query_name='progress_events'
+        related_query_name='legacy_progress_events'
     )
 
     def __str__(self):

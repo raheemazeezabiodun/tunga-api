@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import datetime
 
 import tagulous.models
+from actstream.models import Action
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
@@ -52,6 +54,13 @@ class Project(models.Model):
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through='Participation', through_fields=('project', 'user'),
         related_name='project_participants', blank=True)
+
+    activity_objects = GenericRelation(
+        Action,
+        object_id_field='target_object_id',
+        content_type_field='target_content_type',
+        related_query_name='projects'
+    )
 
     def __str__(self):
         return self.title
@@ -201,6 +210,13 @@ class ProgressEvent(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    activity_objects = GenericRelation(
+        Action,
+        object_id_field='target_object_id',
+        content_type_field='target_content_type',
+        related_query_name='progress_events'
+    )
 
     def __str__(self):
         return '{} | {} - {}'.format(self.type, self.project.title, self.due_at)
