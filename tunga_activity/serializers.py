@@ -79,9 +79,24 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
 class ActivitySerializer(SimpleActivitySerializer):
     actor_type = serializers.SerializerMethodField()
     target_type = serializers.SerializerMethodField()
+    """
     actor = GenericRelatedField({
         get_user_model(): SimpleUserSerializer(),
-        Integration: SimpleIntegrationSerializer()
+        Channel: ChannelSerializer(),
+        ChannelUser: ChannelUserSerializer(),
+        Message: MessageSerializer(),
+        Comment: CommentSerializer(),
+        Upload: UploadSerializer(),
+        Connection: ConnectionSerializer(),
+        Task: SimpleTaskSerializer(),
+        Application: ApplicationSerializer(),
+        LegacyParticipation: LegacyParticipationSerializer(),
+        LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
+        ProgressReport: SimpleProgressReportSerializer(),
+        Integration: SimpleIntegrationSerializer(),
+        IntegrationActivity: SimpleIntegrationActivitySerializer(),
+        Project: ProjectSerializer(),
+        Invoice: InvoiceSerializer()
     })
     target = GenericRelatedField({
         get_user_model(): SimpleUserSerializer(),
@@ -101,6 +116,7 @@ class ActivitySerializer(SimpleActivitySerializer):
         Project: ProjectSerializer(),
         Invoice: InvoiceSerializer()
     })
+    """
 
     class Meta(SimpleActivitySerializer.Meta):
         fields = '__all__'

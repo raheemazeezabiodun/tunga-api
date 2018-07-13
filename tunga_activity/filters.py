@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 from tunga_activity import verbs
+from tunga_projects.models import Project
 from tunga_tasks.models import Task
 from tunga_utils.filters import GenericDateFilterSet
 
@@ -12,12 +13,13 @@ class ActionFilter(GenericDateFilterSet):
     user = django_filters.NumberFilter(method='filter_user')
     task = django_filters.NumberFilter(method='filter_task')
     since = django_filters.NumberFilter(name='id', lookup_expr='gt')
+    project = django_filters.NumberFilter(method='filter_project')
 
     class Meta:
         model = Action
         fields = (
             'verb', 'actor_content_type', 'actor_object_id', 'target_content_type', 'target_object_id',
-            'action_object_content_type', 'action_object_object_id', 'since'
+            'action_object_content_type', 'action_object_object_id', 'since', 'project'
         )
 
     def filter_user(self, queryset, name, value):
@@ -28,6 +30,11 @@ class ActionFilter(GenericDateFilterSet):
     def filter_task(self, queryset, name, value):
         return queryset.filter(
             target_content_type=ContentType.objects.get_for_model(Task), target_object_id=value
+        )
+
+    def filter_project(self, queryset, name, value):
+        return queryset.filter(
+            target_content_type=ContentType.objects.get_for_model(Project), target_object_id=value
         )
 
 
