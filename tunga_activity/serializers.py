@@ -21,8 +21,10 @@ from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializ
     SimpleTaskSerializer, SimpleIntegrationSerializer, SimpleProgressEventSerializer as LegacySimpleProgressEventSerializer, \
     SimpleProgressReportSerializer as LegacySimpleProgressReportSerializer, SimpleIntegrationActivitySerializer, ProgressReportSerializer as LegacyProgressReportSerializer, \
     SimpleEstimateSerializer, SimpleQuoteSerializer, SimpleSprintSerializer
-from tunga_utils.models import Upload
-from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer
+from tunga_uploads.models import Upload
+from tunga_uploads.serializers import UploadSerializer
+from tunga_utils.models import Upload as LegacyUpload
+from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer as LegacyUploadSerializer
 
 
 class ActivityReadLogSerializer(serializers.Serializer):
@@ -45,7 +47,7 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         ChannelUser: ChannelUserSerializer(),
         Message: MessageSerializer(),
         Comment: CommentSerializer(),
-        Upload: UploadSerializer(),
+        LegacyUpload: LegacyUploadSerializer(),
         Connection: ConnectionSerializer(),
         Task: SimpleTaskSerializer(),
         Application: ApplicationSerializer(),
@@ -62,7 +64,8 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         Participation: ParticipationSerializer(),
         ProgressEvent: ProgressEventSerializer(),
         Invoice: InvoiceSerializer(),
-        Payment: PaymentSerializer()
+        Payment: PaymentSerializer(),
+        Upload: UploadSerializer(),
     }, source='action_object')
 
     class Meta:
@@ -79,44 +82,6 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
 class ActivitySerializer(SimpleActivitySerializer):
     actor_type = serializers.SerializerMethodField()
     target_type = serializers.SerializerMethodField()
-    """
-    actor = GenericRelatedField({
-        get_user_model(): SimpleUserSerializer(),
-        Channel: ChannelSerializer(),
-        ChannelUser: ChannelUserSerializer(),
-        Message: MessageSerializer(),
-        Comment: CommentSerializer(),
-        Upload: UploadSerializer(),
-        Connection: ConnectionSerializer(),
-        Task: SimpleTaskSerializer(),
-        Application: ApplicationSerializer(),
-        LegacyParticipation: LegacyParticipationSerializer(),
-        LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
-        LegacyProgressReport: LegacySimpleProgressReportSerializer(),
-        Integration: SimpleIntegrationSerializer(),
-        IntegrationActivity: SimpleIntegrationActivitySerializer(),
-        Project: ProjectSerializer(),
-        Invoice: InvoiceSerializer()
-    })
-    target = GenericRelatedField({
-        get_user_model(): SimpleUserSerializer(),
-        Channel: ChannelSerializer(),
-        ChannelUser: ChannelUserSerializer(),
-        Message: MessageSerializer(),
-        Comment: CommentSerializer(),
-        Upload: UploadSerializer(),
-        Connection: ConnectionSerializer(),
-        Task: SimpleTaskSerializer(),
-        Application: ApplicationSerializer(),
-        LegacyParticipation: LegacyParticipationSerializer(),
-        LegacyProgressEvent: LegacySimpleProgressEventSerializer(),
-        LegacyProgressReport: LegacySimpleProgressReportSerializer(),
-        Integration: SimpleIntegrationSerializer(),
-        IntegrationActivity: SimpleIntegrationActivitySerializer(),
-        Project: ProjectSerializer(),
-        Invoice: InvoiceSerializer()
-    })
-    """
 
     class Meta(SimpleActivitySerializer.Meta):
         fields = '__all__'
@@ -132,7 +97,7 @@ class ActivitySerializer(SimpleActivitySerializer):
 def get_instance_type(instance):
     if instance:
         instance_class = type(instance)
-        is_legacy = instance_class in [LegacyProgressEvent, LegacyProgressReport]
+        is_legacy = instance_class in [LegacyProgressEvent, LegacyProgressReport, LegacyUpload]
         return to_snake_case(str('{}{}'.format(is_legacy and 'Legacy' or '', instance_class.__name__)))
     return None
 

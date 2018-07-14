@@ -57,7 +57,9 @@ class AbstractExperience(models.Model):
 @python_2_unicode_compatible
 class GenericUpload(models.Model):
     file = models.FileField(verbose_name='Upload', upload_to='uploads/%Y/%m/%d', validators=[validate_file_size])
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name=_('content type'))
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.CASCADE, verbose_name=_('content type'), related_name='legacy_uploads'
+    )
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -72,7 +74,9 @@ class GenericUpload(models.Model):
 
 # @python_2_unicode_compatible
 class Upload(GenericUpload):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True, related_name='legacy_uploads'
+    )
 
     activity_objects = GenericRelation(
         Action,

@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'tunga_integrations',
     'tunga_payments',
     'tunga_updates',
+    'tunga_uploads',
 ]
 
 MIDDLEWARE = [

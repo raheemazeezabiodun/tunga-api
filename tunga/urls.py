@@ -41,6 +41,7 @@ from tunga_tasks.views import TimeEntryViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
     TaskDocumentViewSet
+from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file
 
 api_schema_view = get_swagger_view(title='Tunga API')
@@ -60,6 +61,7 @@ router.register(r'activity', ActionViewSet)
 router.register(r'comments', CommentViewSet)
 router.register(r'messages', MessageViewSet)
 router.register(r'skills', SkillViewSet)
+router.register(r'uploads', UploadViewSet)
 
 # Legacy routes
 # router.register(r'user', UserViewSet)
