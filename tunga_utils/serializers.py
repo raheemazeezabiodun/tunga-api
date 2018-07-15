@@ -35,7 +35,10 @@ class SimpleModelSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         object_id = data.get('id', None)
         if object_id:
-            return self.Meta.model.objects.get(pk=object_id)
+            # return self.Meta.model.objects.get(pk=object_id)
+            rep = super(SimpleModelSerializer, self).to_internal_value(data)
+            rep['id'] = object_id
+            return rep
         else:
             rep = super(SimpleModelSerializer, self).to_internal_value(data)
             for serializer_field, serializer_field_value in six.iteritems(self.get_fields()):
@@ -153,8 +156,8 @@ class NestedModelSerializer(serializers.ModelSerializer):
                     for related_key in r:
                         v[related_key] = instance
                 if s.Meta.model:
-                    if id in v:
-                        s.Meta.model.objects.filter(pk=v[id]).update(**v)
+                    if 'id' in v:
+                        s.Meta.model.objects.update_or_create(id=v['id'], defaults=v)
                     else:
                         s.Meta.model.objects.create(**v)
                 else:
