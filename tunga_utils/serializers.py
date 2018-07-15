@@ -35,9 +35,11 @@ class SimpleModelSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         object_id = data.get('id', None)
         if object_id:
-            # return self.Meta.model.objects.get(pk=object_id)
-            rep = super(SimpleModelSerializer, self).to_internal_value(data)
-            rep['id'] = object_id
+            if len(data) == 1:
+                rep = self.Meta.model.objects.get(pk=object_id)
+            else:
+                rep = super(SimpleModelSerializer, self).to_internal_value(data)
+                rep['id'] = object_id
             return rep
         else:
             rep = super(SimpleModelSerializer, self).to_internal_value(data)
