@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterUniqueTogether(
             name='projectmeta',
-            unique_together=set([('project', 'meta_key', 'meta_value')]),
+            unique_together=set([('project', 'meta_key', 'created_by')]),
         ),
     ]
