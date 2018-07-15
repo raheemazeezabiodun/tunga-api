@@ -242,3 +242,23 @@ class ProgressEvent(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return request.user == self.project.user or request.user == self.project.owner
+
+
+@python_2_unicode_compatible
+class ProjectMeta(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    meta_key = models.CharField(max_length=30)
+    meta_value = models.TextField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name='project_meta_created', blank=True, null=True,
+        on_delete=models.DO_NOTHING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{} | {} - {}'.format(self.project, self.meta_key, self.meta_value)
+
+    class Meta:
+        ordering = ['created_at']
+        unique_together = ('project', 'meta_key')
