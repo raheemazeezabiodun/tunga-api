@@ -16,8 +16,8 @@ from tunga_tasks.models import Task, Participation, Application, ProgressEvent, 
 from tunga_tasks.utils import get_task_integration
 from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, VISIBILITY_DEVELOPER, STATUS_ACCEPTED, \
-    APP_INTEGRATION_PROVIDER_SLACK, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BANK, \
-    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+    APP_INTEGRATION_PROVIDER_SLACK, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BANK, \
+    LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.slack_utils import get_user_im_id
 
@@ -330,8 +330,8 @@ def remind_progress_event_slack(instance):
     if not task_integration:
         return
 
-    is_pm_report = instance.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+    is_pm_report = instance.type in [LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
+    is_client_report = instance.type in [LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -391,8 +391,8 @@ def remind_progress_event_slack(instance):
 
 
 def create_progress_report_slack_message(instance, updated=False, to_client=False):
-    is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.event.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+    is_pm_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
+    is_client_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -575,8 +575,8 @@ def create_progress_report_slack_message(instance, updated=False, to_client=Fals
 def notify_new_progress_report_slack(instance, updated=False):
     instance = clean_instance(instance, ProgressReport)
 
-    is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.event.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+    is_pm_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
+    is_client_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -601,7 +601,7 @@ def notify_new_progress_report_slack(instance, updated=False):
 def notify_missed_progress_event_slack(instance):
     instance = clean_instance(instance, ProgressEvent)
 
-    is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+    is_client_report = instance.type in [LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
 
     if instance.task.archived or instance.status != "missed":
         return
@@ -798,7 +798,7 @@ def notify_progress_report_wont_meet_deadline_slack_admin(instance):
 
     task_url = '{}/work/{}/event/{}'.format(TUNGA_URL, instance.event.task.id, instance.event.id)
     slack_msg = "`Alert (!):` {} doesn't expect to meet the deadline | <{}|View on Tunga>".format(
-        instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
+        instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
         task_url
     )
 
@@ -808,8 +808,8 @@ def notify_progress_report_wont_meet_deadline_slack_admin(instance):
             slack_utils.KEY_TITLE_LINK: task_url,
             slack_utils.KEY_TEXT: 'The {} on the \"{}\" {} has indicated that they might not meet the coming deadline.\n'
                                   'Please contact all stakeholders.'.format(
-                instance.event.type in [PROGRESS_EVENT_TYPE_PM,
-                                        PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
+                instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_PM,
+                                        LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL] and 'PM' or 'Developer',
                 instance.event.task.summary,
                 instance.event.task.is_task and 'task' or 'project'
             ),

@@ -20,11 +20,11 @@ from tunga_utils import bitcoin_utils, coinbase_utils, bitpesa, payoneer_utils, 
 from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     PAYMENT_METHOD_BTC_ADDRESS, PAYMENT_METHOD_MOBILE_MONEY, UPDATE_SCHEDULE_HOURLY, UPDATE_SCHEDULE_DAILY, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
-    PROGRESS_EVENT_TYPE_PERIODIC, PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
-    STATUS_INITIATED, PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
-    PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
+    LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
+    STATUS_INITIATED, LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
+    LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
     TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER, \
-    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, USER_TYPE_PROJECT_OWNER
+    LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, USER_TYPE_PROJECT_OWNER
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
 
@@ -52,10 +52,10 @@ def update_task_submit_milestone(task):
             draft_submission_date = task.deadline - datetime.timedelta(days=days_before)
 
         draft_defaults = {'due_at': draft_submission_date, 'title': 'Final draft'}
-        ProgressEvent.objects.update_or_create(task=task, type=PROGRESS_EVENT_TYPE_SUBMIT, defaults=draft_defaults)
+        ProgressEvent.objects.update_or_create(task=task, type=LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, defaults=draft_defaults)
 
         submit_defaults = {'due_at': task.deadline, 'title': 'Submit work'}
-        ProgressEvent.objects.update_or_create(task=task, type=PROGRESS_EVENT_TYPE_COMPLETE, defaults=submit_defaults)
+        ProgressEvent.objects.update_or_create(task=task, type=LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, defaults=submit_defaults)
 
 
 def clean_update_datetime(periodic_start_date, target_task=None):
@@ -79,7 +79,7 @@ def update_task_periodic_updates(task):
 
     if target_task.update_interval and target_task.update_interval_units:
         periodic_start_date = ProgressEvent.objects.filter(
-            Q(task=target_task) | Q(task__parent=target_task), type=PROGRESS_EVENT_TYPE_PERIODIC
+            Q(task=target_task) | Q(task__parent=target_task), type=LEGACY_PROGRESS_EVENT_TYPE_PERIODIC
         ).aggregate(latest_date=Max('due_at'))['latest_date']
 
         now = datetime.datetime.utcnow()
@@ -119,14 +119,14 @@ def update_task_periodic_updates(task):
                                 and next_update_at <= future_by_18_hours and (
                             not target_task.deadline or next_update_at < target_task.deadline):
                             num_updates_within_on_same_day = ProgressEvent.objects.filter(
-                                task=target_task, type=PROGRESS_EVENT_TYPE_PERIODIC,
+                                task=target_task, type=LEGACY_PROGRESS_EVENT_TYPE_PERIODIC,
                                 due_at__contains=next_update_at.date()
                             ).count()
 
                             if num_updates_within_on_same_day == 0:
                                 # Schedule at most one periodic update for any day
                                 ProgressEvent.objects.update_or_create(
-                                    task=target_task, type=PROGRESS_EVENT_TYPE_PERIODIC, due_at=next_update_at
+                                    task=target_task, type=LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, due_at=next_update_at
                                 )
                         break
                     else:
@@ -148,7 +148,7 @@ def update_task_pm_updates(task):
 
     if target_task.update_interval and target_task.update_interval_units:
         periodic_start_date = ProgressEvent.objects.filter(
-            Q(task=target_task) | Q(task__parent=target_task), type=PROGRESS_EVENT_TYPE_PM
+            Q(task=target_task) | Q(task__parent=target_task), type=LEGACY_PROGRESS_EVENT_TYPE_PM
         ).aggregate(latest_date=Max('due_at'))['latest_date']
 
         now = datetime.datetime.utcnow()
@@ -175,14 +175,14 @@ def update_task_pm_updates(task):
                     if next_update_at <= future_by_18_hours and (
                         not target_task.deadline or next_update_at < target_task.deadline):
                         num_updates_within_on_same_day = ProgressEvent.objects.filter(
-                            task=target_task, type=PROGRESS_EVENT_TYPE_PM,
+                            task=target_task, type=LEGACY_PROGRESS_EVENT_TYPE_PM,
                             due_at__contains=next_update_at.date()
                         ).count()
 
                         if num_updates_within_on_same_day == 0:
                             # Schedule at most one pm update for any day
                             ProgressEvent.objects.update_or_create(
-                                task=target_task, type=PROGRESS_EVENT_TYPE_PM,
+                                task=target_task, type=LEGACY_PROGRESS_EVENT_TYPE_PM,
                                 due_at=next_update_at, defaults={'title': 'PM Report'}
                             )
                     break
@@ -207,7 +207,7 @@ def update_task_client_surveys(task):
     if target_task.update_interval and target_task.update_interval_units:
         periodic_start_date = ProgressEvent.objects.filter(
             Q(task=target_task) | Q(task__parent=target_task),
-            type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+            type__in=[LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
         ).aggregate(latest_date=Max('due_at'))['latest_date']
 
         now = datetime.datetime.utcnow()
@@ -230,14 +230,14 @@ def update_task_client_surveys(task):
                         not target_task.deadline or next_update_at < target_task.deadline):
                         num_updates_on_same_day = ProgressEvent.objects.filter(
                             task=target_task,
-                            type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
+                            type__in=[LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
                             due_at__contains=next_update_at.date()
                         ).count()
 
                         if num_updates_on_same_day == 0:
                             # Schedule at most one survey for any day
                             ProgressEvent.objects.update_or_create(
-                                task=target_task, type=PROGRESS_EVENT_TYPE_CLIENT,
+                                task=target_task, type=LEGACY_PROGRESS_EVENT_TYPE_CLIENT,
                                 due_at=next_update_at, defaults={'title': 'Weekly Survey'}
                             )
                     break

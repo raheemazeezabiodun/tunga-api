@@ -5,9 +5,9 @@ from django.core.management.base import BaseCommand
 
 from tunga_tasks.notifications.generic import send_survey_summary_report
 from tunga_tasks.models import ProgressEvent, ProgressReport
-from tunga_utils.constants import PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_PERIODIC, \
-    PROGRESS_EVENT_TYPE_DEFAULT, PROGRESS_EVENT_TYPE_COMPLETE, PROGRESS_EVENT_TYPE_SUBMIT, \
-    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+from tunga_utils.constants import LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, \
+    LEGACY_PROGRESS_EVENT_TYPE_DEFAULT, LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, \
+    LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 
 
 class Command(BaseCommand):
@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
         # Send reminders for tasks updates due in the current 24 hr period
         events = ProgressEvent.objects.filter(
-            type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
+            type__in=[LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
             due_at__range=[last_sunday, right_now]
         )
         for event in events:
@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
             try:
                 client_report = ProgressReport.objects.filter(
-                    event=event, event__type__in=[PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
+                    event=event, event__type__in=[LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT],
                     event__due_at__range=[last_sunday, right_now]
                 ).latest('event__due_at')
             except:
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             try:
                 pm_report = ProgressReport.objects.filter(
                     event__task=event.task, event__type__in=[
-                        PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
+                        LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL
                     ],
                     event__due_at__range=[last_thursday, right_now]
                 ).latest('event__due_at')
@@ -58,10 +58,10 @@ class Command(BaseCommand):
                 dev_report = ProgressReport.objects.filter(
                     event__task=event.task,
                     event__type__in=[
-                        PROGRESS_EVENT_TYPE_PERIODIC,
-                        PROGRESS_EVENT_TYPE_DEFAULT,
-                        PROGRESS_EVENT_TYPE_SUBMIT,
-                        PROGRESS_EVENT_TYPE_COMPLETE
+                        LEGACY_PROGRESS_EVENT_TYPE_PERIODIC,
+                        LEGACY_PROGRESS_EVENT_TYPE_DEFAULT,
+                        LEGACY_PROGRESS_EVENT_TYPE_SUBMIT,
+                        LEGACY_PROGRESS_EVENT_TYPE_COMPLETE
                     ],
                     event__due_at__range=[last_thursday, right_now]
                 ).latest('event__due_at')

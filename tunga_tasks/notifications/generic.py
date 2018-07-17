@@ -27,9 +27,9 @@ from tunga_tasks.notifications.slack import notify_new_task_admin_slack, remind_
     notify_progress_report_client_not_satisfied_slack_admin, notify_progress_report_stuck_slack_admin, \
     notify_progress_report_wont_meet_deadline_slack_admin, send_survey_summary_report_slack, \
     notify_new_task_invoice_admin_slack, notify_hubspot_change_slack
-from tunga_utils.constants import PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_REPORT_STATUS_STUCK, \
-    PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
-    PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+from tunga_utils.constants import LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_REPORT_STATUS_STUCK, \
+    LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
+    LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import clean_instance
 
 
@@ -129,8 +129,8 @@ def notify_new_progress_report(instance):
 def trigger_progress_report_actionable_events(instance):
     # Trigger actionable event notifications
     instance = clean_instance(instance, ProgressReport)
-    is_pm_report = instance.event.type in [PROGRESS_EVENT_TYPE_PM, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
-    is_client_report = instance.event.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
+    is_pm_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]
+    is_client_report = instance.event.type in [LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
     is_pm_or_client_report = is_pm_report or is_client_report
     is_dev_report = not is_pm_or_client_report
 
@@ -176,7 +176,7 @@ def trigger_progress_report_actionable_events(instance):
             notify_progress_report_client_not_satisfied_dev(instance)
 
     # Stuck and/ or not progressing
-    if instance.status in [PROGRESS_REPORT_STATUS_STUCK, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK]:
+    if instance.status in [LEGACY_PROGRESS_REPORT_STATUS_STUCK, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK]:
         if is_pm_report or is_dev_report:
             notify_progress_report_stuck_admin(instance)
 

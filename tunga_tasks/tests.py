@@ -10,9 +10,9 @@ from rest_framework.test import APITestCase
 
 from tunga_tasks.models import Task, ProgressEvent
 from tunga_utils.constants import USER_TYPE_DEVELOPER, USER_TYPE_PROJECT_OWNER, STATUS_ACCEPTED, TASK_TYPE_WEB, \
-    TASK_SCOPE_TASK, USER_TYPE_PROJECT_MANAGER, STATUS_REJECTED, TASK_SCOPE_PROJECT, PROGRESS_EVENT_TYPE_PERIODIC, \
-    PROGRESS_REPORT_STATUS_ON_SCHEDULE, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STUCK_REASON_ERROR, \
-    PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_PM
+    TASK_SCOPE_TASK, USER_TYPE_PROJECT_MANAGER, STATUS_REJECTED, TASK_SCOPE_PROJECT, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, \
+    LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR, \
+    LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_PM
 
 
 class APITaskTestCase(APITestCase):
@@ -192,7 +192,7 @@ class APITaskTestCase(APITestCase):
         Developer can share progress reports
         """
         task = self.__create_task()
-        progress_event = self.__create_progress_event(task, PROGRESS_EVENT_TYPE_PERIODIC)
+        progress_event = self.__create_progress_event(task, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC)
 
         url = reverse('progressreport-list')
 
@@ -209,7 +209,7 @@ class APITaskTestCase(APITestCase):
         # Devs can create reports
         dev_report = dict(
             event=progress_event.id,
-            status=PROGRESS_REPORT_STATUS_ON_SCHEDULE,
+            status=LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE,
             started_at=datetime.datetime.utcnow() - relativedelta(days=2),
             percentage=50,
             accomplished='Finished',
@@ -231,7 +231,7 @@ class APITaskTestCase(APITestCase):
         dev_report_conditionals_missing = copy(dev_report)
         dev_report_conditionals_missing.update(
             dict(
-                status=PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
+                status=LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
                 next_deadline_meet=False
             )
         )
@@ -244,8 +244,8 @@ class APITaskTestCase(APITestCase):
         dev_report_conditionals = copy(dev_report)
         dev_report_conditionals.update(
             dict(
-                status=PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
-                stuck_reason=PROGRESS_REPORT_STUCK_REASON_ERROR,
+                status=LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
+                stuck_reason=LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR,
                 next_deadline_meet=False,
                 next_deadline_fail_reason="It's complicated"
             )
@@ -267,7 +267,7 @@ class APITaskTestCase(APITestCase):
         PM can share progress reports
         """
         task = self.__create_task()
-        progress_event = self.__create_progress_event(task, PROGRESS_EVENT_TYPE_PM)
+        progress_event = self.__create_progress_event(task, LEGACY_PROGRESS_EVENT_TYPE_PM)
 
         url = reverse('progressreport-list')
 
@@ -284,7 +284,7 @@ class APITaskTestCase(APITestCase):
         # PMs can create reports
         pm_report = dict(
             event=progress_event.id,
-            status=PROGRESS_REPORT_STATUS_ON_SCHEDULE,
+            status=LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE,
             last_deadline_met=True,
             percentage=75,
             accomplished='Finished',
@@ -300,7 +300,7 @@ class APITaskTestCase(APITestCase):
         pm_report_conditionals_missing = copy(pm_report)
         pm_report_conditionals_missing.update(
             dict(
-                status=PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
+                status=LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
                 last_deadline_met=False,
                 next_deadline_meet=False
             )
@@ -316,8 +316,8 @@ class APITaskTestCase(APITestCase):
         pm_report_conditionals = copy(pm_report)
         pm_report_conditionals.update(
             dict(
-                status=PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
-                stuck_reason=PROGRESS_REPORT_STUCK_REASON_ERROR,
+                status=LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK,
+                stuck_reason=LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR,
                 last_deadline_met=False,
                 deadline_miss_communicated=False,
                 deadline_report="The was nasty AF",
@@ -341,7 +341,7 @@ class APITaskTestCase(APITestCase):
         Clients can fill survsys
         """
         task = self.__create_task()
-        progress_event = self.__create_progress_event(task, PROGRESS_EVENT_TYPE_CLIENT)
+        progress_event = self.__create_progress_event(task, LEGACY_PROGRESS_EVENT_TYPE_CLIENT)
 
         url = reverse('progressreport-list')
 
@@ -412,7 +412,7 @@ class APITaskTestCase(APITestCase):
             skills='Django, React.js', fee=15, user=self.project_owner
         )
 
-    def __create_progress_event(self, task, event_type=PROGRESS_EVENT_TYPE_PERIODIC):
+    def __create_progress_event(self, task, event_type=LEGACY_PROGRESS_EVENT_TYPE_PERIODIC):
         if not task:
             task = self.__create_task()
         return ProgressEvent.objects.create(

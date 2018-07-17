@@ -18,17 +18,17 @@ from tunga_tasks import slugs
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, ProgressEvent, ProgressReport, \
     Project, IntegrationMeta, Integration, IntegrationEvent, IntegrationActivity, TASK_PAYMENT_METHOD_CHOICES, \
     Estimate, Quote, WorkActivity, WorkPlan, AbstractEstimate, TaskPayment, ParticipantPayment, \
-    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint, TaskDocument, PROGRESS_REPORT_STATUS_CHOICES, \
-    PROGRESS_REPORT_STUCK_REASON_CHOICES
+    MultiTaskPaymentKey, TaskAccess, SkillsApproval, Sprint, TaskDocument, LEGACY_PROGRESS_REPORT_STATUS_CHOICES, \
+    LEGACY_PROGRESS_REPORT_STUCK_REASON_CHOICES
 from tunga_tasks.signals import application_response, participation_response, task_applications_closed, task_closed, \
     task_integration, estimate_created, estimate_status_changed, quote_status_changed, quote_created, task_approved, \
     task_call_window_scheduled, task_fully_saved, task_details_completed, task_owner_added, task_payment_approved
 from tunga_tasks.tasks import update_multi_tasks
 from tunga_utils import coinbase_utils, bitcoin_utils
-from tunga_utils.constants import PROGRESS_EVENT_TYPE_MILESTONE, USER_TYPE_PROJECT_OWNER, USER_SOURCE_TASK_WIZARD, \
+from tunga_utils.constants import LEGACY_PROGRESS_EVENT_TYPE_MILESTONE, USER_TYPE_PROJECT_OWNER, USER_SOURCE_TASK_WIZARD, \
     TASK_SCOPE_ONGOING, VISIBILITY_CUSTOM, TASK_SCOPE_TASK, TASK_SCOPE_PROJECT, TASK_SOURCE_NEW_USER, STATUS_INITIAL, \
     STATUS_ACCEPTED, STATUS_APPROVED, STATUS_DECLINED, STATUS_REJECTED, STATUS_SUBMITTED, \
-    PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STATUS_STUCK
+    LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, LEGACY_PROGRESS_REPORT_STATUS_STUCK
 from tunga_utils.helpers import clean_meta_value
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
@@ -610,9 +610,9 @@ class TaskSerializer(ContentTypeAnnotatedModelSerializer, DetailAnnotatedModelSe
             for item in milestones:
                 event_internal = item.get('internal', False)
                 event_type = item.get(
-                    'type', event_internal and PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL or PROGRESS_EVENT_TYPE_MILESTONE
+                    'type', event_internal and LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL or LEGACY_PROGRESS_EVENT_TYPE_MILESTONE
                 )
-                if event_type not in [PROGRESS_EVENT_TYPE_MILESTONE, PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]:
+                if event_type not in [LEGACY_PROGRESS_EVENT_TYPE_MILESTONE, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL]:
                     continue
                 defaults = {'created_by': self.get_current_user() or task.user}
                 defaults.update(item)
@@ -1121,12 +1121,12 @@ class ProgressReportSerializer(
             required_fields = []
 
             status_schema = (
-                'status', [status_item[0] for status_item in PROGRESS_REPORT_STATUS_CHOICES],
+                'status', [status_item[0] for status_item in LEGACY_PROGRESS_REPORT_STATUS_CHOICES],
                 [
                     (
-                        [PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STATUS_STUCK],
+                        [LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, LEGACY_PROGRESS_REPORT_STATUS_STUCK],
                         'stuck_reason',
-                        [stuck_reason_item[0] for stuck_reason_item in PROGRESS_REPORT_STUCK_REASON_CHOICES]
+                        [stuck_reason_item[0] for stuck_reason_item in LEGACY_PROGRESS_REPORT_STUCK_REASON_CHOICES]
                     )
                 ]
             )
