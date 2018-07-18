@@ -24,19 +24,22 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_401_UNAUTHORIZED
+from slacker import Slacker
 from weasyprint import HTML
 
 from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
-    SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, SOCIAL_CONNECT_CALLBACK
+    SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, SOCIAL_CONNECT_CALLBACK, \
+    SOCIAL_CONNECT_PROJECT
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
 from tunga_auth.models import EmailVisitor, TungaUser
 from tunga_auth.serializers import UserSerializer, AccountInfoSerializer, EmailVisitorSerializer
 from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, \
-    get_session_next_url
+    get_session_next_url, get_session_project
 from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
+from tunga_projects.utils import save_project_metadata
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
 from tunga_utils import coinbase_utils, slack_utils, exact_utils, payoneer_utils
@@ -248,6 +251,14 @@ def social_login_view(request, provider=None):
     if task:
         request.session[SOCIAL_CONNECT_TASK] = task
 
+    try:
+        project = int(request.GET.get(SOCIAL_CONNECT_PROJECT))
+    except:
+        project = None
+
+    if project:
+        request.session[SOCIAL_CONNECT_PROJECT] = project
+
     if action == SOCIAL_CONNECT_ACTION_CONNECT or provider in [
         BTC_WALLET_PROVIDER_COINBASE,
         APP_INTEGRATION_PROVIDER_SLACK,
@@ -428,16 +439,47 @@ def slack_connect_callback(request):
             user=request.user, provider=APP_INTEGRATION_PROVIDER_SLACK, defaults=defaults
         )
 
+        project_id = get_session_project(request)
         task_id = get_session_task(request)
-        if task_id:
+        if project_id or task_id:
             token_info = {
                 'token': response['access_token'],
-                'token_extra': json.dumps(response)
+                'token_extra': json.dumps(response),
+                'team_name': response['team_name'],
+                'team_id': response['team_id'],
             }
+
             if 'bot' in response:
                 token_info['bot_access_token'] = response['bot'].get('bot_access_token')
                 token_info['bot_user_id'] = response['bot'].get('bot_user_id')
-            save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_SLACK, token_info)
+
+            if project_id:
+                meta_info = dict()
+
+                slack_client = Slacker(response['access_token'])
+                channel_response = slack_client.channels.list(exclude_archived=True)
+                if channel_response.successful:
+                    channels = channel_response.body.get(slack_utils.KEY_CHANNELS, None)
+
+                    if channels:
+                        simple_channels = []
+
+                        for channel in channels:
+                            simple_channels.append(
+                                dict(
+                                    id=channel.get('id', None),
+                                    name=channel.get('name', None)
+                                )
+                            )
+
+                        meta_info['slack_channels'] = json.dumps(simple_channels)
+
+                for meta_key in token_info:
+                    meta_info['slack_{}'.format(meta_key)] = token_info[meta_key]
+                save_project_metadata(project_id, meta_info)
+            if task_id:
+                save_task_integration_meta(task_id, APP_INTEGRATION_PROVIDER_SLACK, token_info)
+
     return redirect(get_session_next_url(request, provider=APP_INTEGRATION_PROVIDER_SLACK))
 
 
