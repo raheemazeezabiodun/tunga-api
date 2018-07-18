@@ -252,7 +252,8 @@ class ProgressReport(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
 
     # Status details
-    status = models.PositiveSmallIntegerField(
+    status = models.CharField(
+        max_length=50,
         choices=PROGRESS_REPORT_STATUS_CHOICES,
         help_text=','.join(
             ['%s - %s' % (item[0], item[1]) for item in PROGRESS_REPORT_STATUS_CHOICES]),
@@ -266,7 +267,8 @@ class ProgressReport(models.Model):
     obstacles = models.TextField(blank=True, null=True)
     obstacles_prevention = models.TextField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
-    stuck_reason = models.PositiveIntegerField(
+    stuck_reason = models.CharField(
+        max_length=50,
         choices=PROGRESS_REPORT_STUCK_REASON_CHOICES,
         help_text=','.join(
             ['%s - %s' % (item[0], item[1]) for item in PROGRESS_REPORT_STUCK_REASON_CHOICES]),
