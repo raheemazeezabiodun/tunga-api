@@ -43,6 +43,15 @@ class SimpleProgressEventSerializer(SimpleModelSerializer):
         exclude = ('project',)
 
 
+class NestedProgressEventSerializer(SimpleModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    project = SimpleProjectSerializer(required=False, read_only=True)
+
+    class Meta:
+        model = ProgressEvent
+        fields = '__all__'
+
+
 class SimpleProgressReportSerializer(SimpleModelSerializer):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     status_display = serializers.CharField(required=False, read_only=True, source='get_status_display')
@@ -121,7 +130,7 @@ class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
 
 class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    event = SimpleProgressEventSerializer()
+    event = NestedProgressEventSerializer()
     status_display = serializers.CharField(required=False, read_only=True, source='get_status_display')
     stuck_reason_display = serializers.CharField(required=False, read_only=True, source='get_stuck_reason_display')
 

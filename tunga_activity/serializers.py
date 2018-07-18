@@ -12,9 +12,9 @@ from tunga_payments.models import Invoice, Payment
 from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer
 from tunga_profiles.models import Connection
 from tunga_profiles.serializers import ConnectionSerializer
-from tunga_projects.models import Project, Document, Participation, ProgressEvent
+from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport
 from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
-    ProgressEventSerializer
+    ProgressEventSerializer, ProgressReportSerializer
 from tunga_tasks.models import Task, Application, Participation as LegacyParticipation, Integration, ProgressEvent as LegacyProgressEvent, ProgressReport as LegacyProgressReport, \
     IntegrationActivity, Estimate, Quote, Sprint
 from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializer as LegacyParticipationSerializer, \
@@ -63,6 +63,7 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         Document: DocumentSerializer(),
         Participation: ParticipationSerializer(),
         ProgressEvent: ProgressEventSerializer(),
+        ProgressReport: ProgressReportSerializer(),
         Invoice: InvoiceSerializer(),
         Payment: PaymentSerializer(),
         Upload: UploadSerializer(),
