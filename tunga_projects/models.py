@@ -6,6 +6,7 @@ import datetime
 import tagulous.models
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
@@ -14,7 +15,8 @@ from tunga import settings
 from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
-    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES
+    STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES, \
+    PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES
 from tunga_utils.models import Rating
 
 
@@ -242,6 +244,83 @@ class ProgressEvent(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return request.user == self.project.user or request.user == self.project.owner
+
+
+@python_2_unicode_compatible
+class ProgressReport(models.Model):
+    event = models.ForeignKey(ProgressEvent, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+
+    # Status details
+    status = models.PositiveSmallIntegerField(
+        choices=PROGRESS_REPORT_STATUS_CHOICES,
+        help_text=','.join(
+            ['%s - %s' % (item[0], item[1]) for item in PROGRESS_REPORT_STATUS_CHOICES]),
+        blank=True, null=True
+    )
+    percentage = models.PositiveIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)], blank=True, null=True
+    )
+    accomplished = models.TextField(blank=True, null=True)
+    todo = models.TextField(blank=True, null=True)
+    obstacles = models.TextField(blank=True, null=True)
+    obstacles_prevention = models.TextField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    stuck_reason = models.PositiveIntegerField(
+        choices=PROGRESS_REPORT_STUCK_REASON_CHOICES,
+        help_text=','.join(
+            ['%s - %s' % (item[0], item[1]) for item in PROGRESS_REPORT_STUCK_REASON_CHOICES]),
+        blank=True, null=True
+    )
+    stuck_details = models.TextField(blank=True, null=True)
+
+    # Deliverables
+    rate_deliverables = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)], blank=True, null=True
+    )
+
+    # Deadline Info
+    started_at = models.DateTimeField(blank=True, null=True)
+    last_deadline_met = models.NullBooleanField(blank=True, null=True)
+    deadline_miss_communicated = models.NullBooleanField(blank=True, null=True)
+    deadline_report = models.TextField(blank=True, null=True)
+    next_deadline = models.DateTimeField(blank=True, null=True)
+    next_deadline_meet = models.NullBooleanField(blank=True, null=True)
+    next_deadline_fail_reason = models.TextField(blank=True, null=True)
+
+    # PMs only
+    team_appraisal = models.TextField(blank=True, null=True)
+
+    # Clients only
+    deliverable_satisfaction = models.NullBooleanField(blank=True, null=True)
+    rate_communication = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)], blank=True, null=True
+    )
+    pm_communication = models.NullBooleanField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return '{0} - {1}%'.format(self.event, self.percentage)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.event.project.has_object_read_permission(request)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_developer or request.user.is_project_manager or request.user.is_project_owner
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        return request.user == self.user
 
 
 @python_2_unicode_compatible

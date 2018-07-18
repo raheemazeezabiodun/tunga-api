@@ -34,7 +34,8 @@ from tunga_payments.views import InvoiceViewSet, PaymentViewSet
 from tunga_profiles.views import ProfileView, EducationViewSet, WorkViewSet, ConnectionViewSet, \
     NotificationView, CountryListView, DeveloperApplicationViewSet, RepoListView, IssueListView, SlackIntegrationView, \
     DeveloperInvitationViewSet, CompanyView
-from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet, ProgressEventViewSet
+from tunga_projects.views import ProjectViewSet, DocumentViewSet, ParticipationViewSet, ProgressEventViewSet, \
+    ProgressReportViewSet
 from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TimeEntryViewSet, \
@@ -55,6 +56,7 @@ router.register(r'projects', ProjectViewSet)
 router.register(r'documents', DocumentViewSet)
 router.register(r'participation', ParticipationViewSet)
 router.register(r'progress-events', ProgressEventViewSet)
+router.register(r'progress-reports', ProgressReportViewSet)
 router.register(r'invoices', InvoiceViewSet)
 router.register(r'payments', PaymentViewSet)
 router.register(r'activity', ActionViewSet)
@@ -75,14 +77,10 @@ router.register(r'estimate', EstimateViewSet)
 router.register(r'quote', QuoteViewSet)
 router.register(r'sprint', SprintViewSet)
 router.register(r'time-entry', TimeEntryViewSet)
-# router.register(r'progress-event', LegacyProgressEventViewSet)
-# router.register(r'progress-report', ProgressReportViewSet)
 
 router.register(r'connection', ConnectionViewSet)
-# router.register(r'comment', CommentViewSet)
 router.register(r'channel', ChannelViewSet)
 # router.register(r'message', MessageViewSet)
-# router.register(r'activity', ActionViewSet)
 router.register(r'skill', SkillViewSet)
 router.register(r'support/section', SupportSectionViewSet)
 router.register(r'support/page', SupportPageViewSet)

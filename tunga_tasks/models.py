@@ -1440,7 +1440,9 @@ LEGACY_PROGRESS_REPORT_STUCK_REASON_CHOICES = (
 @python_2_unicode_compatible
 class ProgressReport(models.Model):
     event = models.ForeignKey(ProgressEvent, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='legacy_progress_reports'
+    )
 
     # Status details
     status = models.PositiveSmallIntegerField(

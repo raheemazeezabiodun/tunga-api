@@ -1,10 +1,14 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta
+from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport
+from tunga_utils.constants import PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STATUS_STUCK, \
+    PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateOnlyCurrentUserDefault, \
     NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer, \
     SimpleSkillSerializer
+from tunga_utils.validators import validate_field_schema
 
 
 class SimpleProjectSerializer(SimpleModelSerializer):
@@ -37,6 +41,14 @@ class SimpleProgressEventSerializer(SimpleModelSerializer):
     class Meta:
         model = ProgressEvent
         exclude = ('project',)
+
+
+class SimpleProgressReportSerializer(SimpleModelSerializer):
+    user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+
+    class Meta:
+        model = ProgressReport
+        exclude = ('event',)
 
 
 class SimpleProjectMetaSerializer(SimpleModelSerializer):
@@ -95,8 +107,95 @@ class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSeriali
 class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
+    progress_reports = SimpleProgressReportSerializer(
+        required=False, read_only=True, many=True, source='progressreport_set'
+    )
 
     class Meta:
         model = ProgressEvent
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
+
+
+class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
+    user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    event = SimpleProgressEventSerializer()
+
+    class Meta:
+        model = ProgressReport
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+    def validate(self, attrs):
+        errors = dict()
+
+        current_user = self.get_current_user()
+        if current_user.is_authenticated():
+            BOOLEANS = (True, False)
+            required_fields = []
+
+            status_schema = (
+                'status', [status_item[0] for status_item in PROGRESS_REPORT_STATUS_CHOICES],
+                [
+                    (
+                        [PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, PROGRESS_REPORT_STATUS_STUCK],
+                        'stuck_reason',
+                        [stuck_reason_item[0] for stuck_reason_item in PROGRESS_REPORT_STUCK_REASON_CHOICES]
+                    )
+                ]
+            )
+            rate_deliverables_schema = ('rate_deliverables', list(range(1, 6)))  # 1...5
+
+            if current_user.is_developer:
+                required_fields = [
+                    status_schema,
+                    'started_at',
+                    ('percentage', list(range(0, 101))),  # 0...100
+                    'accomplished',
+                    rate_deliverables_schema,
+                    'todo',
+                    'next_deadline',
+                    (
+                        'next_deadline_meet', BOOLEANS,
+                        [
+                            (False, 'next_deadline_fail_reason')
+                        ]
+                    )
+                ]
+            elif current_user.is_project_manager:
+                required_fields = [
+                    status_schema,
+                    (
+                        'last_deadline_met', BOOLEANS,
+                        [
+                            (False, 'deadline_miss_communicated', BOOLEANS),
+                            (False, 'deadline_report')
+                        ]
+                    ),
+                    'percentage', 'accomplished', 'todo',
+                    'next_deadline',
+                    (
+                        'next_deadline_meet', BOOLEANS,
+                        [
+                            (False, 'next_deadline_fail_reason')
+                        ]
+                    ),
+                    'team_appraisal'
+                ]
+            elif current_user.is_project_owner:
+                required_fields = [
+                    (
+                        'last_deadline_met', BOOLEANS,
+                        [
+                            (False, 'deadline_miss_communicated', BOOLEANS)
+                        ]
+                    ),
+                    ('deliverable_satisfaction', BOOLEANS),
+                    rate_deliverables_schema
+                ]
+
+            errors.update(validate_field_schema(required_fields, attrs, raise_exception=False))
+
+        if errors:
+            raise ValidationError(errors)
+        return attrs
