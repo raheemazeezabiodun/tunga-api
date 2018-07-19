@@ -14,7 +14,7 @@ class ProjectFilter(GenericDateFilterSet):
     class Meta:
         model = Project
         fields = (
-            'user', 'type', 'expected_duration', 'participant', 'skill', 'skill_id'
+            'user', 'type', 'expected_duration', 'participant', 'skill', 'skill_id', 'archived'
         )
 
     def filter_owner(self, queryset, name, value):

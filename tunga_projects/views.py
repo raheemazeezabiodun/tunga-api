@@ -22,6 +22,7 @@ class ProjectViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = ProjectFilter
     filter_backends = DEFAULT_FILTER_BACKENDS
+    search_fields = ('title', 'description')
 
 
 class ParticipationViewSet(ModelViewSet):
