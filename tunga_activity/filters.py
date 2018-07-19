@@ -35,6 +35,8 @@ class ActionFilter(GenericDateFilterSet):
 
     def filter_project(self, queryset, name, value):
         project = Project.objects.get(pk=value)
+        if not project.is_participant(self.request.user, active=True):
+            return queryset.none()
         return queryset.filter(
             Q(projects=project) | Q(progress_events__project=project)
         )
