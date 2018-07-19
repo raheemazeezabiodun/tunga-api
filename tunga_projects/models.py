@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import re
 
 import tagulous.models
 from actstream.models import Action
@@ -12,6 +13,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
+from tunga.settings import TUNGA_URL
 from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
@@ -70,6 +72,18 @@ class Project(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    def is_participant(self, user, active=True):
+        if user == self.user or user == self.owner:
+            return True
+        elif user.is_project_manager and self.pm == user:
+            return True
+        elif user.is_developer and self.participation_set.filter(
+            user=user, status__in=active and [STATUS_ACCEPTED] or [STATUS_ACCEPTED, STATUS_INITIAL]
+        ).count() > 0:
+            return True
+        else:
+            return False
+
     @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
@@ -77,16 +91,7 @@ class Project(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        if request.user == self.user or request.user == self.owner:
-            return True
-        elif request.user.is_project_manager and self.pm == request.user:
-            return True
-        elif request.user.is_developer and self.participation_set.filter(
-            user=request.user, status=STATUS_ACCEPTED
-        ).count() > 0:
-            return True
-        else:
-            return False
+        return True
 
     @staticmethod
     @allow_staff_or_superuser
@@ -133,12 +138,12 @@ class Participation(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.project.has_object_read_permission(request)
+        return self.project.is_participant(request.user, active=False)
 
     @staticmethod
     @allow_staff_or_superuser
     def has_write_permission(request):
-        return request.user.is_project_manager or request.user.is_project_owner
+        return request.user.is_project_owner or request.user.is_project_manager
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
@@ -174,7 +179,7 @@ class Document(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.project.has_object_read_permission(request)
+        return self.project.is_participant(request.user)
 
     @staticmethod
     @allow_staff_or_superuser
@@ -188,7 +193,7 @@ class Document(models.Model):
     @property
     def download_url(self):
         if self.file:
-            return self.file.url
+            return '{}{}'.format(not re.match(r'://', self.file.url) and TUNGA_URL or '', self.file.url)
         elif self.url:
             return self.url
         return None
@@ -234,7 +239,7 @@ class ProgressEvent(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.project.has_object_read_permission(request)
+        return self.project.is_participant(request.user)
 
     @staticmethod
     @allow_staff_or_superuser
@@ -313,7 +318,7 @@ class ProgressReport(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.event.project.has_object_read_permission(request)
+        return self.event.project.is_participant(request)
 
     @staticmethod
     @allow_staff_or_superuser
