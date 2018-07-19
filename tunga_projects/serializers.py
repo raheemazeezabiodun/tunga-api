@@ -14,7 +14,7 @@ from tunga_utils.validators import validate_field_schema
 class SimpleProjectSerializer(SimpleModelSerializer):
     class Meta:
         model = Project
-        fields = ('id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline')
+        fields = ('id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived')
 
 
 class SimpleParticipationSerializer(SimpleModelSerializer):
