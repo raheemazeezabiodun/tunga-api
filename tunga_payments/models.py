@@ -11,7 +11,7 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
 from tunga_projects.models import Project, Participation
-from tunga_utils.constants import TASK_PAYMENT_METHOD_STRIPE, TASK_PAYMENT_METHOD_BANK, TASK_PAYMENT_METHOD_BITCOIN, \
+from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, TASK_PAYMENT_METHOD_BITCOIN, \
     TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
     INVOICE_TYPE_CHOICES, CURRENCY_EUR, CURRENCY_CHOICES_EUR_ONLY, \
     INVOICE_TYPE_PURCHASE, PAYMENT_TYPE_PURCHASE, PAYMENT_TYPE_SALE
@@ -39,7 +39,7 @@ class Invoice(models.Model):
     status = models.CharField(max_length=50, choices=status_choices, null=True, blank=True)
     paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True, blank=True)
-    batch_ref = models.UUIDField(default=uuid.uuid4, editable=False)
+    batch_ref = models.UUIDField(default=uuid.uuid4)
     created_by = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, related_name='invoices_created', on_delete=models.DO_NOTHING
     )
@@ -115,22 +115,25 @@ class Invoice(models.Model):
 @python_2_unicode_compatible
 class Payment(models.Model):
     payment_method_choices = (
-        (TASK_PAYMENT_METHOD_STRIPE, 'Stripe'),
-        (TASK_PAYMENT_METHOD_BANK, 'Bank Transfer'),
+        (PAYMENT_METHOD_STRIPE, 'Stripe'),
+        (PAYMENT_METHOD_BANK, 'Bank Transfer'),
         (TASK_PAYMENT_METHOD_BITCOIN, 'Bitcoin'),
         (TASK_PAYMENT_METHOD_BITONIC, 'Bitonic'),
     )
     invoice = models.ForeignKey(to=Invoice, on_delete=models.DO_NOTHING)
+    payment_method = models.CharField(max_length=150, choices=payment_method_choices)
     amount = models.IntegerField()
     currency = models.CharField(max_length=15, default='EUR')
-    payment_method = models.CharField(max_length=150, choices=payment_method_choices)
-    paid_at = models.DateTimeField(blank=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+    ref = models.TextField(blank=True, null=True)
+    extra = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='payments_created',
                                    on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "%s Amount: %s" % (self.invoice.project.title, self.amount)
+        return "{}: {} {}".format(self.invoice.title, self.currency, self.amount)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if self.invoice:

@@ -36,7 +36,7 @@ from tunga_utils import stripe_utils
 from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPER, VISIBILITY_DEVELOPER, \
     VISIBILITY_MY_TEAM, VISIBILITY_CUSTOM, UPDATE_SCHEDULE_HOURLY, UPDATE_SCHEDULE_DAILY, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
-    TASK_PAYMENT_METHOD_BITONIC, TASK_PAYMENT_METHOD_BITCOIN, TASK_PAYMENT_METHOD_BANK, \
+    TASK_PAYMENT_METHOD_BITONIC, TASK_PAYMENT_METHOD_BITCOIN, PAYMENT_METHOD_BANK, \
     LEGACY_PROGRESS_EVENT_TYPE_DEFAULT, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE, \
     LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND, \
     LEGACY_PROGRESS_REPORT_STATUS_STUCK, INTEGRATION_TYPE_REPO, INTEGRATION_TYPE_ISSUE, STATUS_PENDING, \
@@ -46,12 +46,12 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     TASK_SCOPE_ONGOING, TASK_BILLING_METHOD_FIXED, TASK_BILLING_METHOD_HOURLY, TASK_SCOPE_PROJECT, TASK_SOURCE_DEFAULT, \
     TASK_SOURCE_NEW_USER, LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, STATUS_INITIAL, STATUS_APPROVED, STATUS_DECLINED, \
     STATUS_ACCEPTED, STATUS_REJECTED, STATUS_SUBMITTED, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, \
-    TASK_PAYMENT_METHOD_STRIPE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_BUT_PROGRESSING, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, \
+    PAYMENT_METHOD_STRIPE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_BUT_PROGRESSING, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, \
     LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR, LEGACY_PROGRESS_REPORT_STUCK_REASON_POOR_DOC, LEGACY_PROGRESS_REPORT_STUCK_REASON_HARDWARE, \
     LEGACY_PROGRESS_REPORT_STUCK_REASON_UNCLEAR_SPEC, LEGACY_PROGRESS_REPORT_STUCK_REASON_PERSONAL, \
     LEGACY_PROGRESS_REPORT_STUCK_REASON_OTHER, \
     STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
-    TASK_PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
+    PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
     DOC_TIMELINE, DOC_OTHER, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, VAT_LOCATION_NL, VAT_LOCATION_EUROPE, \
     VAT_LOCATION_WORLD
 from tunga_utils.helpers import round_decimal, get_serialized_id, get_tunga_model, get_edit_token_header
@@ -150,10 +150,10 @@ TASK_CODERS_NEEDED_CHOICES = (
 
 TASK_PAYMENT_METHOD_CHOICES = (
     (TASK_PAYMENT_METHOD_AYDEN, 'Pay with Ayden'),
-    (TASK_PAYMENT_METHOD_STRIPE, 'Pay with Stripe'),
+    (PAYMENT_METHOD_STRIPE, 'Pay with Stripe'),
     (TASK_PAYMENT_METHOD_BITONIC, 'Pay with iDeal / mister cash'),
     (TASK_PAYMENT_METHOD_BITCOIN, 'Pay with BitCoin'),
-    (TASK_PAYMENT_METHOD_BANK, 'Pay by bank transfer')
+    (PAYMENT_METHOD_BANK, 'Pay by bank transfer')
 )
 
 TASK_SOURCE_CHOICES = (
@@ -692,9 +692,9 @@ class Task(models.Model):
         if not self.exclude_payment_costs:
             if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
                 processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-            elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
+            elif self.payment_method == PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
+            processing_fee = self.payment_method == PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
                 self.pay) or (processing_share * self.pay)
 
         amount_details = None
@@ -757,7 +757,7 @@ class Task(models.Model):
 
     @property
     def can_pay_distribution_btc(self):
-        return self.payment_method == TASK_PAYMENT_METHOD_STRIPE and self.paid and \
+        return self.payment_method == PAYMENT_METHOD_STRIPE and self.paid and \
                not self.btc_paid and not self.pay_distributed
 
     @property
@@ -877,7 +877,7 @@ class Task(models.Model):
 
     @property
     def payment_withheld_tunga_fee(self):
-        if self.payment_method == TASK_PAYMENT_METHOD_STRIPE and self.withhold_tunga_fee_distribute:
+        if self.payment_method == PAYMENT_METHOD_STRIPE and self.withhold_tunga_fee_distribute:
             return True
         return self.withhold_tunga_fee
 
@@ -1745,10 +1745,10 @@ class IntegrationActivity(models.Model):
 
 
 TASK_PAYMENT_TYPE_CHOICES = (
-    (TASK_PAYMENT_METHOD_STRIPE, 'Stripe'),
+    (PAYMENT_METHOD_STRIPE, 'Stripe'),
     (TASK_PAYMENT_METHOD_BITCOIN, 'BitCoin'),
-    (TASK_PAYMENT_METHOD_BANK, 'Bank Transfer'),
-    (TASK_PAYMENT_METHOD_PAYONEER, 'Payoneer'),
+    (PAYMENT_METHOD_BANK, 'Bank Transfer'),
+    (PAYMENT_METHOD_PAYONEER, 'Payoneer'),
 )
 
 
@@ -1943,10 +1943,10 @@ class TaskInvoice(models.Model):
         if not self.exclude_payment_costs:
             if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
                 processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
-            elif self.payment_method == TASK_PAYMENT_METHOD_BANK:
+            elif self.payment_method == PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
 
-            processing_fee = self.payment_method == TASK_PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
+            processing_fee = self.payment_method == PAYMENT_METHOD_STRIPE and stripe_utils.calculate_payment_fee(
                 fee_portion) or (Decimal(processing_share) * fee_portion)
 
         amount_details = dict(

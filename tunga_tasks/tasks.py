@@ -23,7 +23,7 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
     STATUS_INITIATED, LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
     LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
-    TASK_PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, TASK_PAYMENT_METHOD_PAYONEER, \
+    PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, PAYMENT_METHOD_PAYONEER, \
     LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, USER_TYPE_PROJECT_OWNER
 from tunga_utils.helpers import clean_instance
 from tunga_utils.hubspot_utils import create_or_update_hubspot_deal
@@ -251,7 +251,7 @@ def get_task_payments(task):
         task=task,
         processed=False,
         received_at__isnull=False,
-        payment_type__in=[TASK_PAYMENT_METHOD_PAYONEER, TASK_PAYMENT_METHOD_BANK],
+        payment_type__in=[PAYMENT_METHOD_PAYONEER, PAYMENT_METHOD_BANK],
         tax_only=False
     )
 
@@ -272,10 +272,10 @@ def distribute_task_payment_payoneer(task):
         # Create Bank or Payoneer payment
         TaskPayment.objects.get_or_create(
             task=task,
-            ref=task.payment_method == TASK_PAYMENT_METHOD_BANK and 'bank' or 'payoneer',
-            payment_type=task.payment_method == TASK_PAYMENT_METHOD_BANK and TASK_PAYMENT_METHOD_BANK or TASK_PAYMENT_METHOD_PAYONEER,
+            ref=task.payment_method == PAYMENT_METHOD_BANK and 'bank' or 'payoneer',
+            payment_type=task.payment_method == PAYMENT_METHOD_BANK and PAYMENT_METHOD_BANK or PAYMENT_METHOD_PAYONEER,
             defaults=dict(
-                amount=Decimal(task.payment_method == TASK_PAYMENT_METHOD_BANK and task.pay or task.pay_dev),
+                amount=Decimal(task.payment_method == PAYMENT_METHOD_BANK and task.pay or task.pay_dev),
                 amount_received=Decimal(task.pay_dev),
                 currency=(task.currency or CURRENCY_EUR).upper(),
                 paid=True,

@@ -18,7 +18,7 @@ from tunga_utils import mandrill_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, USER_TYPE_DEVELOPER, VISIBILITY_MY_TEAM, \
     STATUS_ACCEPTED, VISIBILITY_DEVELOPER, USER_TYPE_PROJECT_MANAGER, STATUS_SUBMITTED, STATUS_APPROVED, \
     STATUS_DECLINED, STATUS_REJECTED, STATUS_INITIAL, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, \
-    TASK_PAYMENT_METHOD_BANK, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
+    PAYMENT_METHOD_BANK, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
 
@@ -1053,7 +1053,7 @@ def notify_new_task_invoice_client_email(instance, template_name='69-invoice'):
         mandrill_utils.create_merge_var('invoice_title', instance.task.summary),
         mandrill_utils.create_merge_var(
             'can_pay',
-            bool(instance.payment_method != TASK_PAYMENT_METHOD_BANK and not instance.task.payment_approved)
+            bool(instance.payment_method != PAYMENT_METHOD_BANK and not instance.task.payment_approved)
         ),
     ]
 

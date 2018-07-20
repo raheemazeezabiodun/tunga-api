@@ -10,7 +10,7 @@ from django.db.models import Q
 from tunga_tasks.models import Task, ParticipantPayment
 from tunga_tasks.tasks import sync_exact_invoices
 from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, STATUS_ACCEPTED, \
-    TASK_PAYMENT_METHOD_PAYONEER, TASK_PAYMENT_METHOD_BANK
+    PAYMENT_METHOD_PAYONEER, PAYMENT_METHOD_BANK
 
 TUNGA_API_BASE_URL = 'https://tunga.io/api'
 
@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 ) | (
                     Q(taskpayment__isnull=False) &
                     Q(taskpayment__payment_type__in=[
-                        TASK_PAYMENT_METHOD_PAYONEER, TASK_PAYMENT_METHOD_BANK
+                        PAYMENT_METHOD_PAYONEER, PAYMENT_METHOD_BANK
                     ]) &
                     Q(taskpayment__created_at__gt=past_by_2_days)
                 )

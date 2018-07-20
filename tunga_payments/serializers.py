@@ -5,6 +5,7 @@ from rest_framework.serializers import ListSerializer
 
 from tunga_payments.models import Payment, Invoice
 from tunga_projects.serializers import NestedProjectSerializer
+from tunga_utils.constants import PAYMENT_METHOD_STRIPE
 from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedModelSerializer, \
     CreateOnlyCurrentUserDefault, SimplestUserSerializer, SimpleModelSerializer
 
@@ -45,3 +46,12 @@ class PaymentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     class Meta:
         model = Payment
         fields = '__all__'
+
+
+class StripePaymentSerializer(serializers.Serializer):
+    payment_method = serializers.ChoiceField(required=True, choices=(
+        (PAYMENT_METHOD_STRIPE, 'Stripe')
+    ))
+    amount = serializers.DecimalField(required=True, max_digits=17, decimal_places=2)
+    token = serializers.CharField(required=True)
+

@@ -59,7 +59,7 @@ from tunga_tasks.tasks import complete_bitpesa_payment, \
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
 from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
 from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
-    TASK_PAYMENT_METHOD_STRIPE, CURRENCY_EUR, TASK_PAYMENT_METHOD_BITCOIN
+    PAYMENT_METHOD_STRIPE, CURRENCY_EUR, TASK_PAYMENT_METHOD_BITCOIN
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.mixins import SaveUploadsMixin
 from tunga_utils.serializers import TaskInvoiceSerializer
@@ -372,7 +372,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             """
         task = self.get_object()
 
-        if provider == TASK_PAYMENT_METHOD_STRIPE:
+        if provider == PAYMENT_METHOD_STRIPE:
             # Pay with Stripe
             payload = request.data
             paid_at = datetime.datetime.utcnow()
@@ -397,7 +397,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
                 )
 
                 task_pay, created = TaskPayment.objects.get_or_create(
-                    task=task, ref=charge.id, payment_type=TASK_PAYMENT_METHOD_STRIPE,
+                    task=task, ref=charge.id, payment_type=PAYMENT_METHOD_STRIPE,
                     defaults=dict(
                         token=payload['token'],
                         email=payload['email'],
@@ -1041,7 +1041,7 @@ class MultiTaskPaymentKeyViewSet(viewsets.ModelViewSet):
             """
         multi_task_key = self.get_object()
 
-        if provider == TASK_PAYMENT_METHOD_STRIPE:
+        if provider == PAYMENT_METHOD_STRIPE:
             # Pay with Stripe
             payload = request.data
             paid_at = datetime.datetime.utcnow()
@@ -1065,7 +1065,7 @@ class MultiTaskPaymentKeyViewSet(viewsets.ModelViewSet):
                 )
 
                 task_pay, created = TaskPayment.objects.get_or_create(
-                    multi_pay_key=multi_task_key, ref=charge.id, payment_type=TASK_PAYMENT_METHOD_STRIPE,
+                    multi_pay_key=multi_task_key, ref=charge.id, payment_type=PAYMENT_METHOD_STRIPE,
                     defaults=dict(
                         token=payload['token'],
                         email=payload['email'],

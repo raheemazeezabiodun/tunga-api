@@ -16,7 +16,7 @@ from tunga_tasks.models import Task, Participation, Application, ProgressEvent, 
 from tunga_tasks.utils import get_task_integration
 from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, VISIBILITY_DEVELOPER, STATUS_ACCEPTED, \
-    APP_INTEGRATION_PROVIDER_SLACK, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BANK, \
+    APP_INTEGRATION_PROVIDER_SLACK, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, PAYMENT_METHOD_BANK, \
     LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
 from tunga_utils.helpers import clean_instance, convert_to_text
 from tunga_utils.slack_utils import get_user_im_id
@@ -1000,7 +1000,7 @@ def notify_new_task_invoice_admin_slack(instance):
     ]
     if not instance.task.payment_approved:
         task_approval_url = '{}edit/payment-approval/'.format(task_url)
-        if instance.payment_method == TASK_PAYMENT_METHOD_BANK:
+        if instance.payment_method == PAYMENT_METHOD_BANK:
             attachments.append({
                 slack_utils.KEY_TITLE: 'Review and approve payment.',
                 slack_utils.KEY_TITLE_LINK: task_approval_url,
