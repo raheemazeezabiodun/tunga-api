@@ -1856,7 +1856,7 @@ class ParticipantPayment(models.Model):
 class TaskInvoice(models.Model):
     task = models.ForeignKey(Task)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, related_name='invoices_created', on_delete=models.DO_NOTHING, blank=True, null=True
+        settings.AUTH_USER_MODEL, related_name='task_invoices_created', on_delete=models.DO_NOTHING, blank=True, null=True
     )
     title = models.CharField(max_length=200)
     fee = models.DecimalField(max_digits=19, decimal_places=4)

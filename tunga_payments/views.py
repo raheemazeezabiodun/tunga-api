@@ -20,8 +20,8 @@ from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 class InvoiceViewSet(ModelViewSet):
     serializer_class = InvoiceSerializer
-    queryset = Invoice.objects.all().order_by('id')
-    permission_classes = [IsAuthenticated, DRYPermissions]
+    queryset = Invoice.objects.all()
+    #permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 

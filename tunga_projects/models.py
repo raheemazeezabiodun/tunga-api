@@ -35,7 +35,7 @@ class Project(models.Model):
     )
     skills = tagulous.models.TagField(Skill, blank=True)
     budget = models.DecimalField(
-        max_digits=19, decimal_places=4, blank=True, null=True, default=None
+        max_digits=17, decimal_places=2, blank=True, null=True, default=None
     )
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default=PROJECT_TYPE_OTHER)

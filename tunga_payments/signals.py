@@ -11,6 +11,9 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
     if created:
         action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.project)
 
+        # save again to generate invoice number
+        instance.save()
+
 
 @receiver(post_save, sender=Payment)
 def activity_handler_new_payment(sender, instance, created, **kwargs):
