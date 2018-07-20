@@ -17,6 +17,16 @@ class SimpleProjectSerializer(SimpleModelSerializer):
         fields = ('id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived')
 
 
+class NestedProjectSerializer(SimpleModelSerializer):
+    user = SimplestUserSerializer(required=False, read_only=True)
+    owner = SimplestUserSerializer(required=False, read_only=True)
+    pm = SimplestUserSerializer(required=False, read_only=True)
+
+    class Meta:
+        model = Project
+        fields = '__all__'
+
+
 class SimpleParticipationSerializer(SimpleModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     user = SimplestUserSerializer()

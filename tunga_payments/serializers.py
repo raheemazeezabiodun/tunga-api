@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ListSerializer
 
 from tunga_payments.models import Payment, Invoice
-from tunga_projects.serializers import SimpleProjectSerializer
+from tunga_projects.serializers import NestedProjectSerializer
 from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedModelSerializer, \
     CreateOnlyCurrentUserDefault, SimplestUserSerializer, SimpleModelSerializer
 
@@ -28,7 +28,7 @@ class InvoiceListSerializer(ListSerializer):
 
 class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
-    project = SimpleProjectSerializer()
+    project = NestedProjectSerializer()
     user = SimplestUserSerializer()
     batch_ref = serializers.CharField(read_only=True)
     tax_amount = serializers.IntegerField(read_only=True)
