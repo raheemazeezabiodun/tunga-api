@@ -28,7 +28,7 @@ from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 class InvoiceViewSet(ModelViewSet):
     serializer_class = InvoiceSerializer
     queryset = Invoice.objects.all()
-    #permission_classes = [IsAuthenticated, DRYPermissions]
+    # permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 
@@ -47,23 +47,23 @@ class InvoiceViewSet(ModelViewSet):
         return Response(data, status=status.HTTP_201_CREATED)
 
     @detail_route(
-        methods=['get', 'post'], url_path='pay/', url_name='pay-invoice',
+        methods=['get', 'post'], url_path='pay', url_name='pay-invoice',
         serializer_class=StripePaymentSerializer,
         permission_classes=[IsAuthenticated]
     )
-    def pay(self, request, pk=None, provider=None):
+    def pay(self, request, pk=None):
         """
-            Invoice Payment Endpoint
-            ---
-            omit_serializer: true
-            omit_parameters:
-                - query
-            """
+        Invoice Payment Endpoint
+        ---
+        omit_serializer: true
+        omit_parameters:
+            - query
+        """
         invoice = self.get_object()
+        payload = request.data
 
-        if provider == PAYMENT_METHOD_STRIPE:
+        if payload['payment_method'] == PAYMENT_METHOD_STRIPE:
             # Pay with Stripe
-            payload = request.data
             paid_at = datetime.datetime.utcnow()
 
             stripe = stripe_utils.get_client()
@@ -96,6 +96,7 @@ class InvoiceViewSet(ModelViewSet):
                         currency=(charge.currency or CURRENCY_EUR).upper(),
                         ref=charge.id,
                         paid_at=paid_at,
+                        created_by=request.user,
                         extra=json.dumps(dict(
                             paid=charge.paid,
                             token=payload['token'],
