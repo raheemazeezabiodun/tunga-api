@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import re
 
+import slackdown
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -228,7 +229,7 @@ class Message(models.Model):
 
     @property
     def excerpt(self):
-        return strip_tags(self.body)
+        return strip_tags(slackdown.render(self.body))
 
     @property
     def text_body(self):

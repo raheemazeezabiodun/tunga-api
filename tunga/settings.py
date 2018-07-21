@@ -8,6 +8,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 """
 import logging
 import os
+from django.utils.translation import ugettext_lazy as _
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import sys
@@ -329,6 +330,10 @@ SWAGGER_SETTINGS = {
     'is_authenticated': True,
     # 'is_superuser': True,
     'permission_denied_handler': 'tunga_utils.helpers.swagger_permission_denied_handler',
+}
+
+COUNTRIES_OVERRIDE = {
+    'NL': _('The Netherlands'),
 }
 
 # Local

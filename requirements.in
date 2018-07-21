@@ -24,7 +24,7 @@ pycrypto==2.6.*
 python-dateutil==2.5.*
 requests==2.10.*
 rest-framework-generic-relations==1.1.*
-WeasyPrint==0.31
+WeasyPrint==0.42.3
 premailer==3.0.*
 slacker==0.9.*
 apscheduler==3.3.*

@@ -2,6 +2,7 @@ import json
 import re
 from decimal import Decimal
 
+import slackdown
 from allauth.socialaccount.models import SocialToken
 from django.apps import apps as django_apps
 from django.core.exceptions import ImproperlyConfigured
@@ -75,7 +76,8 @@ def convert_to_text(body):
     """
     if not body:
         return body
-    txt_body = re.sub(r'(<br\s*/\s*>|<\s*/\s*(?:div|p)>)', '\\1\n', body, flags=re.IGNORECASE)
+    txt_body = slackdown.render(body)
+    txt_body = re.sub(r'(<br\s*/\s*>|<\s*/\s*(?:div|p)>)', '\\1\n', txt_body, flags=re.IGNORECASE)
     txt_body = striptags(txt_body)  # Striptags
     txt_body = re.sub(r'&nbsp;', ' ', txt_body, flags=re.IGNORECASE)  # Replace &nbsp; with space
     txt_body = re.sub(r' {2,}', ' ', txt_body, flags=re.IGNORECASE)  # Squash all multi spaces

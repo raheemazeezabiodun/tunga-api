@@ -15,8 +15,8 @@
                         {% if invoice_type == "tunga" %}
                             <div class="bold">
                                 Attn: Tunga BV<br/>
-                                Ms. van Riemsdijkweg 57<br/>
-                                1033 RC, Amsterdam<br/>
+                                Wibautstraat 131<br/>
+                                1091 GL Amsterdam<br/>
                                 The Netherlands<br/>
                             </div>
                         {% elif invoice_type == "client" %}
@@ -28,7 +28,7 @@
                                         {% if invoice.client.profile.postal_code and invoice.client.profile.city %}
                                             , {% endif %}{{ invoice.client.profile.city | default:'' }}<br/>
                                 {{ invoice.client.profile.country_name | default:'' }}
-                                
+
                                 {% if location == "europe" %}
                                     <br/>
                                     VAT no: {{ invoice.client.profile.vat_number | default:'' }}
@@ -56,8 +56,8 @@
                         {% if invoice_type != "tunga" %}
                             <div style="margin: 20px 0;">
                                 Tunga BV<br/>
-                                Ms. van Riemsdijkweg 57<br/>
-                                1033 RC, Amsterdam<br/>
+                                Wibautstraat 131<br/>
+                                1091 GL Amsterdam<br/>
                                 The Netherlands<br/>
                             </div>
                         {% endif %}
@@ -184,7 +184,7 @@
                                     {% endif %}
                                 </div>
                                 <div>
-                                    Ms van Riemsdijkweg 57, 1033 RC Amsterdam, the Netherlands<br/>
+                                    Wibautstraat 131, 1091 GL Amsterdam, The Netherlands<br/>
                                     +31 (0) 615955194 , <a href="mailto:hello@tunga.io"
                                                            class="highlight">hello@tunga.io</a>, <a
                                         href="https://tunga.io" class="highlight">tunga.io</a><br/>
