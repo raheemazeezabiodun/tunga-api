@@ -178,6 +178,7 @@ class MessageSerializer(serializers.ModelSerializer, GetCurrentUserAnnotatedSeri
     excerpt = serializers.CharField(required=False, read_only=True)
     attachments = UploadSerializer(read_only=True, required=False, many=True)
     sender = SenderSerializer(read_only=True, required=False)
+    text_body = serializers.CharField(required=False, read_only=True)
     html_body = serializers.CharField(required=False, read_only=True)
 
     class Meta:
