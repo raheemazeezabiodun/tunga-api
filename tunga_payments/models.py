@@ -70,6 +70,10 @@ class Invoice(models.Model):
     def tax_amount(self):
         return (self.amount * self.tax_rate) / 100
 
+    @property
+    def total_amount(self):
+        return self.amount + self.processing_fee + self.tax_amount
+
     def generate_invoice_number(self):
         if self.id and not self.number:
             invoice_number = '{}/{}/P{}/{}'.format(

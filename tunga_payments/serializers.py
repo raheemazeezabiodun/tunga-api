@@ -32,7 +32,8 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     project = NestedProjectSerializer()
     user = SimplestUserSerializer()
     batch_ref = serializers.CharField(read_only=True)
-    tax_amount = serializers.IntegerField(read_only=True)
+    tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
+    total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
 
     class Meta:
         model = Invoice
