@@ -74,6 +74,9 @@ class Invoice(models.Model):
                 self.status = STATUS_PENDING
         if self.id and not self.number:
             self.number = self.generate_invoice_number()
+        if not self.id and self.tax_location == VAT_LOCATION_NL:
+            # Set NL vat rate
+            self.tax_rate = 21
         if self.paid and not self.paid_at:
             self.paid_at = datetime.datetime.utcnow()
         super(Invoice, self).save(force_insert, force_update, using, update_fields)
@@ -103,16 +106,9 @@ class Invoice(models.Model):
         return self.number
 
     @property
-    def html(self):
-        return render_to_string("tunga/pdf/invoicev3.html", context=dict(invoice=self)).encode(encoding="UTF-8")
-
-    @property
-    def pdf(self):
-        return HTML(string=self.html, encoding='utf-8').write_pdf()
-
-    @property
     def tax_location(self):
-        if self.type in [INVOICE_TYPE_SALE, INVOICE_TYPE_CLIENT] and self.user.company and self.user.company.country and self.user.company.country.code:
+        if self.type in [INVOICE_TYPE_SALE,
+                         INVOICE_TYPE_CLIENT] and self.user and self.user.company and self.user.company.country and self.user.company.country.code:
             client_country = self.user.company.country.code
             if client_country == VAT_LOCATION_NL:
                 return VAT_LOCATION_NL
@@ -125,6 +121,14 @@ class Invoice(models.Model):
             ]:
                 return VAT_LOCATION_EUROPE
         return VAT_LOCATION_WORLD
+
+    @property
+    def html(self):
+        return render_to_string("tunga/pdf/invoicev3.html", context=dict(invoice=self)).encode(encoding="UTF-8")
+
+    @property
+    def pdf(self):
+        return HTML(string=self.html, encoding='utf-8').write_pdf()
 
     @staticmethod
     @allow_staff_or_superuser
