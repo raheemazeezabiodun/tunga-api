@@ -5,6 +5,7 @@ from dry_rest_permissions.generics import DRYObjectPermissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from tunga_projects.filterbackends import ProjectFilterBackend
 from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationFilter, ProgressEventFilter, \
     ProgressReportFilter
 from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport
@@ -21,7 +22,7 @@ class ProjectViewSet(ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = ProjectFilter
-    filter_backends = DEFAULT_FILTER_BACKENDS
+    filter_backends = DEFAULT_FILTER_BACKENDS + (ProjectFilterBackend,)
     search_fields = ('title', 'description')
 
 
