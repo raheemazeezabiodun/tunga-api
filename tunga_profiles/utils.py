@@ -20,7 +20,7 @@ def profile_check(user):
     elif user.is_project_owner and user.tax_location == 'europe':
         required.extend(['vat_number'])
 
-    profile_dict = user.profile.__dict__
+    profile_dict = user.is_project_owner and user.company.__dict__ or user.profile.__dict__
     for key in profile_dict:
         if key in required and not profile_dict[key]:
             return False
