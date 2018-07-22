@@ -36,7 +36,7 @@ from tunga_utils import stripe_utils
 from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPER, VISIBILITY_DEVELOPER, \
     VISIBILITY_MY_TEAM, VISIBILITY_CUSTOM, UPDATE_SCHEDULE_HOURLY, UPDATE_SCHEDULE_DAILY, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
-    TASK_PAYMENT_METHOD_BITONIC, TASK_PAYMENT_METHOD_BITCOIN, PAYMENT_METHOD_BANK, \
+    PAYMENT_METHOD_BITONIC, PAYMENT_METHOD_BITCOIN, PAYMENT_METHOD_BANK, \
     LEGACY_PROGRESS_EVENT_TYPE_DEFAULT, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE, \
     LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND, \
     LEGACY_PROGRESS_REPORT_STATUS_STUCK, INTEGRATION_TYPE_REPO, INTEGRATION_TYPE_ISSUE, STATUS_PENDING, \
@@ -50,7 +50,7 @@ from tunga_utils.constants import CURRENCY_EUR, CURRENCY_USD, USER_TYPE_DEVELOPE
     LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR, LEGACY_PROGRESS_REPORT_STUCK_REASON_POOR_DOC, LEGACY_PROGRESS_REPORT_STUCK_REASON_HARDWARE, \
     LEGACY_PROGRESS_REPORT_STUCK_REASON_UNCLEAR_SPEC, LEGACY_PROGRESS_REPORT_STUCK_REASON_PERSONAL, \
     LEGACY_PROGRESS_REPORT_STUCK_REASON_OTHER, \
-    STATUS_CANCELED, STATUS_RETRY, TASK_PAYMENT_METHOD_AYDEN, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
+    STATUS_CANCELED, STATUS_RETRY, PAYMENT_METHOD_AYDEN, LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, \
     PAYMENT_METHOD_PAYONEER, DOC_ESTIMATE, DOC_PROPOSAL, DOC_PLANNING, DOC_REQUIREMENTS, DOC_WIREFRAMES, \
     DOC_TIMELINE, DOC_OTHER, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, VAT_LOCATION_NL, VAT_LOCATION_EUROPE, \
     VAT_LOCATION_WORLD
@@ -149,10 +149,10 @@ TASK_CODERS_NEEDED_CHOICES = (
 )
 
 TASK_PAYMENT_METHOD_CHOICES = (
-    (TASK_PAYMENT_METHOD_AYDEN, 'Pay with Ayden'),
+    (PAYMENT_METHOD_AYDEN, 'Pay with Ayden'),
     (PAYMENT_METHOD_STRIPE, 'Pay with Stripe'),
-    (TASK_PAYMENT_METHOD_BITONIC, 'Pay with iDeal / mister cash'),
-    (TASK_PAYMENT_METHOD_BITCOIN, 'Pay with BitCoin'),
+    (PAYMENT_METHOD_BITONIC, 'Pay with iDeal / mister cash'),
+    (PAYMENT_METHOD_BITCOIN, 'Pay with BitCoin'),
     (PAYMENT_METHOD_BANK, 'Pay by bank transfer')
 )
 
@@ -690,7 +690,7 @@ class Task(models.Model):
         processing_share = 0
         processing_fee = 0
         if not self.exclude_payment_costs:
-            if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
+            if self.payment_method == PAYMENT_METHOD_BITONIC:
                 processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
             elif self.payment_method == PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
@@ -1746,7 +1746,7 @@ class IntegrationActivity(models.Model):
 
 TASK_PAYMENT_TYPE_CHOICES = (
     (PAYMENT_METHOD_STRIPE, 'Stripe'),
-    (TASK_PAYMENT_METHOD_BITCOIN, 'BitCoin'),
+    (PAYMENT_METHOD_BITCOIN, 'BitCoin'),
     (PAYMENT_METHOD_BANK, 'Bank Transfer'),
     (PAYMENT_METHOD_PAYONEER, 'Payoneer'),
 )
@@ -1792,8 +1792,8 @@ class TaskPayment(models.Model):
     def __str__(self):
         return '{}:{} - {} | {} {}'.format(
             self.get_payment_type_display(),
-            self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_address or self.charge_id,
-            self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount,
+            self.payment_type == PAYMENT_METHOD_BITCOIN and self.btc_address or self.charge_id,
+            self.payment_type == PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount,
             self.task and self.task.summary or 'Multi Task Payment',
             self.task and '#{}'.format(self.task.id) or ''
         )
@@ -1807,7 +1807,7 @@ class TaskPayment(models.Model):
         if self.multi_pay_key:
             share_ratio = self.multi_pay_key.get_task_share_ratio(task)
         return share_ratio * (
-                    self.payment_type == TASK_PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount_received)
+            self.payment_type == PAYMENT_METHOD_BITCOIN and self.btc_received or self.amount_received)
 
 
 PAYMENT_STATUS_CHOICES = (
@@ -1941,7 +1941,7 @@ class TaskInvoice(models.Model):
         processing_fee = 0
 
         if not self.exclude_payment_costs:
-            if self.payment_method == TASK_PAYMENT_METHOD_BITONIC:
+            if self.payment_method == PAYMENT_METHOD_BITONIC:
                 processing_share = Decimal(BITONIC_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)
             elif self.payment_method == PAYMENT_METHOD_BANK:
                 processing_share = Decimal(BANK_TRANSFER_PAYMENT_COST_PERCENTAGE) * Decimal(0.01)

@@ -10,7 +10,7 @@ from weasyprint import HTML
 from tunga_profiles.models import DeveloperNumber
 from tunga_tasks.models import Task
 from tunga_utils import bitcoin_utils
-from tunga_utils.constants import TASK_PAYMENT_METHOD_BITCOIN, VAT_LOCATION_WORLD
+from tunga_utils.constants import PAYMENT_METHOD_BITCOIN, VAT_LOCATION_WORLD
 from tunga_utils.serializers import InvoiceUserSerializer, TaskInvoiceSerializer
 
 
@@ -87,7 +87,7 @@ def process_invoices(pk, invoice_types=('client',), user_id=None, developer_ids=
                                 try:
                                     participant_payment = common_info['participant'].participantpayment_set.filter().latest('created_at')
                                     if participant_payment and bitcoin_utils.is_valid_btc_address(participant_payment.destination):
-                                        participant_payment_method = TASK_PAYMENT_METHOD_BITCOIN
+                                        participant_payment_method = PAYMENT_METHOD_BITCOIN
                                 except:
                                     pass
 

@@ -58,8 +58,8 @@ from tunga_tasks.tasks import complete_bitpesa_payment, \
     update_multi_tasks, distribute_task_payment_payoneer
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
 from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
-from tunga_utils.constants import TASK_PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
-    PAYMENT_METHOD_STRIPE, CURRENCY_EUR, TASK_PAYMENT_METHOD_BITCOIN
+from tunga_utils.constants import PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
+    PAYMENT_METHOD_STRIPE, CURRENCY_EUR, PAYMENT_METHOD_BITCOIN
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.mixins import SaveUploadsMixin
 from tunga_utils.serializers import TaskInvoiceSerializer
@@ -420,7 +420,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             except InvalidRequestError:
                 return Response(dict(message='We could not process your payment! Please contact hello@tunga.io'),
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        elif provider == TASK_PAYMENT_METHOD_BITONIC:
+        elif provider == PAYMENT_METHOD_BITONIC:
             # Pay with Bitonic
             payload = request.GET
 
@@ -428,7 +428,7 @@ class TaskViewSet(viewsets.ModelViewSet, SaveUploadsMixin):
             next_url = callback
             if task and task.has_object_write_permission(request) and bitcoin_utils.is_valid_btc_address(
                     task.btc_address):
-                if provider == TASK_PAYMENT_METHOD_BITONIC:
+                if provider == PAYMENT_METHOD_BITONIC:
                     client = oauth1.Client(
                         BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET,
                         callback_uri=callback, signature_type=SIGNATURE_TYPE_QUERY
@@ -1091,7 +1091,7 @@ class MultiTaskPaymentKeyViewSet(viewsets.ModelViewSet):
             except InvalidRequestError:
                 return Response(dict(message='We could not process your payment! Please contact hello@tunga.io'),
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        elif provider == TASK_PAYMENT_METHOD_BITONIC:
+        elif provider == PAYMENT_METHOD_BITONIC:
             # Pay with Bitonic
             payload = request.GET
 
@@ -1100,7 +1100,7 @@ class MultiTaskPaymentKeyViewSet(viewsets.ModelViewSet):
             if multi_task_key and multi_task_key.has_object_write_permission(
                     request) and bitcoin_utils.is_valid_btc_address(
                 multi_task_key.btc_address):
-                if provider == TASK_PAYMENT_METHOD_BITONIC:
+                if provider == PAYMENT_METHOD_BITONIC:
                     client = oauth1.Client(
                         BITONIC_CONSUMER_KEY, BITONIC_CONSUMER_SECRET, BITONIC_ACCESS_TOKEN, BITONIC_TOKEN_SECRET,
                         callback_uri=callback, signature_type=SIGNATURE_TYPE_QUERY
@@ -1215,7 +1215,7 @@ def coinbase_notification(request):
 
         if task:
             TaskPayment.objects.get_or_create(
-                task=task, ref=id, payment_type=TASK_PAYMENT_METHOD_BITCOIN, btc_address=task.btc_address, defaults={
+                task=task, ref=id, payment_type=PAYMENT_METHOD_BITCOIN, btc_address=task.btc_address, defaults={
                     'btc_received': amount, 'btc_price': task.btc_price, 'received_at': paid_at
                 }
             )
@@ -1230,7 +1230,7 @@ def coinbase_notification(request):
                 multi_task_key = None
             if multi_task_key:
                 TaskPayment.objects.get_or_create(
-                    multi_pay_key=multi_task_key, ref=id, payment_type=TASK_PAYMENT_METHOD_BITCOIN,
+                    multi_pay_key=multi_task_key, ref=id, payment_type=PAYMENT_METHOD_BITCOIN,
                     btc_address=multi_task_key.btc_address,
                     defaults={
                         'btc_received': amount, 'btc_price': multi_task_key.btc_price, 'received_at': paid_at

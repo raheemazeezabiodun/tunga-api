@@ -22,7 +22,7 @@ from tunga_utils.constants import CURRENCY_BTC, PAYMENT_METHOD_BTC_WALLET, \
     UPDATE_SCHEDULE_WEEKLY, UPDATE_SCHEDULE_MONTHLY, UPDATE_SCHEDULE_QUATERLY, UPDATE_SCHEDULE_ANNUALLY, \
     LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, LEGACY_PROGRESS_EVENT_TYPE_SUBMIT, STATUS_PENDING, STATUS_PROCESSING, \
     STATUS_INITIATED, LEGACY_PROGRESS_EVENT_TYPE_COMPLETE, STATUS_ACCEPTED, \
-    LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, TASK_PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
+    LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, PAYMENT_METHOD_BITCOIN, STATUS_RETRY, \
     PAYMENT_METHOD_BANK, STATUS_APPROVED, CURRENCY_EUR, PAYMENT_METHOD_PAYONEER, \
     LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT, USER_TYPE_PROJECT_OWNER
 from tunga_utils.helpers import clean_instance
@@ -357,7 +357,7 @@ def distribute_task_payment(task, force_distribution=False, destination=None, ta
     # Distribute all payments for this task
     payments = TaskPayment.objects.filter(
         Q(multi_pay_key__tasks=task) | Q(multi_pay_key__distribute_tasks=task) | (Q(task=task) & Q(processed=False)),
-        received_at__isnull=False, payment_type=TASK_PAYMENT_METHOD_BITCOIN
+        received_at__isnull=False, payment_type=PAYMENT_METHOD_BITCOIN
     )
 
     if target_payment:

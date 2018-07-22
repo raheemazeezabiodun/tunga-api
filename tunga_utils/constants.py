@@ -55,11 +55,11 @@ TASK_BILLING_METHOD_FIXED = 1
 TASK_BILLING_METHOD_HOURLY = 2
 
 # Task Payment Methods
-TASK_PAYMENT_METHOD_BITONIC = 'bitonic'
-TASK_PAYMENT_METHOD_BITCOIN = 'bitcoin'
+PAYMENT_METHOD_BITONIC = 'bitonic'
+PAYMENT_METHOD_BITCOIN = 'bitcoin'
 PAYMENT_METHOD_BANK = 'bank'
 PAYMENT_METHOD_STRIPE = 'stripe'
-TASK_PAYMENT_METHOD_AYDEN = 'ayden'
+PAYMENT_METHOD_AYDEN = 'ayden'
 PAYMENT_METHOD_PAYONEER = 'payoneer'
 
 # Transaction and Action Statuses
@@ -308,4 +308,12 @@ PROGRESS_REPORT_STUCK_REASON_CHOICES = (
     (PROGRESS_REPORT_STUCK_REASON_UNCLEAR_SPEC, 'Unclear specifications'),
     (PROGRESS_REPORT_STUCK_REASON_PERSONAL, 'Personal Circumstances'),
     (PROGRESS_REPORT_STUCK_REASON_OTHER, 'Other'),
+)
+
+INVOICE_PAYMENT_METHOD_CHOICES = (
+    (None, 'Any'),
+    (PAYMENT_METHOD_STRIPE, 'Pay with Stripe'),
+    (PAYMENT_METHOD_BITONIC, 'Pay with iDeal / mister cash'),
+    (PAYMENT_METHOD_BITCOIN, 'Pay with BitCoin'),
+    (PAYMENT_METHOD_BANK, 'Pay by bank transfer')
 )

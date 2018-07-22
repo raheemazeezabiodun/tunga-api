@@ -6,15 +6,19 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
+from weasyprint import HTML
 
 from tunga import settings
 from tunga_projects.models import Project, Participation
-from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, TASK_PAYMENT_METHOD_BITCOIN, \
-    TASK_PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
+from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, PAYMENT_METHOD_BITCOIN, \
+    PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
     INVOICE_TYPE_CHOICES, CURRENCY_EUR, CURRENCY_CHOICES_EUR_ONLY, \
-    INVOICE_TYPE_PURCHASE, PAYMENT_TYPE_PURCHASE, PAYMENT_TYPE_SALE
+    INVOICE_TYPE_PURCHASE, PAYMENT_TYPE_PURCHASE, PAYMENT_TYPE_SALE, VAT_LOCATION_WORLD, VAT_LOCATION_EUROPE, \
+    VAT_LOCATION_NL, INVOICE_TYPE_SALE, INVOICE_TYPE_CLIENT, INVOICE_PAYMENT_METHOD_CHOICES
+from tunga_utils.validators import validate_btc_address_or_none
 
 
 @python_2_unicode_compatible
@@ -46,6 +50,14 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Legacy Fields
+    payment_method = models.CharField(
+        max_length=30, choices=INVOICE_PAYMENT_METHOD_CHOICES,
+        blank=True, null=True,
+        help_text=','.join(['%s - %s' % (item[0], item[1]) for item in INVOICE_PAYMENT_METHOD_CHOICES])
+    )
+    btc_address = models.CharField(max_length=40, validators=[validate_btc_address_or_none], blank=True, null=True)
+
     def __str__(self):
         return "{} | {}".format(self.title, self.user.get_full_name())
 
@@ -71,8 +83,12 @@ class Invoice(models.Model):
         return (self.amount * self.tax_rate) / 100
 
     @property
+    def subtotal(self):
+        return self.amount + self.processing_fee
+
+    @property
     def total_amount(self):
-        return self.amount + self.processing_fee + self.tax_amount
+        return self.subtotal + self.tax_amount
 
     def generate_invoice_number(self):
         if self.id and not self.number:
@@ -85,6 +101,30 @@ class Invoice(models.Model):
                 invoice_number = '{}/{}'.format(invoice_number, self.user.id)
             return invoice_number
         return self.number
+
+    @property
+    def html(self):
+        return render_to_string("tunga/pdf/invoicev3.html", context=dict(invoice=self)).encode(encoding="UTF-8")
+
+    @property
+    def pdf(self):
+        return HTML(string=self.html, encoding='utf-8').write_pdf()
+
+    @property
+    def tax_location(self):
+        if self.type in [INVOICE_TYPE_SALE, INVOICE_TYPE_CLIENT] and self.user.company and self.user.company.country and self.user.company.country.code:
+            client_country = self.user.company.country.code
+            if client_country == VAT_LOCATION_NL:
+                return VAT_LOCATION_NL
+            elif client_country in [
+                # EU members
+                'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
+                'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
+                # European Free Trade Association (EFTA)
+                'IS', 'LI', 'NO', 'CH'
+            ]:
+                return VAT_LOCATION_EUROPE
+        return VAT_LOCATION_WORLD
 
     @staticmethod
     @allow_staff_or_superuser
@@ -121,8 +161,8 @@ class Payment(models.Model):
     payment_method_choices = (
         (PAYMENT_METHOD_STRIPE, 'Stripe'),
         (PAYMENT_METHOD_BANK, 'Bank Transfer'),
-        (TASK_PAYMENT_METHOD_BITCOIN, 'Bitcoin'),
-        (TASK_PAYMENT_METHOD_BITONIC, 'Bitonic'),
+        (PAYMENT_METHOD_BITCOIN, 'Bitcoin'),
+        (PAYMENT_METHOD_BITONIC, 'Bitonic'),
     )
     invoice = models.ForeignKey(to=Invoice, on_delete=models.DO_NOTHING)
     payment_method = models.CharField(max_length=150, choices=payment_method_choices)
