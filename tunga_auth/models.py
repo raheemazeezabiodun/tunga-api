@@ -138,7 +138,7 @@ class TungaUser(AbstractUser):
     @property
     def company(self):
         try:
-            return self.company
+            return self.user_company
         except:
             return None
 

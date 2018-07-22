@@ -225,7 +225,7 @@ class UserProfile(models.Model):
 
 @python_2_unicode_compatible
 class Company(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_company')
 
     # Description
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -250,7 +250,7 @@ class Company(models.Model):
     ref_no = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return self.user.get_short_name()
+        return self.name or 'Company #{}'.format(self.id)
 
     @property
     def city_name(self):
