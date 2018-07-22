@@ -98,7 +98,7 @@ class ActivitySerializer(SimpleActivitySerializer):
 def get_instance_type(instance):
     if instance:
         instance_class = type(instance)
-        is_legacy = instance_class in [LegacyProgressEvent, LegacyProgressReport, LegacyUpload]
+        is_legacy = instance_class in [LegacyProgressEvent, LegacyProgressReport, LegacyUpload, LegacyParticipation]
         return to_snake_case(str('{}{}'.format(is_legacy and 'Legacy' or '', instance_class.__name__)))
     return None
 
