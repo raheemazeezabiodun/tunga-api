@@ -5,9 +5,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
 from tunga_activity import verbs
-from tunga_projects.models import Project
+from tunga_comments.models import Comment
+from tunga_projects.models import Project, ProgressEvent, ProgressReport
 from tunga_tasks.models import Task
 from tunga_utils.filters import GenericDateFilterSet
+from tunga_utils.models import Upload
 
 
 class ActionFilter(GenericDateFilterSet):
@@ -38,7 +40,10 @@ class ActionFilter(GenericDateFilterSet):
         if not project.is_participant(self.request.user, active=True):
             return queryset.none()
         return queryset.filter(
-            Q(projects=project) | Q(progress_events__project=project)
+            Q(projects=project) | Q(progress_events__project=project),
+            action_object_content_type__in=[
+                ContentType.objects.get_for_model(model) for model in [Comment, Upload, ProgressEvent, ProgressReport]
+            ]
         )
 
 
