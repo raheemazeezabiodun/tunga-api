@@ -16,4 +16,4 @@ class ProjectFilterBackend(DRYPermissionFiltersBase):
                 Q(participation__user=request.user) &
                 Q(participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
             )
-        )
+        ).distinct()

@@ -1,9 +1,10 @@
 import json
 
+import datetime
 from allauth.socialaccount.providers.github.provider import GitHubProvider
+from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
-from django.utils import six
 from django_countries.fields import CountryField
 from dry_rest_permissions.generics import DRYObjectPermissions, DRYPermissions
 from rest_framework import viewsets, generics, views, status
@@ -13,8 +14,7 @@ from rest_framework.response import Response
 from slacker import Slacker
 
 from tunga_auth.permissions import IsAdminOrCreateOnly
-from tunga_messages.models import Channel
-from tunga_messages.utils import channel_new_messages_filter
+from tunga_payments.models import Invoice
 from tunga_profiles.filterbackends import ConnectionFilterBackend
 from tunga_profiles.filters import EducationFilter, WorkFilter, ConnectionFilter, DeveloperApplicationFilter, \
     DeveloperInvitationFilter
@@ -22,12 +22,12 @@ from tunga_profiles.models import UserProfile, Education, Work, Connection, Deve
     Company
 from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, WorkSerializer, ConnectionSerializer, \
     DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer
-from tunga_tasks.models import Task
+from tunga_projects.models import Project, ProgressReport, ProgressEvent
 from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
-from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, CHANNEL_TYPE_SUPPORT, \
-    CHANNEL_TYPE_DIRECT, CHANNEL_TYPE_TOPIC, CHANNEL_TYPE_DEVELOPER, TASK_SCOPE_ONGOING, TASK_SCOPE_PROJECT, \
-    TASK_SOURCE_NEW_USER, STATUS_ACCEPTED, STATUS_INITIAL, STATUS_REJECTED
+from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
+    STATUS_INITIAL, USER_TYPE_DEVELOPER, \
+    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -198,102 +198,106 @@ class NotificationView(views.APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        channel_filter = Q(channeluser__user=user)
-        if user.is_staff and user.is_superuser or user.is_developer:
-            # channel_filter = channel_filter | Q(type=CHANNEL_TYPE_DEVELOPER)
-            # TODO: Channel filter should include all developer channels for admins and devs
-            # However enabling above query currently breaks new message counts
-            pass
+        user_fields = ['first_name', 'last_name', 'avatar_url']
+        profile_fields = ['skills', 'bio', 'country', 'city', 'street', 'plot_number', 'postal_code']
+        optional_fields = ['skills', 'bio', 'avatar_url', 'phone_number', 'tel_number']
 
-        channels_with_messages = channel_new_messages_filter(
-            Channel.objects.filter(channel_filter),
-            user=user
-        )
+        if request.user.is_developer or request.user.is_project_manager:
+            profile_fields.extend(['id_document', 'phone_number'])
+        elif user.is_project_owner and user.tax_location == 'europe':
+            profile_fields.extend(['vat_number', 'tel_number'])
 
-        channel_updates = [
-            dict(id=channel.id, type=channel.type, new=channel.new_messages, last_read=channel.channel_last_read)
-            for channel in channels_with_messages]
+        missing_required = []
+        missing_optional = []
 
-        channel_type_map = {
-            CHANNEL_TYPE_DIRECT: 'direct',
-            CHANNEL_TYPE_TOPIC: 'topic',
-            CHANNEL_TYPE_SUPPORT: 'support',
-            CHANNEL_TYPE_DEVELOPER: 'developer'
-        }
+        for group in [
+            [request.user, user_fields],
+            [request.user.is_project_owner and request.user.company or request.user.profile, profile_fields]
+        ]:
+            for field in group[1]:
+                if not getattr(group[0], field, None):
+                    if field in optional_fields:
+                        missing_optional.append(field)
+                    else:
+                        missing_required.append(field)
 
-        channel_type_summary_updates = dict()
-        for channel_type_name in six.itervalues(channel_type_map):
-            channel_type_summary_updates[channel_type_name] = 0
-
-        for channel in channel_updates:
-            channel_type_summary_updates[channel_type_map.get(channel['type'], '')] += channel['new']
-
-        requests = user.connection_requests.filter(status=STATUS_INITIAL, from_user__pending=False).count()
-        tasks = user.tasks_created.filter(closed=False).count() + user.participation_set.exclude(
-            status=STATUS_REJECTED).filter(
-            task__closed=False, user=user
-        ).count() + user.tasks_managed.filter(closed=False).count()
-        pm_tasks = Task.objects.filter(
-            Q(scope=TASK_SCOPE_ONGOING) |
+        running_projects = Project.objects.filter(
+            Q(user=request.user) |
+            Q(pm=request.user) |
+            Q(owner=request.user) |
             (
-                Q(scope=TASK_SCOPE_PROJECT) & (
-                    Q(pm_required=True) | Q(source=TASK_SOURCE_NEW_USER)
-                )
-            )
-        )
-        if request.user.is_project_manager:
-            pm_tasks.filter(pm=request.user)
-        estimates = pm_tasks.exclude(estimate__status=STATUS_ACCEPTED).distinct().count()
-        quotes = pm_tasks.filter(estimate__status=STATUS_ACCEPTED).exclude(quote__status=STATUS_ACCEPTED).distinct().count()
+                Q(participation__user=request.user) &
+                Q(participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
+            ), archived=False
+        ).distinct()
 
-        profile = None
-        profile_notifications = {'count': 0, 'missing': [], 'improve': [], 'more': [], 'section': None}
-        try:
-            profile = user.userprofile
-        except:
-            profile_notifications['missing'] = ['skills', 'bio', 'country', 'city', 'street', 'plot_number',
-                                                'phone_number']
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')
 
-        if not user.avatar_url:
-            profile_notifications['missing'].append('image')
+        upcoming_progress_events = ProgressEvent.objects.filter(
+            ~Q(progressreport__user=request.user),
+            project__participation__user=request.user,
+            project__participation__status=STATUS_ACCEPTED,
+            type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE],
+            due_at__gt=datetime.datetime.utcnow() + relativedelta(hours=24)
+        ).order_by('due_at').distinct()
 
-        if profile:
-            skills = profile.skills.count()
-            if skills == 0:
-                profile_notifications['missing'].append('skills')
-            elif skills < 3:
-                profile_notifications['more'].append('skills')
-
-            if not profile.bio:
-                profile_notifications['missing'].append('bio')
-
-            if not profile.country:
-                profile_notifications['missing'].append('country')
-            if not profile.city:
-                profile_notifications['missing'].append('city')
-            if not profile.street:
-                profile_notifications['missing'].append('street')
-            if not profile.plot_number:
-                profile_notifications['missing'].append('plot_number')
-            if not profile.phone_number:
-                profile_notifications['missing'].append('phone_number')
-
-            if user.type == USER_TYPE_PROJECT_OWNER and not profile.company:
-                profile_notifications['missing'].append('company')
-
-        profile_notifications['count'] = len(profile_notifications['missing']) + len(profile_notifications['more']) \
-                                         + len(profile_notifications['improve'])
+        progress_reports = ProgressReport.objects.filter(
+            Q(event__project__user=request.user) |
+            Q(event__project__pm=request.user) |
+            Q(event__project__owner=request.user),
+            user__type=USER_TYPE_DEVELOPER,
+            event__type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
+        ).distinct()
 
         return Response(
             {
-                'messages': channel_type_summary_updates['direct'] + channel_type_summary_updates['topic'] + channel_type_summary_updates['developer'],
-                'requests': requests,
-                'tasks': tasks,
-                'estimates': estimates,
-                'quotes': quotes,
-                'profile': profile_notifications,
-                'channels': channel_updates,
-                'channel_summary': channel_type_summary_updates
+                'profile': dict(
+                    required=missing_required,
+                    optional=missing_optional
+                ),
+                'projects': [dict(
+                    id=project.id,
+                    title=project.title
+                ) for project in running_projects],
+                'invoices': [dict(
+                    id=invoice.id,
+                    title=invoice.title,
+                    due_at=invoice.due_at,
+                    project=dict(
+                        id=invoice.project.id,
+                        title=invoice.project.title
+                    )
+                ) for invoice in unpaid_invoices],
+                'events': [dict(
+                    id=event.id,
+                    title=event.title,
+                    type=event.type,
+                    due_at=event.due_at,
+                    project=dict(
+                        id=event.project.id,
+                        title=event.project.title
+                    )
+                ) for event in upcoming_progress_events],
+                'reports': [dict(
+                    id=report.id,
+                    created_at=report.created_at,
+                    status=report.status,
+                    percentage=report.percentage,
+                    user=dict(
+                        id=report.user.id,
+                        display_name=report.user.display_name
+                    ),
+                    event=dict(
+                        id=report.event.id,
+                        title=report.event.title,
+                        type=report.event.type,
+                        due_at=report.event.due_at,
+                    ),
+                    project=dict(
+                        id=report.event.project.id,
+                        title=report.event.project.title
+                    )
+                ) for report in progress_reports],
             },
             status=status.HTTP_200_OK
         )
