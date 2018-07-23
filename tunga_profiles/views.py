@@ -1,8 +1,10 @@
+import datetime
 import json
 
-import datetime
+from actstream.models import Action
 from allauth.socialaccount.providers.github.provider import GitHubProvider
 from dateutil.relativedelta import relativedelta
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
 from django_countries.fields import CountryField
@@ -13,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from slacker import Slacker
 
+from tunga_activity.serializers import ActivitySerializer
 from tunga_auth.permissions import IsAdminOrCreateOnly
 from tunga_payments.models import Invoice
 from tunga_profiles.filterbackends import ConnectionFilterBackend
@@ -22,10 +25,10 @@ from tunga_profiles.models import UserProfile, Education, Work, Connection, Deve
     Company
 from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, WorkSerializer, ConnectionSerializer, \
     DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer
-from tunga_projects.models import Project, ProgressReport, ProgressEvent
+from tunga_projects.models import Project, ProgressReport, ProgressEvent, Participation
 from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
-from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
+from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
     STATUS_INITIAL, USER_TYPE_DEVELOPER, \
     PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
@@ -231,7 +234,7 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:5]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
             ~Q(progressreport__user=request.user),
@@ -239,7 +242,7 @@ class NotificationView(views.APIView):
             project__participation__status=STATUS_ACCEPTED,
             type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE],
             due_at__gt=datetime.datetime.utcnow() - relativedelta(hours=24)
-        ).order_by('due_at').distinct()
+        ).order_by('due_at').distinct()[:5]
 
         progress_reports = ProgressReport.objects.filter(
             Q(event__project__user=request.user) |
@@ -247,7 +250,12 @@ class NotificationView(views.APIView):
             Q(event__project__owner=request.user),
             user__type=USER_TYPE_DEVELOPER,
             event__type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
-        ).distinct()
+        ).distinct()[:5]
+
+        activities = Action.objects.filter(
+            Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects),
+            action_object_content_type=ContentType.objects.get_for_model(Participation)
+        )[:5]
 
         return Response(
             {
@@ -297,8 +305,9 @@ class NotificationView(views.APIView):
                     project=dict(
                         id=report.event.project.id,
                         title=report.event.project.title
-                    )
+                    ),
                 ) for report in progress_reports],
+                'activities': ActivitySerializer(instance=activities, many=True, context=dict(request=request)).data
             },
             status=status.HTTP_200_OK
         )
