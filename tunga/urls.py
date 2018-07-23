@@ -41,7 +41,7 @@ from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TimeEntryViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
-    TaskDocumentViewSet
+    TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file
 
@@ -70,7 +70,7 @@ router.register(r'uploads', UploadViewSet)
 router.register(r'apply', DeveloperApplicationViewSet)
 router.register(r'invite', DeveloperInvitationViewSet)
 # router.register(r'project', LegacyProjectViewSet)
-# router.register(r'task', TaskViewSet)
+router.register(r'task', TaskViewSet)
 # router.register(r'application', ApplicationViewSet)
 # router.register(r'participation', LegacyParticipationViewSet)
 router.register(r'estimate', EstimateViewSet)
