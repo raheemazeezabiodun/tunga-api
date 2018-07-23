@@ -17,8 +17,10 @@ def profile_check(user):
 
     if user.is_developer or user.is_project_manager:
         required.extend(['id_document'])
-    elif user.is_project_owner and user.tax_location == 'europe':
-        required.extend(['vat_number'])
+    elif user.is_project_owner:
+        required.extend(['name'])
+        if user.tax_location == 'europe':
+            required.extend(['vat_number'])
 
     profile_dict = user.is_project_owner and user.company.__dict__ or user.profile.__dict__
     for key in profile_dict:

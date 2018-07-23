@@ -205,7 +205,7 @@ class NotificationView(views.APIView):
         if request.user.is_developer or request.user.is_project_manager:
             profile_fields.extend(['id_document', 'phone_number'])
         elif user.is_project_owner and user.tax_location == 'europe':
-            profile_fields.extend(['vat_number', 'tel_number'])
+            profile_fields.extend(['name', 'vat_number', 'tel_number'])
 
         missing_required = []
         missing_optional = []
