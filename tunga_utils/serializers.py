@@ -244,6 +244,9 @@ class SimplestUserSerializer(SimpleModelSerializer):
             'id', 'username', 'first_name', 'last_name', 'image', 'display_name', 'short_name', 'type',
             'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin', 'verified', 'company', 'avatar_url'
         )
+        extra_kwargs = {
+            'username': {'required': False}
+        }
 
     def get_company(self, obj):
         try:
