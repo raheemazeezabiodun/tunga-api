@@ -238,7 +238,7 @@ class NotificationView(views.APIView):
             project__participation__user=request.user,
             project__participation__status=STATUS_ACCEPTED,
             type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE],
-            due_at__gt=datetime.datetime.utcnow() + relativedelta(hours=24)
+            due_at__gt=datetime.datetime.utcnow() - relativedelta(hours=24)
         ).order_by('due_at').distinct()
 
         progress_reports = ProgressReport.objects.filter(
@@ -285,6 +285,7 @@ class NotificationView(views.APIView):
                     percentage=report.percentage,
                     user=dict(
                         id=report.user.id,
+                        username=report.user.username,
                         display_name=report.user.display_name
                     ),
                     event=dict(
