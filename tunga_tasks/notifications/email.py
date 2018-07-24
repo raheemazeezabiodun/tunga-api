@@ -535,7 +535,7 @@ def notify_new_progress_report_email(instance):
     is_dev_report = not is_pm_or_client_report
 
     subject = "{} submitted a {}".format(
-        instance.user.display_name, is_client_report and "Weekly Survey" or "Progress Report"
+        instance.user.display_name.encode('utf-8'), is_client_report and "Weekly Survey" or "Progress Report"
     )
 
     to = is_pm_or_client_report and TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS or []
@@ -1077,7 +1077,7 @@ def notify_new_task_invoice_client_email(instance, template_name='69-invoice'):
 @job
 def notify_new_task_invoice_admin_email(instance):
     instance = clean_instance(instance, TaskInvoice)
-    subject = "{} generated an invoice".format(instance.user.display_name)
+    subject = "{} generated an invoice".format(instance.user.display_name.encode('utf-8'))
     to = TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS
     ctx = {
         'user': instance.user,

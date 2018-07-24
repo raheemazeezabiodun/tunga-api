@@ -85,7 +85,7 @@ def create_task_slack_msg(task, summary='', channel='#general', show_schedule=Tr
                         '*Name:* <{}|{}>\n'
                         '*Email:* {}'.format(
                             '{}/people/{}'.format(TUNGA_URL, user.username),
-                            user.display_name,
+                            user.display_name.encode('utf-8'),
                             user.email)
 
                         for user in developers
@@ -97,7 +97,7 @@ def create_task_slack_msg(task, summary='', channel='#general', show_schedule=Tr
     if not summary:
         summary = "New {} created by {} | <{}|View on Tunga>".format(
             task.scope == TASK_SCOPE_TASK and 'task' or 'project',
-            task.user.display_name, task_url)
+            task.user.display_name.encode('utf-8'), task_url)
 
     return {
         slack_utils.KEY_TEXT: summary,
@@ -110,12 +110,12 @@ def create_task_stakeholders_attachment_slack(task, show_title=True):
     task_url = '{}/work/{}'.format(TUNGA_URL, task.id)
     owner = task.owner or task.user
     body_text = "*Project Owner:*\n" \
-                " {} {}".format(owner.display_name, owner.email)
+                " {} {}".format(owner.display_name.encode('utf-8'), owner.email)
 
     if task.pm:
         body_text += "\n*Project Manager:*\n" \
                      "{} {} {}".format(
-            task.pm.display_name,
+            task.pm.display_name.encode('utf-8'),
             task.pm.email,
             task.pm.profile and task.pm.profile.phone_number and task.pm.profile.phone_number or ''
         )
@@ -126,7 +126,7 @@ def create_task_stakeholders_attachment_slack(task, show_title=True):
         body_text += '\n'.join(
             '{}. {} {} {}'.format(
                 idx + 1,
-                dev.display_name,
+                dev.display_name.encode('utf-8'),
                 dev.email,
                 dev.profile and dev.profile.phone_number and dev.profile.phone_number or ''
             ) for idx, dev in enumerate(developers)
@@ -157,7 +157,7 @@ def notify_new_task_admin_slack(instance, new_user=False, completed=False, call_
         (completed or call_scheduled) and 'New wizard' or 'New',
         instance.scope == TASK_SCOPE_TASK and 'task' or 'project',
         completed_phrase or 'created',
-        instance.user.display_name, new_user and ' (New user)' or '',
+        instance.user.display_name.encode('utf-8'), new_user and ' (New user)' or '',
         task_url
     )
     slack_msg = create_task_slack_msg(instance, summary=summary, channel=SLACK_STAFF_LEADS_CHANNEL, show_contacts=True,
@@ -398,7 +398,7 @@ def create_progress_report_slack_message(instance, updated=False, to_client=Fals
 
     report_url = '%s/work/%s/event/%s/' % (TUNGA_URL, instance.event.task_id, instance.event_id)
     slack_msg = "{} {} a {} | {}".format(
-        instance.user.display_name,
+        instance.user.display_name.encode('utf-8'),
         updated and 'updated' or 'submitted',
         is_client_report and "Weekly Survey" or "Progress Report",
         '<{}|View on Tunga>'.format(report_url)
@@ -633,7 +633,7 @@ def notify_missed_progress_event_slack(instance):
                     '*Name:* {}\n'
                     '*Email:* {}{}'.format(
                         instance.due_at.strftime("%d %b, %Y"),
-                        user.display_name,
+                        user.display_name.encode('utf-8'),
                         user.email,
                         user.profile and user.profile.phone_number and '\n*Phone Number:* {}'.format(
                             user.profile.phone_number) or ''
@@ -960,9 +960,9 @@ def send_survey_summary_report_slack(event, client_report, pm_report, dev_report
         {
             slack_utils.KEY_TEXT: "*Summary Report:* <{}|{}>\nProject Owner: <{}|{}>{}".format(
                 '{}/work/{}'.format(TUNGA_URL, event.task.id), event.task.summary,
-                '{}/people/{}'.format(TUNGA_URL, owner.username), owner.display_name,
+                '{}/people/{}'.format(TUNGA_URL, owner.username), owner.display_name.encode('utf-8'),
                 event.task.pm and '\nPM: <{}|{}>'.format('{}/people/{}'.format(
-                    TUNGA_URL, event.task.pm.username), event.task.pm.display_name
+                    TUNGA_URL, event.task.pm.username), event.task.pm.display_name.encode('utf-8')
                 ) or ''
             ),
             slack_utils.KEY_CHANNEL: SLACK_STAFF_PROJECT_EXECUTION_CHANNEL,
@@ -980,7 +980,7 @@ def notify_new_task_invoice_admin_slack(instance):
     client_url = '{}/people/{}/'.format(TUNGA_URL, owner.username)
     invoice_url = '{}/api/task/{}/download/invoice/?format=pdf'.format(TUNGA_URL, instance.task.id)
     slack_msg = '{} generated an invoice'.format(
-        instance.user.display_name
+        instance.user.display_name.encode('utf-8')
     )
 
     attachments = [
