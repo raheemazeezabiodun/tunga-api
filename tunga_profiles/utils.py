@@ -7,7 +7,8 @@ from tunga_utils.helpers import clean_instance
 
 def profile_check(user):
     user = clean_instance(user, get_user_model())
-    if not user.first_name or not user.last_name or not user.email or not user.profile:
+    data_source = user.is_project_owner and user.company or user.profile
+    if not user.first_name or not user.last_name or not user.email and not data_source:
         return False
 
     if user.is_developer and user.payoneer_status not in [STATUS_APPROVED, STATUS_PENDING]:
@@ -22,7 +23,7 @@ def profile_check(user):
         if user.tax_location == 'europe':
             required.extend(['vat_number'])
 
-    profile_dict = user.is_project_owner and user.company.__dict__ or user.profile.__dict__
+    profile_dict = data_source.__dict__
     for key in profile_dict:
         if key in required and not profile_dict[key]:
             return False
