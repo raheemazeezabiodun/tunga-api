@@ -8,7 +8,7 @@ from tunga_utils.helpers import clean_instance
 def profile_check(user):
     user = clean_instance(user, get_user_model())
     data_source = user.is_project_owner and user.company or user.profile
-    if not user.first_name or not user.last_name or not user.email and not data_source:
+    if not user.first_name or not user.last_name or not user.email or not data_source:
         return False
 
     if user.is_developer and user.payoneer_status not in [STATUS_APPROVED, STATUS_PENDING]:
