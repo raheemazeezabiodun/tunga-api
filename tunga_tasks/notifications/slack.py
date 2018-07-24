@@ -603,7 +603,7 @@ def notify_missed_progress_event_slack(instance):
 
     is_client_report = instance.type in [PROGRESS_EVENT_TYPE_CLIENT, PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT]
 
-    if instance.task.archived or instance.status != "missed":
+    if instance.task.archived or instance.status != "missed" or not instance.last_reminder_at:
         return
 
     participants = instance.participants
