@@ -44,14 +44,16 @@ class ProgressEventFilter(GenericDateFilterSet):
     class Meta:
         model = ProgressEvent
         fields = (
-            'project', 'created_by'
+            'project', 'created_by', 'type'
         )
 
 
 class ProgressReportFilter(GenericDateFilterSet):
+    project = django_filters.NumberFilter(name='event__project')
+    type = django_filters.NumberFilter(name='event__type')
 
     class Meta:
         model = ProgressReport
         fields = (
-            'event', 'user'
+            'event', 'user', 'project', 'type'
         )
