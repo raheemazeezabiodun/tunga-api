@@ -12,7 +12,7 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 from weasyprint import HTML
 
 from tunga import settings
-from tunga_projects.models import Project, Participation
+from tunga_projects.models import Project, Participation, ProgressEvent
 from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, PAYMENT_METHOD_BITCOIN, \
     PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
     INVOICE_TYPE_CHOICES, CURRENCY_EUR, CURRENCY_CHOICES_EUR_ONLY, \
@@ -32,6 +32,7 @@ class Invoice(models.Model):
 
     project = models.ForeignKey(to=Project, on_delete=models.DO_NOTHING)
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)
+    milestone = models.ForeignKey(to=ProgressEvent, blank=True, null=True, on_delete=models.DO_NOTHING)
     title = models.CharField(max_length=200, null=True, blank=True)
     type = models.CharField(max_length=50, choices=INVOICE_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=17, decimal_places=2)

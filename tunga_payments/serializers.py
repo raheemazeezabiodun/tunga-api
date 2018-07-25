@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ListSerializer
 
 from tunga_payments.models import Payment, Invoice
-from tunga_projects.serializers import NestedProjectSerializer
+from tunga_projects.serializers import NestedProjectSerializer, SimpleProgressEventSerializer
 from tunga_utils.constants import PAYMENT_METHOD_STRIPE
 from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedModelSerializer, \
     CreateOnlyCurrentUserDefault, SimplestUserSerializer, SimpleModelSerializer
@@ -33,6 +33,7 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = NestedProjectSerializer()
     user = SimplestUserSerializer()
+    milestone = SimpleProgressEventSerializer(required=False)
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
 
