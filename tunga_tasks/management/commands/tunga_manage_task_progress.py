@@ -43,6 +43,7 @@ class Command(BaseCommand):
         missed_events = ProgressEvent.objects.filter(
             task__archived=False,
             due_at__range=[past_by_48_hours, past_by_24_hours],
+            last_reminder_at__isnull=False,
             missed_notification_at__isnull=True
         )
         for event in missed_events:
