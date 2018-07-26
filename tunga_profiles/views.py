@@ -25,7 +25,7 @@ from tunga_profiles.models import UserProfile, Education, Work, Connection, Deve
     Company
 from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, WorkSerializer, ConnectionSerializer, \
     DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer
-from tunga_projects.models import Project, ProgressReport, ProgressEvent, Participation
+from tunga_projects.models import Project, ProgressReport, ProgressEvent, Participation, Document
 from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
 from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
@@ -254,8 +254,10 @@ class NotificationView(views.APIView):
 
         activities = Action.objects.filter(
             Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects),
-            action_object_content_type=ContentType.objects.get_for_model(Participation)
-        )[:5]
+            action_object_content_type__in=[
+                ContentType.objects.get_for_model(model) for model in [Document, Participation]
+            ]
+        )[:15]
 
         return Response(
             {
