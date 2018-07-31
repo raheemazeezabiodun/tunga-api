@@ -35,6 +35,7 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     user = SimplestUserSerializer()
     milestone = SimpleProgressEventSerializer(required=False)
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
+    subtotal = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
 
     class Meta:
