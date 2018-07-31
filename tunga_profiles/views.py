@@ -234,7 +234,7 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:5]
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:4]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
             ~Q(progressreport__user=request.user),
@@ -250,7 +250,7 @@ class NotificationView(views.APIView):
             Q(event__project__owner=request.user),
             user__type=USER_TYPE_DEVELOPER,
             event__type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
-        ).distinct()[:5]
+        ).distinct()[:4]
 
         activities = Action.objects.filter(
             Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects),
