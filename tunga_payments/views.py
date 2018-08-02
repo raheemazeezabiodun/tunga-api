@@ -14,7 +14,7 @@ from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
 from six.moves.urllib_parse import urlencode, quote_plus
 
-from dry_rest_permissions.generics import DRYPermissions
+from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
 from rest_framework import status
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -37,7 +37,7 @@ from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 class InvoiceViewSet(ModelViewSet):
     serializer_class = InvoiceSerializer
     queryset = Invoice.objects.all()
-    # permission_classes = [IsAuthenticated, DRYPermissions]
+    permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 

@@ -138,27 +138,21 @@ class Invoice(models.Model):
 
     @allow_staff_or_superuser
     def has_object_read_permission(self, request):
-        return self.project.is_participant(request.user, active=True)
+        allowed_users = [self.user, self.created_by, self.project.user]
+        if self.project.owner:
+            allowed_users.append(self.project.owner)
+        if self.project.pm:
+            allowed_users.append(self.project.pm)
+        return request.user in allowed_users
 
     @staticmethod
     @allow_staff_or_superuser
     def has_write_permission(request):
-        return False
+        return request.user.is_project_manager or request.user.is_project_owner
 
-    @staticmethod
-    @allow_staff_or_superuser
-    def has_create_permission(request):
-        return False
-
-    @staticmethod
-    @allow_staff_or_superuser
-    def has_update_permission(request):
-        return True
-
-    @staticmethod
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
-        return True
+        return self.has_object_read_permission(request)
 
 
 @python_2_unicode_compatible
