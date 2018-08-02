@@ -174,7 +174,7 @@ def get_client(username=PAYONEER_USERNAME, password=PAYONEER_PASSWORD, client_id
 
 
 def generate_error_redirect_url(
-    status, message='Something went wrong! please reload the page and try again.', url=None
+    status, message='Something went wrong! please try again.', url=None
 ):
     return '{}?status=error&message={}&status_code={}'.format(
         url or '{}/settings/payment/payoneer'.format(TUNGA_URL), message, status
