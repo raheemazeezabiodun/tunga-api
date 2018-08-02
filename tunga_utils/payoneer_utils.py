@@ -80,7 +80,7 @@ class TungaPayoneer(object):
         if type(data) is not dict:
             data = dict()
 
-        data['redirect_url'] = data.get('redirect_url', '{}/profile/payment/?status=pending'.format(TUNGA_URL))
+        data['redirect_url'] = data.get('redirect_url', '{}/settings/payment/?status=pending'.format(TUNGA_URL))
         data['payee_type'] = data.get('payee_type', 1)
 
         for key in ['payee_id', 'first_name', 'last_name', 'phone_number', 'email']:
@@ -173,7 +173,9 @@ def get_client(username=PAYONEER_USERNAME, password=PAYONEER_PASSWORD, client_id
     return TungaPayoneer(username, password, client_id)
 
 
-def generate_error_redirect_url(status, message='Something went wrong! please reload the page and try again.'):
-    return '{}/profile/payment/payoneer?status=error&message={}&status_code={}'.format(
-        TUNGA_URL, message, status
+def generate_error_redirect_url(
+    status, message='Something went wrong! please reload the page and try again.', url=None
+):
+    return '{}?status=error&message={}&status_code={}'.format(
+        url or '{}/settings/payment/payoneer'.format(TUNGA_URL), message, status
     )

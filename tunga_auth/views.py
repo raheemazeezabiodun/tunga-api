@@ -31,7 +31,7 @@ from tunga import settings
 from tunga.settings import GITHUB_SCOPES, COINBASE_CLIENT_ID, COINBASE_CLIENT_SECRET, SOCIAL_CONNECT_ACTION, \
     SOCIAL_CONNECT_NEXT, SOCIAL_CONNECT_USER_TYPE, SOCIAL_CONNECT_ACTION_REGISTER, \
     SOCIAL_CONNECT_ACTION_CONNECT, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SOCIAL_CONNECT_TASK, SOCIAL_CONNECT_CALLBACK, \
-    SOCIAL_CONNECT_PROJECT
+    SOCIAL_CONNECT_PROJECT, TUNGA_URL
 from tunga_auth.filterbackends import UserFilterBackend
 from tunga_auth.filters import UserFilter
 from tunga_auth.models import EmailVisitor, TungaUser
@@ -306,6 +306,8 @@ def payoneer_sign_up(request):
 
     @return: Returns generated url from payoneer systems
     """
+    next_url = '{}?status=pending'.format(request.GET.get('next_url', '{}/settings/payment/'.format(TUNGA_URL)))
+    error_url = request.GET.get('error_url', None)
     user = request.user
     if user and user.is_authenticated() and (user.is_developer or user.is_project_manager):
         payoneer_client = payoneer_utils.get_client(
@@ -318,11 +320,12 @@ def payoneer_sign_up(request):
                 user.id,
                 dict(
                     first_name=user.first_name, last_name=user.last_name,
-                    email=user.email, phone_number=user.phone_number
+                    email=user.email, phone_number=user.phone_number,
+                    redirect_url=next_url
                 )
             )
         except:
-            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR))
+            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR, url=error_url))
 
         try:
             payoneer_url = response.get("token")
@@ -331,11 +334,11 @@ def payoneer_sign_up(request):
                 user.save()
                 return redirect(payoneer_url)
             else:
-                return redirect(payoneer_utils.generate_error_redirect_url(HTTP_400_BAD_REQUEST))
+                return redirect(payoneer_utils.generate_error_redirect_url(HTTP_400_BAD_REQUEST, url=error_url))
         except:
-            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR))
+            return redirect(payoneer_utils.generate_error_redirect_url(HTTP_500_INTERNAL_SERVER_ERROR, url=error_url))
     else:
-        return redirect(payoneer_utils.generate_error_redirect_url(HTTP_401_UNAUTHORIZED))
+        return redirect(payoneer_utils.generate_error_redirect_url(HTTP_401_UNAUTHORIZED, url=error_url))
 
 
 @csrf_exempt
