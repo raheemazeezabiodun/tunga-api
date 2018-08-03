@@ -30,7 +30,7 @@ from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
 from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
     STATUS_INITIAL, USER_TYPE_DEVELOPER, \
-    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE
+    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE, PROGRESS_EVENT_PM
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -234,15 +234,21 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:4]
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:5]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
+            (
+                Q(project__pm=request.user) &
+                Q(type__in=[PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE])
+            ) |
+            (
+                Q(project__participation__user=request.user) &
+                Q(project__participation__status=STATUS_ACCEPTED) &
+                Q(type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE])
+            ),
             ~Q(progressreport__user=request.user),
-            project__participation__user=request.user,
-            project__participation__status=STATUS_ACCEPTED,
-            type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE],
             due_at__gt=datetime.datetime.utcnow() - relativedelta(hours=24)
-        ).order_by('due_at').distinct()[:5]
+        ).order_by('due_at').distinct()[:4]
 
         progress_reports = ProgressReport.objects.filter(
             Q(event__project__user=request.user) |
