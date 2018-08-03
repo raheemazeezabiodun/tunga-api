@@ -72,6 +72,7 @@ class Project(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    @allow_staff_or_superuser
     def is_participant(self, user, active=True):
         if user == self.user or user == self.owner:
             return True
