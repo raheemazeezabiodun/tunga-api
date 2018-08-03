@@ -82,7 +82,7 @@ class SimpleProjectMetaSerializer(SimpleModelSerializer):
 
 
 class ProjectSerializer(
-    NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin, ContentTypeAnnotatedModelSerializer
+    NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin
 ):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     owner = SimplestUserSerializer(required=False, allow_null=True)
@@ -132,7 +132,7 @@ class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSeriali
         read_only_fields = ('created_at', 'updated_at')
 
 
-class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
     progress_reports = SimpleProgressReportSerializer(

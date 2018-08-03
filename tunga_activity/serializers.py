@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from generic_relations.relations import GenericRelatedField
 from rest_framework import serializers
 
-from tunga_activity.models import ActivityReadLog
+from tunga_activity.models import ActivityReadLog, FieldChangeLog
 from tunga_comments.models import Comment
 from tunga_comments.serializers import CommentSerializer
 from tunga_messages.models import Message, Channel, ChannelUser
@@ -24,7 +24,8 @@ from tunga_tasks.serializers import ApplicationSerializer, ParticipationSerializ
 from tunga_uploads.models import Upload
 from tunga_uploads.serializers import UploadSerializer
 from tunga_utils.models import Upload as LegacyUpload
-from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer as LegacyUploadSerializer
+from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer as LegacyUploadSerializer, \
+    SimplestUserSerializer
 
 
 class ActivityReadLogSerializer(serializers.Serializer):
@@ -36,6 +37,22 @@ class ActivityReadLogSerializer(serializers.Serializer):
 
 class LastReadActivitySerializer(serializers.Serializer):
     last_read = serializers.IntegerField(required=True)
+
+
+class FieldChangeLogSerializer(serializers.ModelSerializer):
+    target_type = serializers.SerializerMethodField()
+    target = GenericRelatedField({
+        Project: ProjectSerializer(),
+        ProgressEvent: ProgressEventSerializer(),
+    }, source='content_object')
+    created_by = SimplestUserSerializer()
+
+    class Meta:
+        model = FieldChangeLog
+        fields = '__all__'
+
+    def get_target_type(self, obj):
+        return get_instance_type(obj.content_object)
 
 
 class SimpleActivitySerializer(serializers.ModelSerializer):
@@ -67,6 +84,7 @@ class SimpleActivitySerializer(serializers.ModelSerializer):
         Invoice: InvoiceSerializer(),
         Payment: PaymentSerializer(),
         Upload: UploadSerializer(),
+        FieldChangeLog: FieldChangeLogSerializer(),
     }, source='action_object')
 
     class Meta:

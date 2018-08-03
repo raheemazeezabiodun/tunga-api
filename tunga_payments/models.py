@@ -166,7 +166,7 @@ class Invoice(models.Model):
 
     @property
     def download_url(self):
-        return '{}/api/invoices/{}/download?format=pdf'.format(TUNGA_URL, self.id)
+        return '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, self.id)
 
 
 @python_2_unicode_compatible
