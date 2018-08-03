@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from tunga_activity import verbs
 from tunga_comments.models import Comment
+from tunga_payments.models import Invoice
 from tunga_projects.models import Project, ProgressEvent, ProgressReport, Participation, Document
 from tunga_tasks.models import Task
 from tunga_utils.filters import GenericDateFilterSet
@@ -43,7 +44,7 @@ class ActionFilter(GenericDateFilterSet):
             Q(projects=project) | Q(progress_events__project=project),
             action_object_content_type__in=[
                 ContentType.objects.get_for_model(model) for model in [
-                    Comment, Upload, ProgressEvent, ProgressReport, Participation, Document
+                    Comment, Upload, ProgressEvent, ProgressReport, Participation, Document, Invoice
                 ]
             ]
         )
