@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import datetime
 import uuid
 
+from actstream.models import Action
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.encoding import python_2_unicode_compatible
@@ -59,6 +61,13 @@ class Invoice(models.Model):
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in INVOICE_PAYMENT_METHOD_CHOICES])
     )
     btc_address = models.CharField(max_length=40, validators=[validate_btc_address_or_none], blank=True, null=True)
+
+    activity_objects = GenericRelation(
+        Action,
+        object_id_field='target_object_id',
+        content_type_field='target_content_type',
+        related_query_name='invoices'
+    )
 
     def __str__(self):
         return "{} | {}".format(self.title, self.user.get_full_name())

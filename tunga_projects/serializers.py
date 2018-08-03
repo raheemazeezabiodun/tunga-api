@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from tunga_activity.models import FieldChangeLog
 from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport
 from tunga_utils.constants import PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STATUS_STUCK, \
     PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
@@ -91,6 +92,7 @@ class ProjectSerializer(
     documents = SimpleDocumentSerializer(required=False, many=True, source='document_set')
     progress_events = SimpleProgressEventSerializer(required=False, many=True, source='progressevent_set')
     meta = SimpleProjectMetaSerializer(required=False, many=True, source='projectmeta_set')
+    change_log = serializers.JSONField(write_only=True)
 
     class Meta:
         model = Project
@@ -101,6 +103,11 @@ class ProjectSerializer(
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
             instance.save()
+
+    def save_nested_change_log(self, data, instance):
+        if data is not None:
+            for item in data:
+                FieldChangeLog.objects.create(content_object=instance, created_by=self.get_current_user(), **item)
 
 
 class ParticipationSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
@@ -131,11 +138,17 @@ class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
     progress_reports = SimpleProgressReportSerializer(
         required=False, read_only=True, many=True, source='progressreport_set'
     )
+    change_log = serializers.JSONField(write_only=True)
 
     class Meta:
         model = ProgressEvent
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
+
+    def save_nested_change_log(self, data, instance):
+        if data is not None:
+            for item in data:
+                FieldChangeLog.objects.create(content_object=instance, created_by=self.get_current_user(), **item)
 
 
 class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
