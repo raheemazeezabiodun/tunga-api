@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from slacker import Slacker
 
+from tunga_activity.models import FieldChangeLog
 from tunga_activity.serializers import ActivitySerializer
 from tunga_auth.permissions import IsAdminOrCreateOnly
 from tunga_payments.models import Invoice
@@ -261,7 +262,7 @@ class NotificationView(views.APIView):
         activities = Action.objects.filter(
             Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects),
             action_object_content_type__in=[
-                ContentType.objects.get_for_model(model) for model in [Document, Participation]
+                ContentType.objects.get_for_model(model) for model in [Document, Participation, Invoice, FieldChangeLog]
             ]
         )[:15]
 
