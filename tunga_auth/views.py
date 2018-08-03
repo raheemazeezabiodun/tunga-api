@@ -137,7 +137,7 @@ class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.Updat
     lookup_value_regex = '[^/]+'
     filter_class = UserFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (UserFilterBackend,)
-    search_fields = ('^username', '^first_name', '^last_name', '=email', 'userprofile__skills__name')
+    search_fields = ('^username', '^first_name', '^last_name', '=email')
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
