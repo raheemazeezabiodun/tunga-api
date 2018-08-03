@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
 from copy import copy
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -138,6 +139,13 @@ class NestedModelSerializer(serializers.ModelSerializer):
 
                 # remove attribute from validated data to prevent writable nested non readonly fields error
                 validated_data.pop(attribute_key)
+
+            if type(attribute_value) in [dict, OrderedDict]:
+                attribute_value_object_id = attribute_value.get('id', None)
+                if attribute_value_object_id:
+                    serializer_field = self.get_fields().get(clean_attribute_key, None)
+                    serializer_class = serializer_field.__class__
+                    validated_data[clean_attribute_key] = serializer_class.Meta.model.objects.get(pk=attribute_value_object_id)
 
         if instance:
             instance = super(NestedModelSerializer, self).update(instance, validated_data)
