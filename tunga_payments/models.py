@@ -12,6 +12,7 @@ from dry_rest_permissions.generics import allow_staff_or_superuser
 from weasyprint import HTML
 
 from tunga import settings
+from tunga.settings import TUNGA_URL
 from tunga_projects.models import Project, Participation, ProgressEvent
 from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, PAYMENT_METHOD_BITCOIN, \
     PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
@@ -153,6 +154,10 @@ class Invoice(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return self.has_object_read_permission(request)
+
+    @property
+    def download_url(self):
+        return '{}/api/invoices/{}/download?format=pdf'.format(TUNGA_URL, self.id)
 
 
 @python_2_unicode_compatible
