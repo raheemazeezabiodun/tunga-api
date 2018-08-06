@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 import re
 
-import slackdown
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -18,9 +17,8 @@ from tunga import settings
 from tunga_profiles.models import Connection, Inquirer
 from tunga_utils.constants import CHANNEL_TYPE_DIRECT, CHANNEL_TYPE_TOPIC, CHANNEL_TYPE_SUPPORT, \
     APP_INTEGRATION_PROVIDER_SLACK, CHANNEL_TYPE_DEVELOPER
-from tunga_utils.helpers import GenericObject, convert_to_text, convert_to_html
+from tunga_utils.helpers import GenericObject, convert_to_text, convert_to_html, convert_slack_to_html
 from tunga_utils.models import Upload
-
 
 CHANNEL_TYPE_CHOICES = (
     (CHANNEL_TYPE_DIRECT, 'Direct Channel'),
@@ -229,11 +227,11 @@ class Message(models.Model):
 
     @property
     def excerpt(self):
-        return strip_tags(slackdown.render(self.body))
+        return strip_tags(convert_slack_to_html(self.body))
 
     @property
     def text_body(self):
-        return convert_to_text(self.body)
+        return convert_to_text(convert_slack_to_html(self.body))
 
     @property
     def html_body(self):
