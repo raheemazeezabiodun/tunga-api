@@ -92,7 +92,7 @@ class ProjectSerializer(
     documents = SimpleDocumentSerializer(required=False, many=True, source='document_set')
     progress_events = SimpleProgressEventSerializer(required=False, many=True, source='progressevent_set')
     meta = SimpleProjectMetaSerializer(required=False, many=True, source='projectmeta_set')
-    change_log = serializers.JSONField(write_only=True)
+    change_log = serializers.JSONField(required=False, write_only=True)
 
     class Meta:
         model = Project
@@ -138,7 +138,7 @@ class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
     progress_reports = SimpleProgressReportSerializer(
         required=False, read_only=True, many=True, source='progressreport_set'
     )
-    change_log = serializers.JSONField(write_only=True)
+    change_log = serializers.JSONField(required=False, write_only=True)
 
     class Meta:
         model = ProgressEvent
