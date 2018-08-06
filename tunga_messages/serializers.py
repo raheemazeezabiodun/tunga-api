@@ -7,7 +7,7 @@ from tunga_messages.models import Message, Channel, ChannelUser
 from tunga_messages.tasks import get_or_create_direct_channel
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import CreateOnlyCurrentUserDefault, SimpleUserSerializer, DetailAnnotatedModelSerializer, \
-    ContentTypeAnnotatedModelSerializer, UploadSerializer, SimplestUserSerializer
+    ContentTypeAnnotatedModelSerializer, UploadSerializer, SimplestUserSerializer, NestedModelSerializer
 
 
 class SimpleChannelSerializer(serializers.ModelSerializer):
@@ -58,12 +58,10 @@ class ChannelDetailsSerializer(serializers.ModelSerializer):
         fields = ('participants',)
 
 
-class ChannelSerializer(DetailAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
+class ChannelSerializer(NestedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     display_type = serializers.CharField(required=False, read_only=True, source='get_type_display')
-    participants = serializers.PrimaryKeyRelatedField(
-        required=True, many=True, queryset=get_user_model().objects.all()
-    )
+    participants = SimplestUserSerializer(required=True, many=True)
     attachments = UploadSerializer(read_only=True, required=False, many=True, source='all_attachments')
     user = serializers.SerializerMethodField(read_only=True, required=False)
     new_messages = serializers.IntegerField(read_only=True, required=False)
@@ -75,7 +73,6 @@ class ChannelSerializer(DetailAnnotatedModelSerializer, GetCurrentUserAnnotatedS
         model = Channel
         exclude = ()
         read_only_fields = ('created_at', 'type')
-        details_serializer = ChannelDetailsSerializer
 
     def validate_participants(self, value):
         error = 'Select some participants for this conversation'
