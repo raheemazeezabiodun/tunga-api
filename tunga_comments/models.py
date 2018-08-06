@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
 
-import re
-
-import slackdown
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -13,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
-from tunga_utils.helpers import convert_to_text, convert_to_html
+from tunga_utils.helpers import convert_to_text, convert_to_html, convert_slack_to_html
 from tunga_utils.models import Upload
 
 
@@ -51,11 +48,11 @@ class Comment(models.Model):
 
     @property
     def excerpt(self):
-        return strip_tags(slackdown.render(self.body))
+        return strip_tags(convert_slack_to_html(self.body))
 
     @property
     def text_body(self):
-        return convert_to_text(self.body)
+        return convert_to_text(convert_slack_to_html(self.body))
 
     @property
     def html_body(self):
