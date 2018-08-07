@@ -1,7 +1,7 @@
 from actstream.models import Action
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from tunga_activity.filters import ActionFilter
@@ -14,7 +14,7 @@ class ActionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Action.objects.all()
     serializer_class = ActivitySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     filter_class = ActionFilter
     search_fields = (
         'comments__body', 'messages__body', 'uploads__file', 'messages__attachments__file', 'comments__uploads__file'
