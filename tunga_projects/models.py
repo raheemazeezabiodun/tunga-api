@@ -59,6 +59,9 @@ class Project(models.Model):
         settings.AUTH_USER_MODEL, through='Participation', through_fields=('project', 'user'),
         related_name='project_participants', blank=True)
 
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
+
     activity_objects = GenericRelation(
         Action,
         object_id_field='target_object_id',
@@ -119,6 +122,9 @@ class Participation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     responded_at = models.DateTimeField(blank=True, null=True)
 
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
+
     def __str__(self):
         return '#{} | {} - {}'.format(self.id, self.user.get_short_name() or self.user.username, self.project.title)
 
@@ -166,6 +172,9 @@ class Document(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return '{} | {}'.format(self.type, self.project)
@@ -218,6 +227,9 @@ class ProgressEvent(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
 
     activity_objects = GenericRelation(
         Action,
@@ -308,6 +320,9 @@ class ProgressReport(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return '{0} - {1}%'.format(self.event, self.percentage)

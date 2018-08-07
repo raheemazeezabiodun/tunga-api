@@ -54,6 +54,9 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
+
     # Legacy Fields
     payment_method = models.CharField(
         max_length=30, choices=INVOICE_PAYMENT_METHOD_CHOICES,
@@ -188,6 +191,9 @@ class Payment(models.Model):
                                    on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    migrated_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return "{}: {} {}".format(self.invoice.title, self.currency, self.amount)
