@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 company = Company(user=client)
 
                 for item in field_map:
-                    field_value = str(getattr(client.profile, item[1], None))
+                    field_value = getattr(client.profile, item[1], None)
                     if field_value:
                         setattr(company, item[0], field_value)
 
