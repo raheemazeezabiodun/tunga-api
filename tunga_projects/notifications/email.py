@@ -18,6 +18,6 @@ def notify_new_participant_email_dev(participation):
         'project': participation.project,
         'project_url': '{}/projects/{}/'.format(TUNGA_URL, participation.project.id)
     }
-    print send_mail(
+    send_mail(
         subject, 'tunga/email/project_invitation', to, ctx
     )
