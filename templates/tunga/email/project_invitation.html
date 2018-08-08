@@ -1,0 +1,18 @@
+{% extends "tunga/email/content.html" %}
+{% load i18n %}
+{% block email_header %}
+    Woohoo! You've been invited to a project.
+{% endblock %}
+{% block email_content %}
+    <p>Hi {{ invitee.first_name }},</p>
+
+    <p>{{ inviter.display_name }} invited you to the project:</p>
+
+    <p>{{ project.title }}</p>
+
+    <p>
+        Click the link below to view the project's details:<br/>
+        <a href="{{ project_url }}">{{ project_url }}</a>
+    </p>
+
+{% endblock %}

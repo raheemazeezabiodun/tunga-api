@@ -9,37 +9,36 @@ from tunga_utils.helpers import clean_instance
 
 
 @job
-def notify_new_project_slack_admin(instance):
-    instance = clean_instance(instance, Project)
-    project_url = '{}/projects/{}/'.format(TUNGA_URL, instance.id)
+def notify_new_project_slack_admin(project):
+    project = clean_instance(project, Project)
+    project_url = '{}/projects/{}/'.format(TUNGA_URL, project.id)
 
     summary = "New project created by {} | <{}|View on Tunga>".format(
-        instance.user.display_name.encode('utf-8'),
+        project.user.display_name.encode('utf-8'),
         project_url
     )
 
     attachments = [
         {
-            slack_utils.KEY_TITLE: instance.title,
+            slack_utils.KEY_TITLE: project.title,
             slack_utils.KEY_TITLE_LINK: project_url,
-            slack_utils.KEY_TEXT: instance.description or instance.title,
+            slack_utils.KEY_TEXT: project.description or project.title,
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_TUNGA
         }
     ]
 
     extra_details = ''
-    if instance.type:
-        extra_details += '*Type*: {}\n'.format(instance.get_type_display())
-    if instance.expected_duration:
-        extra_details += '*Expected duration*: {}\n'.format(instance.get_type_display())
-    if instance.skills:
-        extra_details += '*Skills*: {}\n'.format(instance.skills_list)
-    if instance.deadline:
-        extra_details += '*Deadline*: {}\n'.format(instance.deadline.strftime("%d %b, %Y"))
-    if instance.budget:
-        amount = instance.budget
-        extra_details += '*Fee*: EUR {}\n'.format(floatformat(amount, arg=-2))
+    if project.type:
+        extra_details += '*Type*: {}\n'.format(project.get_type_display())
+    if project.expected_duration:
+        extra_details += '*Expected duration*: {}\n'.format(project.get_expected_duration_display())
+    if project.skills:
+        extra_details += '*Skills*: {}\n'.format(str(project.skills))
+    if project.deadline:
+        extra_details += '*Deadline*: {}\n'.format(project.deadline.strftime("%d %b, %Y"))
+    if project.budget:
+        extra_details += '*Fee*: EUR {}\n'.format(floatformat(project.budget, arg=-2))
 
     if extra_details:
         attachments.append({
