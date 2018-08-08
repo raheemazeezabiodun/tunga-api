@@ -42,5 +42,5 @@ def activity_handler_new_progress_report(sender, instance, created, **kwargs):
     if created and not instance.legacy_id:
         action.send(instance.user, verb=verbs.CREATE, action_object=instance, target=instance.event)
         notify_new_progress_report.delay(instance.id)
-    else:
+    elif not instance.legacy_id:
         notify_new_progress_report_slack.delay(instance.id, updated=True)
