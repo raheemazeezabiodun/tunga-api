@@ -13,7 +13,7 @@
     <p>
         Status: {{ report.get_status_display }}
     </p>
-    
+
     {% if report.stuck_reason %}
     <p>
         Reason for being stuck:<br/>
@@ -44,7 +44,8 @@
 
     {% if report.next_deadline_meet %}
     <p>
-        Do you anticipate to meet this deadline?:{% if report.next_deadline_meet %}Yes{% else %}No{% endif %}
+        Do you anticipate to meet this deadline?:<br/>
+        {% if report.next_deadline_meet %}Yes{% else %}No{% endif %}
     </p>
     {% endif %}
 

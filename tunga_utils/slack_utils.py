@@ -1,13 +1,13 @@
 import json
 
 import requests
-from lxml.etree import Error
+from django.core.exceptions import ObjectDoesNotExist
 from slacker import Slacker
 
 from tunga.settings import SLACK_STAFF_OUTGOING_WEBHOOK_TOKEN, SLACK_AUTHORIZE_URL, SLACK_SCOPES, SLACK_CLIENT_ID, \
-    SLACK_ACCESS_TOKEN_URL, TUNGA_ICON_URL_150, TUNGA_ICON_SQUARE_URL_150
-from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK
+    SLACK_ACCESS_TOKEN_URL, TUNGA_ICON_SQUARE_URL_150
 from tunga_profiles.utils import get_app_integration
+from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK
 
 KEY_TOKEN = 'token'
 KEY_TEAM_ID = 'team_id'
@@ -121,6 +121,30 @@ def send_integration_message(task, message=None, attachments=None, author_name='
             task_integration.token, task_integration.channel_id,
             message=message, attachments=attachments, author_name=author_name, author_icon=author_icon
         )
+
+
+def send_project_message(project, message=None, attachments=None, author_name='tunga', author_icon=TUNGA_ICON_SQUARE_URL_150):
+    try:
+        slack_token = project.projectmeta_set.get(meta_key='slack_token').meta_value
+        slack_channel = project.projectmeta_set.get(meta_key='slack_channel_id').meta_value
+    except ObjectDoesNotExist:
+        slack_token = None
+        slack_channel = None
+
+    if slack_token and slack_channel:
+        # token = get_slack_token(task.user)
+        send_slack_message(
+            slack_token, slack_channel,
+            message=message, attachments=attachments, author_name=author_name, author_icon=author_icon
+        )
+    else:
+        webhook_url = get_webhook_url(project.owner or project.user)
+        if webhook_url:
+            # Attempt to send via webhook in case of old tokens
+            send_incoming_webhook(webhook_url, {
+                KEY_TEXT: message,
+                KEY_ATTACHMENTS: attachments
+            })
 
 
 def send_slack_message(token, channel, message=None, attachments=None, author_name='tunga', author_icon=TUNGA_ICON_SQUARE_URL_150):
