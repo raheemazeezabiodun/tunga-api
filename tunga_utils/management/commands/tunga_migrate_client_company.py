@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Fix payment rates based on task status
+        Migrate company details
         """
         # command to run: python manage.py tunga_migrate_client_company
 
