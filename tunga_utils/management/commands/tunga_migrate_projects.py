@@ -71,7 +71,7 @@ class Command(BaseCommand):
                     setattr(project, item[0], field_value)
 
             if task.type:
-                setattr(project, 'type', type_map.get(task.scope, type))
+                setattr(project, 'type', type_map.get(task.type, None))
 
             if task.scope:
                 setattr(project, 'expected_duration', scope_map.get(task.scope, None))
