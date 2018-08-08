@@ -4,12 +4,16 @@ from django.dispatch import receiver
 
 from tunga_activity import verbs
 from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProgressReport
+from tunga_projects.notifications.generic import notify_new_project
 
 
 @receiver(post_save, sender=Project)
 def activity_handler_new_project(sender, instance, created, **kwargs):
     if created:
         action.send(instance.user, verb=verbs.CREATE, action_object=instance)
+
+        if not instance.legacy_id:
+            notify_new_project.delay(instance.id)
 
 
 @receiver(post_save, sender=Participation)
