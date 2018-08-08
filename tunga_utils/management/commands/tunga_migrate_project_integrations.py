@@ -17,7 +17,7 @@ class Command(BaseCommand):
         """
         Migrate progress events
         """
-        # command to run: python manage.py tunga_migrate_progress_events
+        # command to run: python manage.py tunga_migrate_project_integrations
 
         task_integrations = Integration.objects.filter(provider=APP_INTEGRATION_PROVIDER_SLACK)
         for integration in task_integrations:
