@@ -5,15 +5,18 @@ from operator import itemgetter
 
 import datetime
 import requests
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import FileSystemStorage
 from django.utils import six
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from tunga.settings import MEDIA_ROOT, MEDIA_URL
 from tunga_profiles.models import Skill
+from tunga_projects.models import Project, ProgressEvent
+from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
 from tunga_utils.models import ContactRequest
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer
 
@@ -87,3 +90,21 @@ def upload_file(request):
         uploaded_file_url = fs.url(filename)
         file_response = dict(url=uploaded_file_url)
     return Response(file_response)
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([AllowAny])
+def find_by_legacy_id(request, model, pk):
+    response = None
+    try:
+        if model == 'task':
+            project = Project.objects.get(legacy_id=pk)
+            response = SimpleProjectSerializer(instance=project).data
+        elif model == 'event':
+            progress_event = ProgressEvent.objects.get(legacy_id=pk)
+            response = SimpleProgressEventSerializer(instance=progress_event).data
+    except ObjectDoesNotExist:
+        pass
+    if response:
+        return Response(response)
+    return Response(dict(message='{} #{} replacement found'.format(model, pk)), status=status.HTTP_404_NOT_FOUND)
