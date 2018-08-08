@@ -10,7 +10,8 @@ from tunga_comments.models import Comment
 from tunga_messages.models import Channel, Message
 from tunga_payments.models import Invoice
 from tunga_projects.models import Project, ProgressEvent, ProgressReport, Participation, Document
-from tunga_tasks.models import Task
+from tunga_tasks.models import Task, ProgressEvent as LegacyProgressEvent, ProgressReport as LegacyProgressReport, \
+    Participation as LegacyParticipation, TaskDocument
 from tunga_utils.filters import GenericDateFilterSet
 from tunga_utils.models import Upload
 
@@ -43,14 +44,37 @@ class ActionFilter(GenericDateFilterSet):
         project = Project.objects.get(pk=value)
         if not project.is_participant(self.request.user, active=True):
             return queryset.none()
-        return queryset.filter(
-            Q(projects=project) | Q(progress_events__project=project),
-            action_object_content_type__in=[
-                ContentType.objects.get_for_model(model) for model in [
-                    Comment, Upload, ProgressEvent, ProgressReport, Participation, Document, Invoice, FieldChangeLog
+        queries = []
+        if project.legacy_id:
+            task = Task.objects.get(pk=project.legacy_id)
+            queries.append(
+                (
+                    Q(tasks=task) | Q(legacy_progress_events__task=task)
+                ) &
+                Q(
+                    action_object_content_type__in=[
+                        ContentType.objects.get_for_model(model) for model in [
+                            Comment, Upload, LegacyProgressEvent, LegacyProgressReport, LegacyParticipation,
+                            TaskDocument
+                        ]
+                    ]
+                )
+            )
+        queries.append((
+                Q(projects=project) | Q(progress_events__project=project)
+            ) &
+            Q(
+                action_object_content_type__in=[
+                    ContentType.objects.get_for_model(model) for model in [
+                        Comment, Upload, ProgressEvent, ProgressReport, Participation, Document, Invoice, FieldChangeLog
+                    ]
                 ]
-            ]
-        )
+            ))
+
+        query = queries.pop()
+        for item in queries:
+            query |= item
+        return queryset.filter(query)
 
     def filter_channel(self, queryset, name, value):
         channel = Channel.objects.get(pk=value)
