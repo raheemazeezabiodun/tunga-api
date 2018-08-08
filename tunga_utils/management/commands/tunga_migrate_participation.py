@@ -12,9 +12,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Migrate tasks to participation
+        Migrate participation
         """
-        # command to run: python manage.py tunga_migrate_projects
+        # command to run: python manage.py tunga_migrate_participation
 
         legacy_participation_set = LegacyParticipation.objects.all()
         for legacy_participation in legacy_participation_set:
