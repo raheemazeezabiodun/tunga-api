@@ -9,7 +9,8 @@ from tunga_payments.models import Invoice, Payment
 @receiver(post_save, sender=Invoice)
 def activity_handler_new_invoice(sender, instance, created, **kwargs):
     if created:
-        action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.project)
+        if not instance.legacy_id:
+            action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.project)
 
         # save again to generate invoice number
         instance.save()
@@ -17,5 +18,5 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Payment)
 def activity_handler_new_payment(sender, instance, created, **kwargs):
-    if created:
+    if created and not instance.legacy_id:
         action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.invoice)
