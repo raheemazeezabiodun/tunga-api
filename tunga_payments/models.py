@@ -54,7 +54,7 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    legacy_id = models.PositiveIntegerField(blank=True, null=True)
+    legacy_id = models.CharField(max_length=100, blank=True, null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
 
     # Legacy Fields
