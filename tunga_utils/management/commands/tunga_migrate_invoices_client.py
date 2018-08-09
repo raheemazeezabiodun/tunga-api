@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         """
-        Migrate invoices
+        Migrate client invoices
         """
         # command to run: python manage.py tunga_migrate_invoices
 
