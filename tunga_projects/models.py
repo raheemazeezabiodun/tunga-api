@@ -130,6 +130,7 @@ class Participation(models.Model):
 
     class Meta:
         unique_together = ('user', 'project')
+        ordering = ['-created_at']
         verbose_name_plural = 'participation'
 
     def save(self, force_insert=False, force_update=False, using=None,
@@ -326,6 +327,9 @@ class ProgressReport(models.Model):
 
     def __str__(self):
         return '{0} - {1}%'.format(self.event, self.percentage)
+
+    class Meta:
+        ordering = ['-created_at']
 
     @staticmethod
     @allow_staff_or_superuser
