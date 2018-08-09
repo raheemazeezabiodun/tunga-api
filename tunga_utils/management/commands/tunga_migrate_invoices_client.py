@@ -42,7 +42,6 @@ class Command(BaseCommand):
                     field_map = [
                         ['title', 'title'],
                         ['currency', 'currency'],
-                        ['number', 'number'],
                         ['payment_method', 'payment_method'],
                         ['btc_address', 'btc_address'],
                     ]
@@ -59,6 +58,7 @@ class Command(BaseCommand):
                     v3_invoice.type = INVOICE_TYPE_SALE
                     v3_invoice.status = STATUS_APPROVED
                     v3_invoice.due_at = legacy_invoice.created_at
+                    v3_invoice.number = legacy_invoice.invoice_id(invoice_type='client', user=legacy_invoice.client)
 
                     for item in field_map:
                         field_value = getattr(legacy_invoice, item[1], None)
