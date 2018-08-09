@@ -13,6 +13,7 @@ from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedM
 class SimpleInvoiceSerializer(SimpleModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     user = SimplestUserSerializer()
+    full_title = serializers.CharField(read_only=True)
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     download_url = serializers.CharField(read_only=True)
@@ -34,6 +35,7 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = NestedProjectSerializer()
     user = SimplestUserSerializer()
+    full_title = serializers.CharField(read_only=True)
     milestone = SimpleProgressEventSerializer(required=False, allow_null=True)
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     subtotal = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)

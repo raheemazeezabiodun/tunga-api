@@ -279,6 +279,7 @@ class NotificationView(views.APIView):
                 'invoices': [dict(
                     id=invoice.id,
                     title=invoice.title,
+                    full_title=invoice.full_title,
                     due_at=invoice.due_at,
                     project=dict(
                         id=invoice.project.id,
