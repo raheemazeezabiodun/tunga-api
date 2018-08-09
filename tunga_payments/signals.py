@@ -4,6 +4,7 @@ from django.dispatch import receiver
 
 from tunga_activity import verbs
 from tunga_payments.models import Invoice, Payment
+from tunga_projects.notifications.generic import notify_new_invoice
 
 
 @receiver(post_save, sender=Invoice)
@@ -14,6 +15,8 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
 
         # save again to generate invoice number
         instance.save()
+
+        notify_new_invoice.delay(instance.id)
 
 
 @receiver(post_save, sender=Payment)
