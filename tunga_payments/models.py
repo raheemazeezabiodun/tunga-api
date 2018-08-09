@@ -98,7 +98,7 @@ class Invoice(models.Model):
 
     @property
     def tax_amount(self):
-        return (self.amount * self.tax_rate) / 100
+        return ((self.amount + self.processing_fee) * self.tax_rate) / 100
 
     @property
     def subtotal(self):
