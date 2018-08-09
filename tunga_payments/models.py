@@ -82,9 +82,10 @@ class Invoice(models.Model):
         if not self.title:
             self.title = self.project.title
         if not self.status:
-            if self.user.is_project_owner:
+            if self.user.is_project_owner and self.type == INVOICE_TYPE_SALE:
+                # Only sales invoices being sent to clients are approved by default
                 self.status = STATUS_APPROVED
-            elif self.user.is_developer:
+            else:
                 self.status = STATUS_PENDING
         if self.id and not self.number:
             self.number = self.generate_invoice_number()
