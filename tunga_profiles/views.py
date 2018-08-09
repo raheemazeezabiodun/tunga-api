@@ -235,18 +235,7 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        future_unpaid = []
-        past_unpaid = []
-        now = datetime.datetime.utcnow()
-        for invoice in Invoice.objects.filter(user=request.user, paid=False).order_by('-due_at'):
-            if invoice.due_at >= now:
-                future_unpaid.append(invoice)
-            else:
-                past_unpaid.append(invoice)
-
-        unpaid_invoices = future_unpaid
-        unpaid_invoices.reverse()
-        unpaid_invoices.extend(past_unpaid)
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:5]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
             (
