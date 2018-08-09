@@ -162,8 +162,11 @@ class InvoiceViewSet(ModelViewSet):
             return HttpResponse(invoice.html)
         else:
             http_response = HttpResponse(invoice.pdf, content_type='application/pdf')
-            http_response['Content-Disposition'] = 'filename="invoice_{}.pdf"'.format(
-                invoice and invoice.title or pk)
+            http_response['Content-Disposition'] = 'filename="Invoice_{}_{}_{}.pdf"'.format(
+                invoice and invoice.number or pk,
+                invoice and invoice.project and invoice.project.title or pk,
+                invoice and invoice.title or pk
+            )
             return http_response
 
 
