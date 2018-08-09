@@ -77,7 +77,7 @@
                             </tr>
 
                             <tr>
-                                <td>{% if invoice.type == "developer" %}Tunga fee for {% endif %}{{ invoice.title }}</td>
+                                <td>{% if invoice.type == "developer" %}Tunga fee for {% endif %}{{ invoice.full_title }}</td>
                                 <td>
                                     &euro;{{ invoice.amount | floatformat:2 }}
                                 </td>

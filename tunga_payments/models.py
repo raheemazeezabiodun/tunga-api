@@ -97,6 +97,10 @@ class Invoice(models.Model):
         super(Invoice, self).save(force_insert, force_update, using, update_fields)
 
     @property
+    def full_title(self):
+        return '{}{}{}'.format(self.project.title, self.project.title != self.title and ': ' or '', self.project.title != self.title and self.title or '')
+
+    @property
     def tax_amount(self):
         return ((self.amount + self.processing_fee) * self.tax_rate) / 100
 
