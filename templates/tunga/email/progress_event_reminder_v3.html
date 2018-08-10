@@ -1,0 +1,22 @@
+{% extends "tunga/email/content.html" %}
+{% load i18n %}
+{% block email_header %}
+    Don't forget to give a progress report.
+{% endblock %}
+{% block email_content %}
+    <p>Hello,</p>
+
+    <p>{{ owner.display_name }} requested for an update:</p>
+
+    <p>Due date: {{ event.due_at | date:'jS F Y' }}</p>
+
+    {% if event.title %}<p>Title: {{ event.title }}</p>{% endif %}
+
+    <p>Project: {{ event.project.title }}</p>
+
+    <p>
+        Click the link below to view the fill the update form:<br/>
+        <a href="{{ update_url }}">{{ update_url }}</a>
+    </p>
+
+{% endblock %}

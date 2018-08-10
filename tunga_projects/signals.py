@@ -34,7 +34,10 @@ def activity_handler_new_document(sender, instance, created, **kwargs):
 @receiver(post_save, sender=ProgressEvent)
 def activity_handler_new_progress_event(sender, instance, created, **kwargs):
     if created and not instance.legacy_id:
-        action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.project)
+        action.send(
+            instance.created_by or instance.project.owner or instance.project.user,
+            verb=verbs.CREATE, action_object=instance, target=instance.project
+        )
 
 
 @receiver(post_save, sender=ProgressReport)

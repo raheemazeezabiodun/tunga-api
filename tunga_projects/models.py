@@ -240,7 +240,7 @@ class ProgressEvent(models.Model):
     )
 
     def __str__(self):
-        return '{} | {} - {}'.format(self.type, self.project.title, self.due_at)
+        return '{} | {} - {}'.format(self.type, self.title, self.due_at)
 
     class Meta:
         unique_together = ('project', 'type', 'due_at')

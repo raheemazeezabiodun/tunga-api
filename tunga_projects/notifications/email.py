@@ -1,15 +1,17 @@
 import base64
 
+import datetime
 from django_rq import job
 
 from tunga.settings import TUNGA_URL, MANDRILL_VAR_FIRST_NAME
 from tunga_payments.models import Invoice
-from tunga_projects.models import Participation, ProgressReport
-from tunga_settings.slugs import NEW_TASK_PROGRESS_REPORT_EMAIL
+from tunga_projects.models import Participation, ProgressReport, ProgressEvent
+from tunga_settings.slugs import NEW_TASK_PROGRESS_REPORT_EMAIL, TASK_SURVEY_REMINDER_EMAIL
 from tunga_settings.utils import check_switch_setting
 from tunga_utils import mandrill_utils
 from tunga_utils.constants import PROGRESS_EVENT_MILESTONE, \
-    PROGRESS_EVENT_DEVELOPER, INVOICE_TYPE_SALE
+    PROGRESS_EVENT_DEVELOPER, INVOICE_TYPE_SALE, PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
+    STATUS_ACCEPTED
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
 
@@ -29,6 +31,57 @@ def notify_new_participant_email_dev(participation):
     send_mail(
         subject, 'tunga/email/project_invitation', to, ctx
     )
+
+
+@job
+def remind_progress_event_email(progress_event):
+    progress_event = clean_instance(progress_event, ProgressEvent)
+
+    is_client_event = progress_event.type in [PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_MILESTONE]
+    is_pm_event = progress_event.type in [PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_MILESTONE]
+    is_dev_event = progress_event.type in [PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
+
+    successful_sends = []
+
+    owner = progress_event.project.owner or progress_event.project.user
+    pm = progress_event.project.pm
+
+    ctx = {
+        'owner': owner,
+        'event': progress_event,
+        'update_url': '%s/projects/%s/events/%s/' % (TUNGA_URL, progress_event.project.id, progress_event.id)
+    }
+
+    if is_client_event and owner and check_switch_setting(owner, TASK_SURVEY_REMINDER_EMAIL):
+        subject = "Progress Survey"
+        to = [owner.email]
+        if owner.email != progress_event.project.user.email:
+            to.append(progress_event.project.user.email)
+
+        if send_mail(subject, 'tunga/email/client_survey_reminder_v3', to, ctx):
+            successful_sends.append('client')
+
+    if is_pm_event and pm:
+        subject = "Upcoming progress update"
+        to = [pm.email]
+
+        if send_mail(subject, 'tunga/email/progress_event_reminder_v3', to, ctx, bcc=None):
+            successful_sends.append('pm')
+
+    if is_dev_event:
+        subject = "Upcoming progress update"
+
+        participants = progress_event.project.participation_set.filter(status=STATUS_ACCEPTED, updates_enabled=True)
+        if participants:
+            to = [participants[0].user.email]
+            bcc = [participant.user.email for participant in participants[1:]] if participants.count() > 1 else None
+
+            if send_mail(subject, 'tunga/email/progress_event_reminder_v3', to, ctx, bcc=bcc):
+                successful_sends.append('devs')
+
+    if successful_sends:
+        progress_event.last_reminder_at = datetime.datetime.utcnow()
+        progress_event.save()
 
 
 @job
