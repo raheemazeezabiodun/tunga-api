@@ -56,6 +56,7 @@ class Command(BaseCommand):
                 v3_participation.save()
 
                 v3_participation.created_at = legacy_participation.created_at
+                v3_participation.updates_enabled = legacy_participation.updates_enabled
                 v3_participation.save()
             else:
                 print('project not migrated', legacy_participation.task.id)
