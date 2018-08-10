@@ -20,7 +20,8 @@ from tunga_utils.constants import PAYMENT_METHOD_STRIPE, PAYMENT_METHOD_BANK, PA
     PAYMENT_METHOD_BITONIC, INVOICE_TYPE_TUNGA, STATUS_CANCELED, STATUS_APPROVED, STATUS_PENDING, \
     INVOICE_TYPE_CHOICES, CURRENCY_EUR, CURRENCY_CHOICES_EUR_ONLY, \
     INVOICE_TYPE_PURCHASE, PAYMENT_TYPE_PURCHASE, PAYMENT_TYPE_SALE, VAT_LOCATION_WORLD, VAT_LOCATION_EUROPE, \
-    VAT_LOCATION_NL, INVOICE_TYPE_SALE, INVOICE_TYPE_CLIENT, INVOICE_PAYMENT_METHOD_CHOICES
+    VAT_LOCATION_NL, INVOICE_TYPE_SALE, INVOICE_TYPE_CLIENT, INVOICE_PAYMENT_METHOD_CHOICES, STATUS_PROCESSING, \
+    STATUS_INITIATED, STATUS_COMPLETED, STATUS_FAILED, STATUS_RETRY
 from tunga_utils.validators import validate_btc_address_or_none
 
 
@@ -30,7 +31,6 @@ class Invoice(models.Model):
         (STATUS_PENDING, 'Pending'),
         (STATUS_APPROVED, 'Approved'),
         (STATUS_CANCELED, 'Canceled')
-
     )
 
     project = models.ForeignKey(to=Project, on_delete=models.DO_NOTHING)
@@ -185,15 +185,26 @@ class Payment(models.Model):
         (PAYMENT_METHOD_BITCOIN, 'Bitcoin'),
         (PAYMENT_METHOD_BITONIC, 'Bitonic'),
     )
+
+    status_choices = (
+        (STATUS_INITIATED, 'Initiated'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_FAILED, 'Failed'),
+        (STATUS_RETRY, 'Retry'),
+    )
+
     invoice = models.ForeignKey(to=Invoice, on_delete=models.DO_NOTHING)
-    payment_method = models.CharField(max_length=150, choices=payment_method_choices)
     amount = models.IntegerField()
-    currency = models.CharField(max_length=15, default='EUR')
+    payment_method = models.CharField(max_length=150, choices=payment_method_choices)
+    currency = models.CharField(max_length=15, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
+    status = models.CharField(max_length=50, choices=status_choices, default=STATUS_INITIATED)
     paid_at = models.DateTimeField(blank=True, null=True)
     ref = models.TextField(blank=True, null=True)
     extra = models.TextField(blank=True, null=True)
-    created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='payments_created',
-                                   on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL, related_name='payments_created',
+        blank=True, null=True, on_delete=models.DO_NOTHING
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -204,11 +215,13 @@ class Payment(models.Model):
         return "{}: {} {}".format(self.invoice.title, self.currency, self.amount)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.invoice:
+        if self.status == STATUS_COMPLETED and self.invoice and not self.invoice.paid:
             self.invoice.paid = True
-            self.invoice.paid_at = datetime.datetime.now()
+            self.invoice.paid_at = self.paid_at or datetime.datetime.now()
             self.invoice.save()
-        super(Payment, self).save(force_insert, force_update, using, update_fields)
+        super(Payment, self).save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
     @property
     def type(self):

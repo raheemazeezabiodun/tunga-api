@@ -30,7 +30,7 @@ from tunga_payments.models import Invoice, Payment
 from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, StripePaymentSerializer
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils import stripe_utils
-from tunga_utils.constants import PAYMENT_METHOD_STRIPE, CURRENCY_EUR
+from tunga_utils.constants import PAYMENT_METHOD_STRIPE, CURRENCY_EUR, STATUS_COMPLETED
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -103,6 +103,7 @@ class InvoiceViewSet(ModelViewSet):
                         payment_method=PAYMENT_METHOD_STRIPE,
                         amount=Decimal(charge.amount) * Decimal(0.01),
                         currency=(charge.currency or CURRENCY_EUR).upper(),
+                        status=STATUS_COMPLETED,
                         ref=charge.id,
                         paid_at=paid_at,
                         created_by=request.user,

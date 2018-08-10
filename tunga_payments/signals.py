@@ -22,4 +22,7 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Payment)
 def activity_handler_new_payment(sender, instance, created, **kwargs):
     if created and not instance.legacy_id:
-        action.send(instance.created_by, verb=verbs.CREATE, action_object=instance, target=instance.invoice)
+        action.send(
+            instance.created_by or instance.invoice.created_by,
+            verb=verbs.CREATE, action_object=instance, target=instance.invoice
+        )

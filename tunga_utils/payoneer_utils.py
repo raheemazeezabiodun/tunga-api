@@ -158,7 +158,8 @@ class TungaPayoneer(object):
         """
         payload = self._create_request_params(
             'PerformPayoutPayment', dict(
-                p4=program_id, p5=payment_id, p6=payee_id, p7='{0:.2f}'.format(amount), p8=description, Currency=currency
+                p4=program_id, p5=payment_id, p6=payee_id, p7='{0:.2f}'.format(amount),
+                p8=description, Currency=currency
             )
         )
         response = requests.post(self.PAYONEER_API_URL, data=payload, headers=headers or self.DEFAULT_HEADERS)
