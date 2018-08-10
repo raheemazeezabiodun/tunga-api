@@ -276,20 +276,18 @@ def notify_new_invoice_slack_admin(invoice):
         # ignore legacy invoices
         return
 
-    if invoice.type != INVOICE_TYPE_SALE:
-        # Only notify about client invoices
-        return
-
     project_url = '{}/projects/{}/'.format(TUNGA_URL, invoice.project.id)
     payment_url = '{}/pay'.format(project_url)
-    client_url = '{}/network/{}/'.format(TUNGA_URL, invoice.user.username)
+    person_url = '{}/network/{}/'.format(TUNGA_URL, invoice.user.username)
     invoice_url = '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, invoice.id)
-    slack_msg = '{} generated an invoice'.format(
-        invoice.created_by.display_name.encode('utf-8')
+    slack_msg = '{} generated a {} invoice'.format(
+        invoice.created_by.display_name.encode('utf-8'),
+        invoice.type == INVOICE_TYPE_SALE and 'client' or 'developer'
     )
 
-    invoice_summary = 'Client: <{}|{}>\nProject: <{}|{}>\nTitle: {}\nFee: EUR {}\n<{}|Download invoice>'.format(
-        client_url, invoice.user.display_name.encode('utf-8'),
+    invoice_summary = '{}: <{}|{}>\nProject: <{}|{}>\nTitle: {}\nFee: EUR {}\n<{}|Download invoice>'.format(
+        invoice.type == INVOICE_TYPE_SALE and 'Client' or 'Developer',
+        person_url, invoice.user.display_name.encode('utf-8'),
         project_url, invoice.project.title,
         invoice.title,
         invoice.amount,
