@@ -6,12 +6,15 @@ scheduler = BlockingScheduler()
 
 
 @scheduler.scheduled_job('interval', minutes=5)
-def manage_task_payments_and_progress():
-    # Distribute task payments to participants
-    call_command('tunga_distribute_task_payments_payoneer')
+def make_payouts():
+    # Make payouts
+    call_command('tunga_make_payouts')
 
-    # Update periodic task progress events
-    call_command('tunga_manage_task_progress')
+
+@scheduler.scheduled_job('interval', days=1)
+def manage_progress_updates():
+    # Schedule progress updates and send update reminders
+    call_command('tunga_manage_progress_updates')
 
 
 @scheduler.scheduled_job('interval', minutes=10)
