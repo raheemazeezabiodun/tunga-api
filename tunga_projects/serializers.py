@@ -227,7 +227,8 @@ class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelS
                         ]
                     ),
                     ('deliverable_satisfaction', BOOLEANS),
-                    rate_deliverables_schema
+                    rate_deliverables_schema,
+                    ('pm_communication', BOOLEANS)
                 ]
 
             errors.update(validate_field_schema(required_fields, attrs, raise_exception=False))
