@@ -42,8 +42,6 @@ class ActionFilter(GenericDateFilterSet):
 
     def filter_project(self, queryset, name, value):
         project = Project.objects.get(pk=value)
-        if not project.is_participant(self.request.user, active=True):
-            return queryset.none()
         queries = []
         if project.legacy_id:
             task = Task.objects.get(pk=project.legacy_id)
