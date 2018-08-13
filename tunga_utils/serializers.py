@@ -39,6 +39,7 @@ class SimpleModelSerializer(serializers.ModelSerializer):
             if len(data) == 1:
                 rep = self.Meta.model.objects.get(pk=object_id)
             else:
+                #data.pop('id')
                 rep = super(SimpleModelSerializer, self).to_internal_value(data)
                 rep['id'] = object_id
             return rep
@@ -245,12 +246,14 @@ class SimpleCompanySerializer(serializers.ModelSerializer):
 
 class SimplestUserSerializer(SimpleModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
+    can_contribute = serializers.SerializerMethodField(required=False, read_only=True)
 
     class Meta:
         model = get_user_model()
         fields = (
             'id', 'username', 'first_name', 'last_name', 'image', 'display_name', 'short_name', 'type',
-            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin', 'verified', 'company', 'avatar_url'
+            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin',
+            'verified', 'company', 'avatar_url', 'can_contribute'
         )
         extra_kwargs = {
             'username': {'required': False}
@@ -265,6 +268,9 @@ class SimplestUserSerializer(SimpleModelSerializer):
                 return dict(name=obj.profile.company)
         return
 
+    def get_can_contribute(self, obj):
+        return profile_check(obj)
+
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
@@ -274,7 +280,8 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 'display_name', 'short_name', 'type', 'image',
-            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin', 'verified', 'company', 'avatar_url',
+            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin',
+            'verified', 'company', 'avatar_url',
             'can_contribute', 'date_joined', 'agree_version', 'agreed_at', 'disagree_version', 'disagreed_at',
             'payoneer_signup_url', 'payoneer_status', 'exact_code', 'tax_location'
         )
