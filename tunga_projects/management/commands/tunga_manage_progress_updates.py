@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
         today_start = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today_noon = datetime.datetime.utcnow().replace(hour=12, minute=0, second=0, microsecond=0)
-        today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=1000)
+        today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
 
         projects = Project.objects.filter(
             Q(deadline__isnull=True) | Q(deadline__gte=today_start), archived=False
