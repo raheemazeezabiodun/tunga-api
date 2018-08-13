@@ -166,7 +166,7 @@ class InviteRequest(models.Model):
     email = models.EmailField(unique=True, validators=[validate_email])
     motivation = models.TextField()
     country = CountryField()
-    cv = models.ImageField(upload_to='cv/%Y/%m/%d', validators=[validate_file_size])
+    cv = models.FileField(upload_to='cv/%Y/%m/%d', validators=[validate_file_size])
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

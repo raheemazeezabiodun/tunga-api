@@ -459,3 +459,6 @@ class InviteRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = InviteRequest
         fields = '__all__'
+        extra_kwargs = {
+            'cv': {'required': True}
+        }
