@@ -17,6 +17,8 @@ class SimpleInvoiceSerializer(SimpleModelSerializer):
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     download_url = serializers.CharField(read_only=True)
+    due_at = serializers.DateTimeField(read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Invoice
@@ -41,6 +43,8 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
     subtotal = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     total_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
     download_url = serializers.CharField(read_only=True)
+    due_at = serializers.DateTimeField(read_only=True)
+    is_overdue = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Invoice

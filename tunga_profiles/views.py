@@ -282,6 +282,7 @@ class NotificationView(views.APIView):
                     full_title=invoice.full_title,
                     issued_at=invoice.issued_at,
                     due_at=invoice.due_at,
+                    is_overdue=invoice.is_overdue,
                     project=dict(
                         id=invoice.project.id,
                         title=invoice.project.title
