@@ -38,7 +38,7 @@ class Command(BaseCommand):
             for milestone in all_milestones:
                 # Send reminders for milestones
                 if not milestone.last_reminder_at:
-                    remind_progress_event(milestone.id)
+                    remind_progress_event.delay(milestone.id)
 
                 # Filter milestone types
                 if milestone.type == PROGRESS_EVENT_MILESTONE:
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                     )
 
                     if not dev_event.last_reminder_at:
-                        remind_progress_event(dev_event.id)
+                        remind_progress_event.delay(dev_event.id)
 
                 if weekday in [0, 3] and project.pm and not internal_milestones:
                     # PM Reports on Monday (0) and Thursday (3)
@@ -69,13 +69,13 @@ class Command(BaseCommand):
                         project=project, type=PROGRESS_EVENT_PM, due_at=today_noon, defaults=pm_defaults
                     )
                     if not pm_event.last_reminder_at:
-                        remind_progress_event(pm_event.id)
+                        remind_progress_event.delay(pm_event.id)
 
-                if weekday == 0:
+                if weekday == 0 and participants:
                     # Client surveys on Monday (0)
                     client_defaults = dict(title='Client Survey')
                     client_event, created = ProgressEvent.objects.update_or_create(
                         project=project, type=PROGRESS_EVENT_CLIENT, due_at=today_noon, defaults=client_defaults
                     )
                     if not client_event.last_reminder_at:
-                        remind_progress_event(client_event.id)
+                        remind_progress_event.delay(client_event.id)

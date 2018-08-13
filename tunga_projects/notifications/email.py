@@ -37,6 +37,10 @@ def notify_new_participant_email_dev(participation):
 def remind_progress_event_email(progress_event):
     progress_event = clean_instance(progress_event, ProgressEvent)
 
+    if progress_event.last_reminder_at:
+        # No double notifications
+        return
+
     is_client_event = progress_event.type in [PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_MILESTONE]
     is_pm_event = progress_event.type in [PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_MILESTONE]
     is_dev_event = progress_event.type in [PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
