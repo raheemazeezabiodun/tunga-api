@@ -235,7 +235,7 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('due_at')[:5]
+        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('issued_at')[:5]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
             (
@@ -280,6 +280,7 @@ class NotificationView(views.APIView):
                     id=invoice.id,
                     title=invoice.title,
                     full_title=invoice.full_title,
+                    issued_at=invoice.issued_at,
                     due_at=invoice.due_at,
                     project=dict(
                         id=invoice.project.id,

@@ -5,6 +5,7 @@ import datetime
 import uuid
 
 from actstream.models import Action
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
@@ -40,7 +41,7 @@ class Invoice(models.Model):
     type = models.CharField(max_length=50, choices=INVOICE_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=17, decimal_places=2)
     currency = models.CharField(max_length=15, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
-    due_at = models.DateTimeField(default=datetime.datetime.utcnow)
+    issued_at = models.DateTimeField(default=datetime.datetime.utcnow)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     number = models.CharField(max_length=100, blank=True, null=True)
     processing_fee = models.DecimalField(max_digits=17, decimal_places=2, default=0)
@@ -76,7 +77,7 @@ class Invoice(models.Model):
         return "{} | {}".format(self.title, self.user.get_full_name())
 
     class Meta:
-        ordering = ['-due_at', '-created_at']
+        ordering = ['-issued_at', '-created_at']
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if not self.title:
@@ -149,6 +150,23 @@ class Invoice(models.Model):
     def pdf(self):
         return HTML(string=self.html, encoding='utf-8').write_pdf()
 
+    @property
+    def download_url(self):
+        return '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, self.id)
+
+    @property
+    def due_at(self):
+        if self.issued_at:
+            return (self.issued_at + relativedelta(days=14)).replace(
+                hour=23, minute=59, second=59, microsecond=999999)
+        return None
+
+    @property
+    def is_overdue(self):
+        if self.due_at and not self.paid:
+            return datetime.datetime.utcnow() > self.due_at
+        return False
+
     @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):
@@ -171,10 +189,6 @@ class Invoice(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return self.has_object_read_permission(request)
-
-    @property
-    def download_url(self):
-        return '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, self.id)
 
 
 @python_2_unicode_compatible

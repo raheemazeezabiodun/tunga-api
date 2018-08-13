@@ -57,7 +57,7 @@ class Command(BaseCommand):
                     v3_invoice.project = project
                     v3_invoice.type = INVOICE_TYPE_SALE
                     v3_invoice.status = STATUS_APPROVED
-                    v3_invoice.due_at = legacy_invoice.created_at
+                    v3_invoice.issued_at = legacy_invoice.created_at
                     v3_invoice.number = legacy_invoice.invoice_id(invoice_type='client', user=legacy_invoice.client)
 
                     for item in field_map:
