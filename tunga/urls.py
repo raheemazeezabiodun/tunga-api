@@ -44,7 +44,7 @@ from tunga_tasks.views import TimeEntryViewSet, \
     TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file, \
-    find_by_legacy_id
+    find_by_legacy_id, InviteRequestView
 
 api_schema_view = get_swagger_view(title='Tunga API')
 
@@ -142,6 +142,7 @@ urlpatterns = [
     url(r'api/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api/countries/', CountryListView.as_view(), name='countries'),
     url(r'^api/contact-request/', ContactRequestView.as_view(), name='contact-request'),
+    url(r'^api/invite-request/', InviteRequestView.as_view(), name='invite-request'),
     url(r'^api/medium/', get_medium_posts, name='medium-posts'),
     url(r'^api/oembed/', get_oembed_details, name='oembed-details'),
     url(r'^api/upload/', upload_file, name='upload-file'),

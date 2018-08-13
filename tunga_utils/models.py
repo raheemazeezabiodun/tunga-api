@@ -1,22 +1,20 @@
 from __future__ import unicode_literals
 
-import re
-
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
+from django_countries.fields import CountryField
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
-from tunga_utils.constants import USER_TYPE_DEVELOPER, RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
+from tunga_utils.constants import RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
     RATING_CRITERIA_SPEED, MONTHS, CONTACT_REQUEST_ITEM_ONBOARDING, CONTACT_REQUEST_ITEM_PROJECT, \
     CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF
-from tunga_utils.validators import validate_year, validate_file_size
+from tunga_utils.validators import validate_year, validate_file_size, validate_email
 
 
 @python_2_unicode_compatible
@@ -159,4 +157,20 @@ class SiteMeta(models.Model):
         return '{} - {}'.format(self.meta_key, self.meta_value)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ['meta_key']
+
+
+@python_2_unicode_compatible
+class InviteRequest(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(unique=True, validators=[validate_email])
+    motivation = models.TextField()
+    country = CountryField()
+    cv = models.ImageField(upload_to='cv/%Y/%m/%d', blank=True, null=True, validators=[validate_file_size])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.name, self.email)
+
+    class Meta:
+        ordering = ['-created_at']

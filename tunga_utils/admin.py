@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tunga_utils.models import ContactRequest, SiteMeta
+from tunga_utils.models import ContactRequest, SiteMeta, InviteRequest
 
 
 class AdminAutoCreatedBy(admin.ModelAdmin):
@@ -52,3 +52,10 @@ class SiteMetaAdmin(AdminAutoCreatedBy):
     list_display = ('meta_key', 'meta_value', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('meta_key',)
+
+
+@admin.register(InviteRequest)
+class InviteRequestAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'country')
+    list_filter = ('country',)
+    search_fields = ('name', 'email')

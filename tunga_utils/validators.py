@@ -1,10 +1,16 @@
 import datetime
 import re
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from tunga.settings import UPLOAD_SIZE_LIMIT_MBS
 from tunga_utils.bitcoin_utils import is_valid_btc_address
+
+
+def validate_email(value):
+    if get_user_model().objects.filter(email__iexact=value).count():
+        raise ValidationError('This email is already associated with a Tunga account')
 
 
 def validate_year(value):

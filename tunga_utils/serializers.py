@@ -12,7 +12,7 @@ from tunga_profiles.models import Skill, City, UserProfile, Education, Work, Con
 from tunga_profiles.utils import profile_check
 from tunga_tasks.models import TaskInvoice
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
-from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractExperience, Rating
+from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractExperience, Rating, InviteRequest
 
 
 class CreateOnlyCurrentUserDefault(serializers.CurrentUserDefault):
@@ -453,3 +453,9 @@ class TaskInvoiceSerializer(serializers.ModelSerializer, GetCurrentUserAnnotated
                 pass
         return obj.get_amount_details(share=0)
 
+
+class InviteRequestSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InviteRequest
+        fields = '__all__'
