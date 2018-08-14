@@ -1,16 +1,12 @@
-import base64
-
 import datetime
 from django_rq import job
 
-from tunga.settings import TUNGA_URL, MANDRILL_VAR_FIRST_NAME
-from tunga_payments.models import Invoice
+from tunga.settings import TUNGA_URL
 from tunga_projects.models import Participation, ProgressReport, ProgressEvent
 from tunga_settings.slugs import NEW_TASK_PROGRESS_REPORT_EMAIL, TASK_SURVEY_REMINDER_EMAIL
 from tunga_settings.utils import check_switch_setting
-from tunga_utils import mandrill_utils
 from tunga_utils.constants import PROGRESS_EVENT_MILESTONE, \
-    PROGRESS_EVENT_DEVELOPER, INVOICE_TYPE_SALE, PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
+    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
     STATUS_ACCEPTED
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
@@ -129,43 +125,3 @@ def notify_new_progress_report_email_client(progress_report):
     send_mail(
         subject, 'tunga/email/new_progress_report', to, ctx
     )
-
-
-@job
-def notify_new_invoice_email_client(invoice):
-    invoice = clean_instance(invoice, Invoice)
-
-    if invoice.legacy_id:
-        # ignore legacy invoices
-        return
-
-    if invoice.type != INVOICE_TYPE_SALE:
-        # Only notify about client invoices
-        return
-
-    to = [invoice.user.email]
-    if invoice.project.owner and invoice.project.owner.email != invoice.user.email:
-        to.append(invoice.project.owner.email)
-
-    if invoice.project.user and invoice.project.user.email != invoice.user.email:
-        to.append(invoice.project.user.email)
-
-    payment_link = '{}/projects/{}/pay'.format(TUNGA_URL, invoice.project.id)
-
-    merge_vars = [
-        mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, invoice.user.first_name),
-        mandrill_utils.create_merge_var('project_title', '{}: {}'.format(invoice.project.title, invoice.title)),
-        mandrill_utils.create_merge_var('payment_link', payment_link),
-    ]
-
-    pdf_file_contents = base64.b64encode(invoice.pdf)
-
-    attachments = [
-        dict(
-            content=pdf_file_contents,
-            name='Invoice - {}.pdf'.format(invoice.title),
-            type='application/pdf'
-        )
-    ]
-
-    mandrill_utils.send_email('83-invoice-email', to, merge_vars=merge_vars, attachments=attachments)

@@ -4,7 +4,7 @@ from django.dispatch import receiver
 
 from tunga_activity import verbs
 from tunga_payments.models import Invoice, Payment
-from tunga_projects.notifications.generic import notify_new_invoice
+from tunga_payments.notifications.generic import notify_new_invoice
 
 
 @receiver(post_save, sender=Invoice)
