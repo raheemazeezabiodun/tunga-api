@@ -45,6 +45,7 @@ KEY_TS = 'ts'
 KEY_MRKDWN = 'mrkdwn'
 KEY_MRKDWN_IN = 'mrkdwn_in'
 KEY_COMMAND = 'command'
+KEY_LINK_NAMES = 'link_names'
 
 KEY_ID = 'id'
 KEY_CHANNELS = 'channels'
@@ -92,6 +93,7 @@ def is_task_notification_enabled(task, event_id):
 
 
 def send_incoming_webhook(url, message):
+    message[KEY_LINK_NAMES] = 1
     return requests.post(url, json=message)
 
 
