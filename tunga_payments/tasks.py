@@ -19,8 +19,8 @@ def make_payout(invoice):
         # No pay outs for legacy invoices
         return
 
-    if invoice.type != INVOICE_TYPE_PURCHASE or invoice.status != STATUS_APPROVED:
-        # Only payout approved purchase invoices
+    if invoice.type != INVOICE_TYPE_PURCHASE or invoice.status != STATUS_APPROVED or invoice.paid:
+        # Only payout non-paid approved purchase invoices
         return
 
     payoneer_client = payoneer_utils.get_client(

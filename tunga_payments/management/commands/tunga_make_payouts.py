@@ -13,7 +13,7 @@ class Command(BaseCommand):
         """
         # command to run: python manage.py tunga_manage_project_progress_events
 
-        invoices = Invoice.objects.filter(type=INVOICE_TYPE_PURCHASE, payment__isnull=True, legacy_id__isnull=True)
+        invoices = Invoice.objects.filter(type=INVOICE_TYPE_PURCHASE, paid=False, legacy_id__isnull=True)
         for invoice in invoices:
             # Make pay out
             make_payout(invoice)
