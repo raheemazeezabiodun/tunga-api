@@ -15,12 +15,8 @@ from tunga_utils.helpers import clean_instance
 def make_payout(invoice):
     invoice = clean_instance(invoice, Invoice)
 
-    if invoice.legacy_id:
-        # No pay outs for legacy invoices
-        return
-
-    if invoice.type != INVOICE_TYPE_PURCHASE or invoice.status != STATUS_APPROVED or invoice.paid:
-        # Only payout non-paid approved purchase invoices
+    if invoice.legacy_id or invoice.type != INVOICE_TYPE_PURCHASE or invoice.status != STATUS_APPROVED or invoice.paid:
+        # Only payout non-legacy non-paid approved purchase invoices
         return
 
     payoneer_client = payoneer_utils.get_client(
