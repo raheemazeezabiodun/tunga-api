@@ -162,7 +162,7 @@ class SiteMeta(models.Model):
 
 @python_2_unicode_compatible
 class InviteRequest(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     email = models.EmailField(unique=True, validators=[validate_email])
     motivation = models.TextField()
     country = CountryField()
