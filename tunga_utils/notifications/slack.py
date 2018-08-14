@@ -1,6 +1,7 @@
 from django_rq.decorators import job
 
-from tunga.settings import SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_PROFILES_CHANNEL, SLACK_ATTACHMENT_COLOR_GREEN
+from tunga.settings import SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_PROFILES_CHANNEL, SLACK_ATTACHMENT_COLOR_GREEN, \
+    SLACK_ATTACHMENT_COLOR_BLUE
 from tunga_utils import slack_utils
 from tunga_utils.helpers import clean_instance
 from tunga_utils.models import InviteRequest
@@ -26,6 +27,12 @@ def notify_new_invite_request_slack(invite_request):
             ),
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN,
+        },
+        {
+            slack_utils.KEY_TITLE: 'Motivation',
+            slack_utils.KEY_TEXT: invite_request.motivation,
+            slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+            slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_BLUE,
         }
     ]
 
