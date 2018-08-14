@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import re
+
 from actstream.models import Action
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +13,7 @@ from django_countries.fields import CountryField
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
 from tunga import settings
+from tunga.settings import TUNGA_URL
 from tunga_utils.constants import RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
     RATING_CRITERIA_SPEED, MONTHS, CONTACT_REQUEST_ITEM_ONBOARDING, CONTACT_REQUEST_ITEM_PROJECT, \
     CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF
@@ -174,3 +177,9 @@ class InviteRequest(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+    @property
+    def cv_url(self):
+        if self.cv:
+            return '{}{}'.format(not re.match(r'://', self.cv.url) and TUNGA_URL or '', self.cv.url)
+        return None
