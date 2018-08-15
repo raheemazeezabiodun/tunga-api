@@ -27,6 +27,7 @@ from stripe import InvalidRequestError
 from tunga_payments.filterbackends import InvoiceFilterBackend, PaymentFilterBackend
 from tunga_payments.filters import InvoiceFilter, PaymentFilter
 from tunga_payments.models import Invoice, Payment
+from tunga_payments.notifications.generic import notify_paid_invoice
 from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, StripePaymentSerializer
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils import stripe_utils
@@ -119,6 +120,8 @@ class InvoiceViewSet(ModelViewSet):
                     invoice.paid = True
                     invoice.paid_at = paid_at
                     invoice.save()
+
+                    notify_paid_invoice.delay(invoice)
 
                 invoice_serializer = InvoiceSerializer(invoice, context={'request': request})
                 return Response(invoice_serializer.data)

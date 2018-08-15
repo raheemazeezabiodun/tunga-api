@@ -5,6 +5,7 @@ from django_rq.decorators import job
 
 from tunga.settings import PAYONEER_USERNAME, PAYONEER_PASSWORD, PAYONEER_PARTNER_ID
 from tunga_payments.models import Payment, Invoice
+from tunga_payments.notifications.generic import notify_paid_invoice
 from tunga_utils import payoneer_utils
 from tunga_utils.constants import PAYMENT_METHOD_PAYONEER, CURRENCY_EUR, STATUS_APPROVED, INVOICE_TYPE_PURCHASE, \
     STATUS_FAILED, STATUS_RETRY, STATUS_INITIATED
@@ -59,6 +60,8 @@ def make_payout(invoice):
                 payment.paid_at = paid_at
                 payment.created_by = invoice.created_by
                 payment.save()
+
+                notify_paid_invoice.delay(invoice)
             else:
                 payment.status = STATUS_FAILED
                 payment.save()
