@@ -1,33 +1,32 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 # Create your views here.
 import json
 import uuid
-
-import datetime
 from decimal import Decimal
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from rest_framework.exceptions import NotAuthenticated, PermissionDenied
-from rest_framework.generics import get_object_or_404
-from six.moves.urllib_parse import urlencode, quote_plus
-
 from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
 from rest_framework import status
 from rest_framework.decorators import list_route, detail_route
+from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.viewsets import ModelViewSet
+from six.moves.urllib_parse import urlencode, quote_plus
 from stripe import InvalidRequestError
 
 from tunga_payments.filterbackends import InvoiceFilterBackend, PaymentFilterBackend
 from tunga_payments.filters import InvoiceFilter, PaymentFilter
 from tunga_payments.models import Invoice, Payment
-from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, StripePaymentSerializer
+from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, StripePaymentSerializer, \
+    BulkInvoiceSerializer
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils import stripe_utils
 from tunga_utils.constants import PAYMENT_METHOD_STRIPE, CURRENCY_EUR, STATUS_COMPLETED
@@ -37,7 +36,7 @@ from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 class InvoiceViewSet(ModelViewSet):
     serializer_class = InvoiceSerializer
     queryset = Invoice.objects.all()
-    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+    permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
 
@@ -54,6 +53,55 @@ class InvoiceViewSet(ModelViewSet):
         output_serializer = InvoiceSerializer(results, many=True)
         data = output_serializer.data[:]
         return Response(data, status=status.HTTP_201_CREATED)
+
+    @list_route(methods=['put'], permission_classes=[IsAuthenticated, DRYPermissions],
+                serializer_class=BulkInvoiceSerializer,
+                url_path='bulk/(?P<batch_ref>[0-9a-f-]+)', url_name='bulk-put-invoices')
+    def create_put_invoices(self, request, batch_ref=None):
+        ids_updated = []
+        invoices = Invoice.objects.filter(batch_ref=batch_ref)
+        if invoices:
+            request_project = request.data.get('project', None)
+            request_invoices = request.data.get('invoices', None)
+            request_title = request.data.get('title', None)
+            request_milestone = request.data.get('milestone', None)
+            batch_title = invoices.first().title
+            batch_milestone = invoices.first().milestone.id
+            batch_project = invoices.first().project.id
+            if (batch_title == request_title) and (batch_milestone == request_milestone.get('id', None)) \
+                and (batch_project == request_project.get('id', None)):
+                for invoice in request_invoices:
+                    if 'id' in invoice:
+                        id_ = invoice.pop('id', None)
+                        ids_updated.append(id_)
+                        created = Invoice.objects.get(id=id_, batch_ref=batch_ref)  # .update(**invoice)
+                        serializer = InvoiceSerializer(created, data=invoice, partial=True)
+                        if serializer.is_valid():
+                            serializer.save()
+
+                    else:
+                        serializer = InvoiceSerializer(data=invoice, context={'request': request})
+                        if serializer.is_valid():
+                            serializer.save(batch_ref=batch_ref)
+                invoices_ids = list(invoices.values_list('id', flat=True))
+                ids_to_delete = list(set(invoices_ids) - set(invoices_ids))
+                Invoice.objects.filter(id__in=ids_to_delete).delete()
+                results = Invoice.objects.filter(batch_ref=batch_ref)
+                output_serializer = InvoiceSerializer(results, many=True)
+                data = output_serializer.data[:]
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response(dict(message='Invoice data in batch does not match'),
+                                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(dict(message='No Invoices with that batch ref exist'),
+                            status=status.HTTP_404_NOT_FOUND)
+
+    @list_route(methods=['delete'], permission_classes=[IsAuthenticated, DRYPermissions],
+                url_path='bulk/(?P<batch_ref>[0-9a-f-]+)', url_name='bulk-delete-invoices')
+    def delete_bulk_invoices(self, request, batch_ref=None):
+        Invoice.objects.filter(batch_ref=batch_ref).delete()
+        return Response({}, status=status.HTTP_200_OK)
 
     @detail_route(
         methods=['get', 'post'], url_path='pay', url_name='pay-invoice',
