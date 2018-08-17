@@ -205,7 +205,9 @@ class TungaUser(AbstractUser):
     @property
     def tax_location(self):
         client_country = ''
-        if self.profile and self.profile.country and self.profile.country.code:
+        if self.is_project_owner and self.company and self.company.country and self.company.country.code:
+            client_country = self.company.country.code
+        elif self.profile and self.profile.country and self.profile.country.code:
             client_country = self.profile.country.code
         if client_country == 'NL':
             return 'NL'
