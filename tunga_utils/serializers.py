@@ -253,7 +253,7 @@ class SimplestUserSerializer(SimpleModelSerializer):
         fields = (
             'id', 'username', 'first_name', 'last_name', 'image', 'display_name', 'short_name', 'type',
             'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin',
-            'verified', 'company', 'avatar_url', 'can_contribute'
+            'verified', 'company', 'avatar_url', 'can_contribute', 'tax_location'
         )
         extra_kwargs = {
             'username': {'required': False}
