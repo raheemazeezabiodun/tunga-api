@@ -26,7 +26,7 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
             action_object=instance, target=instance.project
         )
 
-        notify_invoice.delay(instance.id, updated=True)
+        #notify_invoice.delay(instance.id, updated=True)
 
 
 @receiver(post_save, sender=Payment)
