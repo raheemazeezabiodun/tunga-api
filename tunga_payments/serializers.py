@@ -1,6 +1,7 @@
 import uuid
 
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
 from rest_framework.serializers import ListSerializer
 
 from tunga_payments.models import Payment, Invoice
@@ -12,6 +13,7 @@ from tunga_utils.serializers import NestedModelSerializer, ContentTypeAnnotatedM
 
 class SimpleInvoiceSerializer(SimpleModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    updated_by = SimplestUserSerializer(required=False, read_only=True, default=CurrentUserDefault())
     user = SimplestUserSerializer()
     full_title = serializers.CharField(read_only=True)
     tax_amount = serializers.DecimalField(max_digits=17, decimal_places=2, read_only=True)
@@ -35,6 +37,7 @@ class InvoiceListSerializer(ListSerializer):
 
 class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    updated_by = SimplestUserSerializer(required=False, read_only=True, default=CurrentUserDefault())
     project = NestedProjectSerializer()
     user = SimplestUserSerializer()
     full_title = serializers.CharField(read_only=True)

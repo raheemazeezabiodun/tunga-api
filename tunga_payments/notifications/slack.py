@@ -9,7 +9,7 @@ from tunga_utils.helpers import clean_instance
 
 
 @job
-def notify_new_invoice_slack_admin(invoice):
+def notify_invoice_slack_admin(invoice, updated=False):
     invoice = clean_instance(invoice, Invoice)
 
     if invoice.legacy_id:
@@ -21,8 +21,9 @@ def notify_new_invoice_slack_admin(invoice):
     person_url = '{}/network/{}/'.format(TUNGA_URL, invoice.user.username)
     invoice_url = '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, invoice.id)
 
-    slack_msg = '{} generated a {} invoice'.format(
-        invoice.created_by.display_name.encode('utf-8'),
+    slack_msg = '{} {} a {} invoice'.format(
+        (updated and invoice.updated_by or invoice.created_by).display_name.encode('utf-8'),
+        updated and 'updated' or 'created',
         invoice.type == INVOICE_TYPE_SALE and 'client' or 'developer'
     )
 
