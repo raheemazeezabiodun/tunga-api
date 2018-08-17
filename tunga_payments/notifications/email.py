@@ -1,5 +1,6 @@
 import base64
 
+import datetime
 from django.utils.dateformat import DateFormat
 from django_rq import job
 
@@ -26,72 +27,87 @@ def notify_invoice_email(invoice, updated=False):
 def notify_new_invoice_email_client(invoice):
     invoice = clean_instance(invoice, Invoice)
 
-    if invoice.legacy_id or invoice.type != INVOICE_TYPE_SALE:
-        # ignore legacy invoices and only notify about client invoices
-        return
+    today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
 
-    to = [invoice.user.email]
-    if invoice.project.owner and invoice.project.owner.email != invoice.user.email:
-        to.append(invoice.project.owner.email)
+    if (not invoice.legacy_id) and invoice.type == INVOICE_TYPE_SALE and \
+        invoice.issued_at <= today_end and not invoice.last_sent_at and not invoice.paid:
 
-    if invoice.project.user and invoice.project.user.email != invoice.user.email:
-        to.append(invoice.project.user.email)
+        # only notify about non-legacy client invoices that are already due and haven't been sent yet
 
-    payment_link = '{}/projects/{}/pay'.format(TUNGA_URL, invoice.project.id)
+        to = [invoice.user.email]
+        if invoice.project.owner and invoice.project.owner.email != invoice.user.email:
+            to.append(invoice.project.owner.email)
 
-    merge_vars = [
-        mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, invoice.user.first_name),
-        mandrill_utils.create_merge_var('project_title', invoice.full_title),
-        mandrill_utils.create_merge_var('payment_link', payment_link),
-    ]
+        if invoice.project.user and invoice.project.user.email != invoice.user.email:
+            to.append(invoice.project.user.email)
 
-    pdf_file_contents = base64.b64encode(invoice.pdf)
+        payment_link = '{}/projects/{}/pay'.format(TUNGA_URL, invoice.project.id)
 
-    attachments = [
-        dict(
-            content=pdf_file_contents,
-            name='Invoice - {}.pdf'.format(invoice.full_title),
-            type='application/pdf'
-        )
-    ]
+        merge_vars = [
+            mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, invoice.user.first_name),
+            mandrill_utils.create_merge_var('project_title', invoice.full_title),
+            mandrill_utils.create_merge_var('payment_link', payment_link),
+        ]
 
-    mandrill_utils.send_email('83-invoice-email', to, merge_vars=merge_vars, attachments=attachments)
+        pdf_file_contents = base64.b64encode(invoice.pdf)
+
+        attachments = [
+            dict(
+                content=pdf_file_contents,
+                name='Invoice - {}.pdf'.format(invoice.full_title),
+                type='application/pdf'
+            )
+        ]
+
+        mandrill_response = mandrill_utils.send_email('83-invoice-email', to, merge_vars=merge_vars, attachments=attachments)
+        if mandrill_response:
+            invoice.last_sent_at = datetime.datetime.utcnow()
+            invoice.save()
+
+            mandrill_utils.log_emails.delay(mandrill_response, to)
 
 
 @job
 def notify_updated_invoice_email_client(invoice):
     invoice = clean_instance(invoice, Invoice)
 
-    if invoice.legacy_id or invoice.type != INVOICE_TYPE_SALE:
-        # ignore legacy invoices and only notify about client invoices
-        return
+    today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
 
-    to = [invoice.user.email]
-    if invoice.project.owner and invoice.project.owner.email != invoice.user.email:
-        to.append(invoice.project.owner.email)
+    if (not invoice.legacy_id) and invoice.type == INVOICE_TYPE_SALE and \
+        invoice.issued_at <= today_end and invoice.last_sent_at and not invoice.paid:
+        # only notify updates to non-legacy client invoices that are already due and have been sent before
 
-    if invoice.project.user and invoice.project.user.email != invoice.user.email:
-        to.append(invoice.project.user.email)
+        to = [invoice.user.email]
+        if invoice.project.owner and invoice.project.owner.email != invoice.user.email:
+            to.append(invoice.project.owner.email)
 
-    payment_link = '{}/projects/{}/pay'.format(TUNGA_URL, invoice.project.id)
+        if invoice.project.user and invoice.project.user.email != invoice.user.email:
+            to.append(invoice.project.user.email)
 
-    merge_vars = [
-        mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, invoice.user.first_name),
-        mandrill_utils.create_merge_var('invoice_title', invoice.full_title),
-        mandrill_utils.create_merge_var('payment_link', payment_link),
-    ]
+        payment_link = '{}/projects/{}/pay'.format(TUNGA_URL, invoice.project.id)
 
-    pdf_file_contents = base64.b64encode(invoice.pdf)
+        merge_vars = [
+            mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, invoice.user.first_name),
+            mandrill_utils.create_merge_var('invoice_title', invoice.full_title),
+            mandrill_utils.create_merge_var('payment_link', payment_link),
+        ]
 
-    attachments = [
-        dict(
-            content=pdf_file_contents,
-            name='Invoice - {}.pdf'.format(invoice.full_title),
-            type='application/pdf'
-        )
-    ]
+        pdf_file_contents = base64.b64encode(invoice.pdf)
 
-    mandrill_utils.send_email('88-invoice-update', to, merge_vars=merge_vars, attachments=attachments)
+        attachments = [
+            dict(
+                content=pdf_file_contents,
+                name='Invoice - {}.pdf'.format(invoice.full_title),
+                type='application/pdf'
+            )
+        ]
+
+        mandrill_response = mandrill_utils.send_email('88-invoice-update', to, merge_vars=merge_vars, attachments=attachments)
+        if mandrill_response:
+            invoice.last_sent_at = datetime.datetime.utcnow()
+            invoice.save()
+
+            mandrill_utils.log_emails.delay(mandrill_response, to)
 
 
 @job

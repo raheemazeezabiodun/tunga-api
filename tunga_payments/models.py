@@ -58,6 +58,9 @@ class Invoice(models.Model):
     )
     updated_at = models.DateTimeField(auto_now=True)
 
+    last_sent_at = models.DateTimeField(blank=True, null=True)
+    last_reminder_at = models.DateTimeField(blank=True, null=True)
+
     legacy_id = models.CharField(max_length=100, blank=True, null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
 
