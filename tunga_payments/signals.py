@@ -20,13 +20,6 @@ def activity_handler_new_invoice(sender, instance, created, **kwargs):
             Invoice.objects.filter(id=instance.id).update(number=invoice_number)
 
         notify_invoice.delay(instance.id, updated=False)
-    elif not instance.legacy_id:
-        action.send(
-            instance.updated_by or instance.created_by, verb=verbs.UPDATE,
-            action_object=instance, target=instance.project
-        )
-
-        #notify_invoice.delay(instance.id, updated=True)
 
 
 @receiver(post_save, sender=Payment)
