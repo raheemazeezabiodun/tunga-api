@@ -69,6 +69,7 @@ def notify_new_invoice_email_client(invoice):
 
 @job
 def notify_updated_invoice_email_client(invoice):
+    return 
     invoice = clean_instance(invoice, Invoice)
 
     today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
