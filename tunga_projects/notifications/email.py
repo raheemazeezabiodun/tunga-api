@@ -101,10 +101,12 @@ def notify_new_progress_report_email_client(progress_report):
 
     to = []
     if is_dev_report:
-        if progress_report.event.project.owner and check_switch_setting(progress_report.event.project.owner, NEW_TASK_PROGRESS_REPORT_EMAIL):
-            to.append(progress_report.event.project.owner.email)
-        elif progress_report.event.project.user and check_switch_setting(progress_report.event.project.user, NEW_TASK_PROGRESS_REPORT_EMAIL):
-            to.append(progress_report.event.project.user.email)
+        owner = progress_report.event.project.owner or progress_report.event.project.user
+        if owner and check_switch_setting(owner, NEW_TASK_PROGRESS_REPORT_EMAIL):
+            to.append(owner.email)
+            creator = progress_report.event.project.user
+            if creator and creator.id != owner.id and check_switch_setting(creator, NEW_TASK_PROGRESS_REPORT_EMAIL):
+                to.append(creator.email)
         # TODO: Re-enable admins
         # admins = progress_report.event.project.admins
         # if admins:
