@@ -41,6 +41,7 @@ class InvoiceViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
+    search_fields = ('title', '^project__title')
 
     @list_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
                 url_path='bulk', url_name='bulk-create-invoices')
