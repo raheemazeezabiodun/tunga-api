@@ -17,7 +17,7 @@ def notify_invoice_slack_admin(invoice, updated=False):
         return
 
     project_url = '{}/projects/{}/'.format(TUNGA_URL, invoice.project.id)
-    payment_url = '{}/pay'.format(project_url)
+    payment_url = '{}pay'.format(project_url)
     person_url = '{}/network/{}/'.format(TUNGA_URL, invoice.user.username)
     invoice_url = '{}/api/invoices/{}/download/?format=pdf'.format(TUNGA_URL, invoice.id)
 
