@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from slacker import Slacker
 
-from tunga_activity.models import FieldChangeLog
+from tunga_activity.models import FieldChangeLog, NotificationReadLog
 from tunga_activity.serializers import ActivitySerializer
 from tunga_auth.permissions import IsAdminOrCreateOnly
 from tunga_payments.models import Invoice
@@ -31,7 +31,8 @@ from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
 from tunga_utils.constants import APP_INTEGRATION_PROVIDER_SLACK, STATUS_ACCEPTED, \
     STATUS_INITIAL, USER_TYPE_DEVELOPER, \
-    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE, PROGRESS_EVENT_PM
+    PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE, PROGRESS_EVENT_PM, NOTIFICATION_TYPE_PROFILE, \
+    NOTIFICATION_TYPE_ACTIVITY
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -260,17 +261,27 @@ class NotificationView(views.APIView):
         ).distinct()[:4]
 
         activities = Action.objects.filter(
-            Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects),
+            ~Q(id__in=[int(item.notification_id) for item in NotificationReadLog.objects.filter(user=user, type=NOTIFICATION_TYPE_ACTIVITY)]) &
+            (
+                Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects)
+            ),
             action_object_content_type__in=[
                 ContentType.objects.get_for_model(model) for model in [Document, Participation, Invoice, FieldChangeLog]
-            ]
+            ],
         )[:15]
+
+        cleared_notifications = [
+            item.notification_id for item in NotificationReadLog.objects.filter(
+                user=user, type=NOTIFICATION_TYPE_PROFILE
+            )
+        ]
 
         return Response(
             {
                 'profile': dict(
                     required=missing_required,
-                    optional=missing_optional
+                    optional=missing_optional,
+                    cleared=cleared_notifications
                 ),
                 'projects': [dict(
                     id=project.id,
