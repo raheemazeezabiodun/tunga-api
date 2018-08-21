@@ -75,6 +75,8 @@ def create_progress_report_slack_message(progress_report, updated=False, to_clie
     )
 
     slack_text_suffix = ''
+    if not to_client:
+        slack_text_suffix += '*Due Date:* {}\n'.format(progress_report.event.due_at.strftime("%d %b, %Y"))
     if not is_client_report:
         slack_text_suffix += '*Status:* {}\n*Percentage completed:* {}{}'.format(
             progress_report.get_status_display(), progress_report.percentage, '%')
