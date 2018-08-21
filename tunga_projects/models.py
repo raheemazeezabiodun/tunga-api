@@ -6,6 +6,7 @@ import re
 
 import tagulous.models
 from actstream.models import Action
+from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -18,7 +19,8 @@ from tunga_profiles.models import Skill
 from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURRENCY_EUR, \
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
     STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES, \
-    PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES
+    PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE, \
+    PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL
 from tunga_utils.models import Rating
 
 
@@ -263,6 +265,32 @@ class ProgressEvent(models.Model):
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
         return request.user == self.project.user or request.user == self.project.owner
+
+    @property
+    def participants(self):
+        participants = []
+        if self.type in [PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_MILESTONE]:
+            if self.project.owner:
+                participants.append(self.project.owner)
+            else:
+                participants.append(self.project.user)
+        if self.type in [PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE, PROGRESS_EVENT_INTERNAL] and self.project.pm:
+            participants.append(self.project.pm)
+        if self.type in [PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]:
+            participants.extend([
+                participant.user
+                for participant in self.project.participation_set.filter(status=STATUS_ACCEPTED, updates_enabled=True)
+            ])
+        return participants
+
+    @property
+    def status(self):
+        if self.progressreport_set.count() > 0:
+            return 'completed'
+        past_by_24_hours = datetime.datetime.utcnow() - relativedelta(hours=24)
+        if self.due_at > past_by_24_hours:
+            return 'upcoming'
+        return 'missed'
 
 
 @python_2_unicode_compatible

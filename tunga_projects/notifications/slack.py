@@ -1,10 +1,11 @@
+import datetime
 from django.template.defaultfilters import floatformat
 from django_rq import job
 
 from tunga.settings import TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_LEADS_CHANNEL, \
     SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED, \
-    SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE
-from tunga_projects.models import Project, ProgressReport
+    SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_MISSED_UPDATES_CHANNEL
+from tunga_projects.models import Project, ProgressReport, ProgressEvent
 from tunga_utils import slack_utils
 from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
     PROGRESS_EVENT_MILESTONE
@@ -265,3 +266,66 @@ def notify_new_progress_report_slack(progress_report, updated=False):
         # TODO: Respect client's settings
         slack_msg, attachments = create_progress_report_slack_message(progress_report, updated=updated, to_client=True)
         slack_utils.send_project_message(progress_report.event.project, message=slack_msg, attachments=attachments)
+
+
+@job
+def notify_missed_progress_event_slack(progress_event):
+    progress_event = clean_instance(progress_event, ProgressEvent)
+
+    if progress_event.project.archived or progress_event.status != "missed" or not progress_event.last_reminder_at or progress_event.missed_notification_at:
+        return
+
+    participants = progress_event.participants
+    if not participants:
+        # No one to report or project is now closed
+        return
+
+    target_user = None
+    if participants and len(participants) == 1:
+        target_user = participants[0]
+
+    project_url = '{}/projects/{}'.format(TUNGA_URL, progress_event.project.id)
+    slack_msg = "`Alert (!):` {} {} for \"{}\" | <{}|View on Tunga>".format(
+        target_user and '{} missed a'.format(target_user.short_name) or 'Missed',
+        (progress_event.type == PROGRESS_EVENT_CLIENT and 'progress survey') or
+        (progress_event.type == PROGRESS_EVENT_MILESTONE and 'milestone report') or
+        'progress report',
+        progress_event.project.title,
+        project_url
+    )
+
+    attachments = [
+        {
+            slack_utils.KEY_TITLE: progress_event.project.title,
+            slack_utils.KEY_TITLE_LINK: project_url,
+            slack_utils.KEY_TEXT: '*Due Date:* {}\n\n{}'.format(
+                progress_event.due_at.strftime("%d %b, %Y"),
+                '\n\n'.join(
+                    [
+                        '*Name:* {}\n'
+                        '*Email:* {}{}'.format(
+                            user.display_name.encode('utf-8'),
+                            user.email,
+                            not user.is_project_owner and user.profile and user.profile.phone_number and
+                            '\n*Phone Number:* {}'.format(user.profile.phone_number) or '')
+                        for user in participants
+                    ]
+                )
+            ),
+            slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+            slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_TUNGA
+        }
+    ]
+
+    slack_utils.send_incoming_webhook(
+        SLACK_STAFF_INCOMING_WEBHOOK,
+        {
+            slack_utils.KEY_TEXT: slack_msg,
+            slack_utils.KEY_ATTACHMENTS: attachments,
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_MISSED_UPDATES_CHANNEL
+        }
+    )
+
+    # Save notification time
+    progress_event.missed_notification_at = datetime.datetime.now()
+    progress_event.save()
