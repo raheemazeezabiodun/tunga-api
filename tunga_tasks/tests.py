@@ -1,6 +1,6 @@
 import datetime
-
 from copy import copy
+
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.test.client import RequestFactory
@@ -10,8 +10,10 @@ from rest_framework.test import APITestCase
 
 from tunga_tasks.models import Task, ProgressEvent
 from tunga_utils.constants import USER_TYPE_DEVELOPER, USER_TYPE_PROJECT_OWNER, STATUS_ACCEPTED, TASK_TYPE_WEB, \
-    TASK_SCOPE_TASK, USER_TYPE_PROJECT_MANAGER, STATUS_REJECTED, TASK_SCOPE_PROJECT, LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, \
-    LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR, \
+    TASK_SCOPE_TASK, USER_TYPE_PROJECT_MANAGER, STATUS_REJECTED, TASK_SCOPE_PROJECT, \
+    LEGACY_PROGRESS_EVENT_TYPE_PERIODIC, \
+    LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE, LEGACY_PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK, \
+    LEGACY_PROGRESS_REPORT_STUCK_REASON_ERROR, \
     LEGACY_PROGRESS_EVENT_TYPE_CLIENT, LEGACY_PROGRESS_EVENT_TYPE_PM
 
 
@@ -108,7 +110,7 @@ class APITaskTestCase(APITestCase):
         # Guests can't edit tasks
         self.__auth_guest()
         response = self.client.patch(url, data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Devs can't edit tasks
         self.__auth_developer()
@@ -199,7 +201,7 @@ class APITaskTestCase(APITestCase):
         # Guests can't create developer reports
         self.__auth_guest()
         response = self.client.post(url, dict(event=progress_event.id))
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.__auth_developer()
         # Devs can't create empty reports
@@ -208,17 +210,21 @@ class APITaskTestCase(APITestCase):
 
         # Devs can create reports
         dev_report = dict(
-            event=progress_event.id,
+            user={"id": self.developer.id},
             status=LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE,
             started_at=datetime.datetime.utcnow() - relativedelta(days=2),
             percentage=50,
             accomplished='Finished',
+            event={"id": progress_event.id},
             todo='Next steps',
             rate_deliverables=5,
             next_deadline=datetime.datetime.utcnow() + relativedelta(days=3),
             next_deadline_meet=True
         )
+        print progress_event.id
+        print self.developer.id
         response = self.client.post(url, dev_report)
+        print response.content
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Devs can create reports with percentage completed as zero
@@ -274,7 +280,7 @@ class APITaskTestCase(APITestCase):
         # Guests can't create PM reports
         self.__auth_guest()
         response = self.client.post(url, dict(event=progress_event.id))
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.__auth_project_manager()
         # PMs can't create empty reports
@@ -283,9 +289,10 @@ class APITaskTestCase(APITestCase):
 
         # PMs can create reports
         pm_report = dict(
-            event=progress_event.id,
+            event={"id": progress_event.id},
             status=LEGACY_PROGRESS_REPORT_STATUS_ON_SCHEDULE,
             last_deadline_met=True,
+            user={"id": self.project_manager.id},
             percentage=75,
             accomplished='Finished',
             todo='Next steps',
@@ -348,7 +355,7 @@ class APITaskTestCase(APITestCase):
         # Guests can't create client surveys
         self.__auth_guest()
         response = self.client.post(url, dict(event=progress_event.id))
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.__auth_project_owner()
         # Clients can't create empty surveys
@@ -357,7 +364,7 @@ class APITaskTestCase(APITestCase):
 
         # Clients can create reports
         client_report = dict(
-            event=progress_event.id,
+            event={"id": progress_event.id},
             last_deadline_met=True,
             deliverable_satisfaction=False,
             rate_deliverables=3

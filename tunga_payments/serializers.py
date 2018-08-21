@@ -54,6 +54,16 @@ class InvoiceSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
         fields = '__all__'
 
 
+class BulkInvoiceSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True)
+    project = NestedProjectSerializer()
+    milestone = SimpleProgressEventSerializer(required=False, allow_null=True)
+    invoices = serializers.ListField(child=InvoiceSerializer())
+
+    class Meta:
+        model = Invoice
+
+
 class PaymentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     invoice = SimpleInvoiceSerializer()
@@ -69,4 +79,3 @@ class StripePaymentSerializer(serializers.Serializer):
     ))
     amount = serializers.DecimalField(required=True, max_digits=17, decimal_places=2)
     token = serializers.CharField(required=True)
-

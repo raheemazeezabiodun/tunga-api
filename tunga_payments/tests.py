@@ -73,7 +73,7 @@ class APIInvoiceTestCase(APITestCase):
         # Guests can fill the wizard
         self.client.force_authenticate(user=None)
         response = self.client.post(url, invoice_data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Developer's can't create tasks
         self.client.force_authenticate(user=self.developer)
@@ -85,10 +85,10 @@ class APIInvoiceTestCase(APITestCase):
         response = self.client.post(url, invoice_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # PM's can't create tasks
+        # PM's can create invoices
         self.client.force_authenticate(user=self.project_manager)
         response = self.client.post(url, invoice_data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Admins can create tasks
         self.client.force_authenticate(user=self.admin)
@@ -118,7 +118,7 @@ class APIInvoiceTestCase(APITestCase):
             "currency": "EUR",
             "amount": 1500,
             "tax_rate": 12,
-            "user": {'id': self.project_owner.id},
+            "user": {'id': self.project_manager.id},
             "type": "tunga"
         }
         invoice_bulk = [invoice_data, invoice_data]
@@ -131,7 +131,7 @@ class APIInvoiceTestCase(APITestCase):
         # Guests can fill the wizard
         self.client.force_authenticate(user=None)
         response = self.client.post(url, invoice_data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Developer's can't create tasks
         self.client.force_authenticate(user=self.developer)
@@ -143,10 +143,10 @@ class APIInvoiceTestCase(APITestCase):
         response = self.client.post(url, invoice_bulk)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # PM's can't create tasks
+        # PM's can create invoices
         self.client.force_authenticate(user=self.project_manager)
         response = self.client.post(url, invoice_bulk)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Admins can create tasks
         self.client.force_authenticate(user=self.admin)
@@ -184,7 +184,7 @@ class APIInvoiceTestCase(APITestCase):
         # Guests
         self.client.force_authenticate(user=None)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Developer
         self.client.force_authenticate(user=self.developer)
@@ -280,7 +280,7 @@ class APIPaymentTestCase(APITestCase):
         # Guests can fill the wizard
         self.client.force_authenticate(user=None)
         response = self.client.post(url, payment_data)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Developer's can't create tasks
         self.client.force_authenticate(user=self.developer)
@@ -342,7 +342,7 @@ class APIPaymentTestCase(APITestCase):
         # Guests
         self.client.force_authenticate(user=None)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Developer
         self.client.force_authenticate(user=self.developer)

@@ -190,7 +190,7 @@ class Invoice(models.Model):
     @staticmethod
     @allow_staff_or_superuser
     def has_write_permission(request):
-        return request.user.is_project_manager or request.user.is_project_owner
+        return request.user.is_project_manager or request.user.is_admin
 
     @allow_staff_or_superuser
     def has_object_write_permission(self, request):
