@@ -7,6 +7,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from tunga import settings
+from tunga_utils.constants import NOTIFICATION_TYPE_CHOICES
 
 
 @python_2_unicode_compatible
@@ -24,6 +25,21 @@ class ActivityReadLog(models.Model):
 
     class Meta:
         unique_together = ('user', 'content_type', 'object_id')
+
+
+@python_2_unicode_compatible
+class NotificationReadLog(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    type = models.CharField(max_length=50, choices=NOTIFICATION_TYPE_CHOICES)
+    notification_id = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} | {} - {}'.format(self.user.get_short_name() or self.user.username, self.type, self.notification_id)
+
+    class Meta:
+        unique_together = ('user', 'type', 'notification_id')
+        ordering = ['-created_at']
 
 
 @python_2_unicode_compatible

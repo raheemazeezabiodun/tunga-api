@@ -23,7 +23,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
 from rest_framework_swagger.views import get_swagger_view
 
-from tunga_activity.views import ActionViewSet
+from tunga_activity.views import ActionViewSet, NotificationReadLogViewSet
 from tunga_auth.views import VerifyUserView, AccountInfoView, UserViewSet, social_login_view, coinbase_connect_callback, \
     slack_connect_callback, EmailVisitorView, github_connect_callback, DevelopersSitemap, \
     payoneer_sign_up, payoneer_notification, exact_connect_callback
@@ -70,6 +70,7 @@ router.register(r'uploads', UploadViewSet)
 router.register(r'skills', SkillViewSet)
 router.register(r'skill-pages', SkillPageViewSet)
 router.register(r'blogs', BlogPostViewSet)
+router.register(r'notification-log', NotificationReadLogViewSet)
 
 # Legacy routes
 # router.register(r'user', UserViewSet)

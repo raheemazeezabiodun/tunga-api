@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from generic_relations.relations import GenericRelatedField
 from rest_framework import serializers
 
-from tunga_activity.models import ActivityReadLog, FieldChangeLog
+from tunga_activity.models import ActivityReadLog, FieldChangeLog, NotificationReadLog
 from tunga_comments.models import Comment
 from tunga_comments.serializers import CommentSerializer
 from tunga_messages.models import Message, Channel, ChannelUser
@@ -25,13 +25,21 @@ from tunga_uploads.models import Upload
 from tunga_uploads.serializers import UploadSerializer
 from tunga_utils.models import Upload as LegacyUpload
 from tunga_utils.serializers import SimpleUserSerializer, UploadSerializer as LegacyUploadSerializer, \
-    SimplestUserSerializer
+    SimplestUserSerializer, CreateOnlyCurrentUserDefault
 
 
-class ActivityReadLogSerializer(serializers.Serializer):
+class ActivityReadLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActivityReadLog
+        fields = '__all__'
+
+
+class NotificationReadLogSerializer(serializers.ModelSerializer):
+    user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+
+    class Meta:
+        model = NotificationReadLog
         fields = '__all__'
 
 
