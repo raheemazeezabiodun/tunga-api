@@ -16,13 +16,13 @@ class Command(BaseCommand):
         # command to run: python manage.py tunga_missed_progress_updates
 
         right_now = datetime.datetime.utcnow()
-        past_by_24_hours = right_now - relativedelta(hours=24)
+        past_by_18_hours = right_now - relativedelta(hours=18)
         past_by_48_hours = right_now - relativedelta(hours=48)
 
         # Notify Tunga of missed updates (limit to events due in last 48 hours, prevents spam from very old projects)
         missed_events = ProgressEvent.objects.filter(
             project__archived=False,
-            due_at__range=[past_by_48_hours, past_by_24_hours],
+            due_at__range=[past_by_48_hours, past_by_18_hours],
             last_reminder_at__isnull=False,
             missed_notification_at__isnull=True
         )
