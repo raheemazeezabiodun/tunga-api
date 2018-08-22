@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from tunga_auth.forms import TungaUserChangeForm, TungaUserCreationForm
 from tunga_auth.models import EmailVisitor, TungaUser
 from tunga_utils.constants import USER_TYPE_DEVELOPER, USER_TYPE_PROJECT_OWNER
-from tunga_profiles.admin import UserProfileInline
+from tunga_profiles.admin import UserProfileInline, CompanyInline
 from tunga_utils.helpers import Echo
 
 
@@ -36,7 +36,7 @@ class TungaUserAdmin(UserAdmin):
     list_filter = ('date_joined', 'type', 'pending', 'is_staff', 'is_superuser', 'is_internal', 'payoneer_status')
     list_max_show_all = 1000
 
-    inlines = (UserProfileInline,)
+    inlines = (CompanyInline, UserProfileInline)
 
     def make_pending(self, request, queryset):
         rows_updated = queryset.update(pending=True)

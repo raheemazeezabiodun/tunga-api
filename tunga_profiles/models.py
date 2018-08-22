@@ -249,6 +249,10 @@ class Company(models.Model):
     reg_no = models.CharField(max_length=50, blank=True, null=True)
     ref_no = models.CharField(max_length=50, blank=True, null=True)
 
+    class Meta:
+        verbose_name = 'company'
+        verbose_name_plural = 'companies'
+
     def __str__(self):
         return self.name or 'Company #{}'.format(self.id)
 
