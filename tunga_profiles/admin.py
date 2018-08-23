@@ -2,13 +2,18 @@ from django.contrib import admin
 
 from tunga_profiles.notifications import send_developer_accepted_email
 from tunga_profiles.models import Education, Work, Connection, \
-    DeveloperApplication, BTCWallet, UserProfile, AppIntegration, Inquirer, DeveloperInvitation, Skill
+    DeveloperApplication, BTCWallet, UserProfile, AppIntegration, Inquirer, DeveloperInvitation, Skill, Company
 from tunga_utils.constants import REQUEST_STATUS_ACCEPTED, REQUEST_STATUS_REJECTED
 
 
 class UserProfileInline(admin.StackedInline):
     verbose_name = 'profile info'
     model = UserProfile
+
+
+class CompanyInline(admin.StackedInline):
+    verbose_name = 'company'
+    model = Company
 
 
 @admin.register(Skill)
