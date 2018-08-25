@@ -148,6 +148,7 @@ class NestedModelSerializer(serializers.ModelSerializer):
                     serializer_class = serializer_field.__class__
                     validated_data[clean_attribute_key] = serializer_class.Meta.model.objects.get(pk=attribute_value_object_id)
 
+        is_created = bool(instance)
         if instance:
             instance = super(NestedModelSerializer, self).update(instance, validated_data)
         else:
@@ -159,7 +160,7 @@ class NestedModelSerializer(serializers.ModelSerializer):
                 save_method = attribute_details[0]
                 attribute_value = attribute_details[1]
                 if save_method and attribute_value:
-                    save_method(attribute_value, instance)
+                    save_method(attribute_value, instance, created=is_created)
 
             for (k, v, s, r) in nested_data:
                 v = dict(v)
