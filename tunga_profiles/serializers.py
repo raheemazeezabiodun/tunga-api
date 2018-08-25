@@ -43,7 +43,7 @@ class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
             user_profile_updated.send(sender=UserProfile, profile=instance)
         return instance
 
-    def save_nested_user(self, data, instance):
+    def save_nested_user(self, data, instance, created=False):
         user = instance.user
         if user:
             user.first_name = data.get('first_name', user.first_name)
@@ -53,7 +53,7 @@ class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
                 user.image = image
             user.save()
 
-    def save_nested_skills(self, data, instance):
+    def save_nested_skills(self, data, instance, created=False):
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
             instance.save()
@@ -66,7 +66,7 @@ class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
                 except:
                     pass
 
-    def save_nested_city(self, data, instance):
+    def save_nested_city(self, data, instance, created=False):
         if data:
             instance.city = data
             instance.save()
@@ -83,7 +83,7 @@ class CompanySerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
         model = Company
         fields = '__all__'
 
-    def save_nested_user(self, data, instance):
+    def save_nested_user(self, data, instance, created=False):
         user = instance.user
         if user:
             user.first_name = data.get('first_name', user.first_name)
@@ -93,12 +93,12 @@ class CompanySerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializ
                 user.image = image
             user.save()
 
-    def save_nested_skills(self, data, instance):
+    def save_nested_skills(self, data, instance, created=False):
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
             instance.save()
 
-    def save_nested_city(self, data, instance):
+    def save_nested_city(self, data, instance, created=False):
         if data:
             instance.city = data
             instance.save()

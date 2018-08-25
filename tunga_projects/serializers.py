@@ -109,12 +109,12 @@ class ProjectSerializer(
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 
-    def save_nested_skills(self, data, instance):
+    def save_nested_skills(self, data, instance, created=False):
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])
             instance.save()
 
-    def save_nested_change_log(self, data, instance):
+    def save_nested_change_log(self, data, instance, created=False):
         if data is not None:
             for item in data:
                 FieldChangeLog.objects.create(content_object=instance, created_by=self.get_current_user(), **item)
@@ -166,7 +166,7 @@ class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 
-    def save_nested_change_log(self, data, instance):
+    def save_nested_change_log(self, data, instance, created=False):
         if data is not None:
             for item in data:
                 FieldChangeLog.objects.create(content_object=instance, created_by=self.get_current_user(), **item)
