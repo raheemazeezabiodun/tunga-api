@@ -7,10 +7,10 @@ from rest_framework.viewsets import ModelViewSet
 
 from tunga_projects.filterbackends import ProjectFilterBackend
 from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationFilter, ProgressEventFilter, \
-    ProgressReportFilter
-from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport
+    ProgressReportFilter, InterestPollFilter
+from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport, InterestPoll
 from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
-    ProgressEventSerializer, ProgressReportSerializer
+    ProgressEventSerializer, ProgressReportSerializer, InterestPollSerializer
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -34,6 +34,17 @@ class ParticipationViewSet(ModelViewSet):
     serializer_class = ParticipationSerializer
     permission_classes = [IsAuthenticated, DRYObjectPermissions]
     filter_class = ParticipationFilter
+    filter_backends = DEFAULT_FILTER_BACKENDS
+
+
+class InterestPollViewSet(ModelViewSet):
+    """
+    Interest Poll Resource
+    """
+    queryset = InterestPoll.objects.all()
+    serializer_class = InterestPollSerializer
+    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+    filter_class = InterestPollFilter
     filter_backends = DEFAULT_FILTER_BACKENDS
 
 

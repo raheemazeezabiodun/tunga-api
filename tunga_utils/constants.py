@@ -76,6 +76,8 @@ STATUS_APPROVED = 'approved'
 STATUS_DECLINED = 'declined'
 STATUS_CANCELED = 'canceled'
 STATUS_RETRY = 'retry'
+STATUS_INTERESTED = 'interested'
+STATUS_UNINTERESTED = 'uninterested'
 
 REQUEST_STATUS_CHOICES = (
     (STATUS_INITIAL, 'Initial'),

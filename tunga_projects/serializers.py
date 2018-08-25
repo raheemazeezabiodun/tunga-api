@@ -2,7 +2,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from tunga_activity.models import FieldChangeLog
-from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport
+from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport, \
+    InterestPoll
 from tunga_utils.constants import PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STATUS_STUCK, \
     PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
@@ -34,6 +35,15 @@ class SimpleParticipationSerializer(SimpleModelSerializer):
 
     class Meta:
         model = Participation
+        exclude = ('project',)
+
+
+class SimpleInterestPollSerializer(SimpleModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    user = SimplestUserSerializer()
+
+    class Meta:
+        model = InterestPoll
         exclude = ('project',)
 
 
@@ -117,6 +127,17 @@ class ParticipationSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
 
     class Meta:
         model = Participation
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class InterestPollSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
+    created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
+    project = SimpleProjectSerializer()
+    user = SimplestUserSerializer()
+
+    class Meta:
+        model = InterestPoll
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 

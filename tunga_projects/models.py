@@ -20,7 +20,8 @@ from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURR
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
     STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES, \
     PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE, \
-    PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL, PROJECT_STAGE_ACTIVE, PROJECT_STAGE_CHOICES
+    PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL, PROJECT_STAGE_ACTIVE, PROJECT_STAGE_CHOICES, STATUS_UNINTERESTED, \
+    STATUS_INTERESTED
 from tunga_utils.models import Rating
 
 
@@ -141,6 +142,64 @@ class Participation(models.Model):
         if self.status != STATUS_INITIAL and self.responded_at is None:
             self.responded_at = datetime.datetime.utcnow()
         super(Participation, self).save(force_insert=force_insert, force_update=force_update, using=using)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_read_permission(request):
+        return True
+
+    @allow_staff_or_superuser
+    def has_object_read_permission(self, request):
+        return self.project.is_participant(request.user, active=False)
+
+    @staticmethod
+    @allow_staff_or_superuser
+    def has_write_permission(request):
+        return request.user.is_project_owner or request.user.is_project_manager
+
+    @allow_staff_or_superuser
+    def has_object_write_permission(self, request):
+        allowed_users = [self.created_by, self.user, self.project.user]
+        for user in [self.project.owner, self.project.pm]:
+            if user:
+                allowed_users.append(user)
+        return request.user in allowed_users
+
+
+@python_2_unicode_compatible
+class InterestPoll(models.Model):
+    status_choices = (
+        (STATUS_INITIAL, 'Initial'),
+        (STATUS_INTERESTED, 'Interested'),
+        (STATUS_UNINTERESTED, 'Uninterested')
+    )
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls', on_delete=models.DO_NOTHING)
+    status = models.CharField(
+        max_length=20, choices=REQUEST_STATUS_CHOICES,
+        help_text=','.join(['%s - %s' % (item[0], item[1]) for item in status_choices]),
+        default=STATUS_INITIAL
+    )
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls_created')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    responded_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return '#{} | {} - {}'.format(self.id, self.user.get_short_name() or self.user.username, self.project.title)
+
+    class Meta:
+        unique_together = ('user', 'project')
+        ordering = ['-created_at']
+        verbose_name = 'interest poll'
+        verbose_name_plural = 'interest polls'
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.status != STATUS_INITIAL and self.responded_at is None:
+            self.responded_at = datetime.datetime.utcnow()
+        super(InterestPoll, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     @staticmethod
     @allow_staff_or_superuser
