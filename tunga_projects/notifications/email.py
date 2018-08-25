@@ -1,15 +1,34 @@
 import datetime
+
+from django.contrib.auth import get_user_model
 from django_rq import job
 
 from tunga.settings import TUNGA_URL
-from tunga_projects.models import Participation, ProgressReport, ProgressEvent
+from tunga_projects.models import Participation, ProgressReport, ProgressEvent, InterestPoll
 from tunga_settings.slugs import NEW_TASK_PROGRESS_REPORT_EMAIL, TASK_SURVEY_REMINDER_EMAIL
 from tunga_settings.utils import check_switch_setting
 from tunga_utils.constants import PROGRESS_EVENT_MILESTONE, \
     PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
-    STATUS_ACCEPTED
+    STATUS_ACCEPTED, USER_TYPE_DEVELOPER, PROJECT_STAGE_OPPORTUNITY
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
+
+
+@job
+def notify_new_project_email_dev(project):
+    project = clean_instance(project, Participation)
+
+    if project.stage != PROJECT_STAGE_OPPORTUNITY:
+        # Only poll dev interest for opportunities
+        return
+
+    # TODO: Send email about new project to devs
+    developers = get_user_model().filter(type=USER_TYPE_DEVELOPER, skills__in=project.skills.all())
+
+    for developer in developers:
+        InterestPoll.objects.update_or_create(
+            project=project, user=developer, defaults=dict(created_by=project.user)
+        )
 
 
 @job

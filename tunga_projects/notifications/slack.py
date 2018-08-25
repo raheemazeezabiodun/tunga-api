@@ -11,6 +11,11 @@ from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PR
     PROGRESS_EVENT_MILESTONE
 from tunga_utils.helpers import clean_instance, convert_to_text
 
+@job
+def notify_new_project_slack(project):
+    notify_new_project_slack_admin(project)
+    # TODO: Notify devs about new project if stage is opportunity
+
 
 @job
 def notify_new_project_slack_admin(project):
