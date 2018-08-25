@@ -20,7 +20,7 @@ from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURR
     PROJECT_EXPECTED_DURATION_CHOICES, CURRENCY_CHOICES_EUR_ONLY, STATUS_INITIAL, REQUEST_STATUS_CHOICES, \
     STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES, \
     PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE, \
-    PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL
+    PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL, PROJECT_STAGE_ACTIVE, PROJECT_STAGE_CHOICES
 from tunga_utils.models import Rating
 
 
@@ -42,6 +42,7 @@ class Project(models.Model):
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default=PROJECT_TYPE_OTHER)
     expected_duration = models.CharField(max_length=20, choices=PROJECT_EXPECTED_DURATION_CHOICES, blank=True, null=True)
+    stage = models.CharField(max_length=20, choices=PROJECT_STAGE_CHOICES, default=PROJECT_STAGE_ACTIVE)
 
     # State identifiers
     client_survey_enabled = models.BooleanField(default=True)
