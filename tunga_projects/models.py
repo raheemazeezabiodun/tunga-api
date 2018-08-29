@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.db.models import Sum
 from django.utils.encoding import python_2_unicode_compatible
 from dry_rest_permissions.generics import allow_staff_or_superuser
 
@@ -21,7 +22,7 @@ from tunga_utils.constants import PROJECT_TYPE_CHOICES, PROJECT_TYPE_OTHER, CURR
     STATUS_ACCEPTED, PROJECT_DOCUMENT_CHOICES, DOC_OTHER, PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_TYPE_CHOICES, \
     PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_EVENT_PM, PROGRESS_EVENT_MILESTONE, \
     PROGRESS_EVENT_CLIENT, PROGRESS_EVENT_INTERNAL, PROJECT_STAGE_ACTIVE, PROJECT_STAGE_CHOICES, STATUS_UNINTERESTED, \
-    STATUS_INTERESTED
+    STATUS_INTERESTED, INVOICE_TYPE_SALE, INVOICE_TYPE_PURCHASE
 from tunga_utils.models import Rating
 
 
@@ -42,7 +43,8 @@ class Project(models.Model):
     )
     currency = models.CharField(max_length=5, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default=PROJECT_TYPE_OTHER)
-    expected_duration = models.CharField(max_length=20, choices=PROJECT_EXPECTED_DURATION_CHOICES, blank=True, null=True)
+    expected_duration = models.CharField(max_length=20, choices=PROJECT_EXPECTED_DURATION_CHOICES, blank=True,
+                                         null=True)
     stage = models.CharField(max_length=20, choices=PROJECT_STAGE_CHOICES, default=PROJECT_STAGE_ACTIVE)
 
     # State identifiers
@@ -110,11 +112,21 @@ class Project(models.Model):
     def has_object_write_permission(self, request):
         return request.user == self.user or request.user == self.owner or request.user == self.pm
 
+    @property
+    def margin(self):
+        from tunga_payments.models import Invoice
+        sales_amount = Invoice.objects.filter(project=self, type=INVOICE_TYPE_SALE).aggregate(Sum('amount'))
+        project_amount = Invoice.objects.filter(project=self, type=INVOICE_TYPE_PURCHASE).aggregate(Sum('amount'))
+        sales_amount = sales_amount['amount__sum'] or 0
+        project_amount = project_amount['amount__sum'] or 0
+        return sales_amount - project_amount
+
 
 @python_2_unicode_compatible
 class Participation(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_participation', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_participation',
+                             on_delete=models.DO_NOTHING)
     status = models.CharField(
         max_length=20, choices=REQUEST_STATUS_CHOICES,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in REQUEST_STATUS_CHOICES]),
@@ -175,7 +187,8 @@ class InterestPoll(models.Model):
     )
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls',
+                             on_delete=models.DO_NOTHING)
     status = models.CharField(
         max_length=20, choices=REQUEST_STATUS_CHOICES,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in status_choices]),
