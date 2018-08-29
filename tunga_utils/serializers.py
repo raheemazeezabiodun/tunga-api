@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
-from copy import copy
+
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -12,7 +12,8 @@ from tunga_profiles.models import Skill, City, UserProfile, Education, Work, Con
 from tunga_profiles.utils import profile_check
 from tunga_tasks.models import TaskInvoice
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
-from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractExperience, Rating, InviteRequest
+from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractExperience, Rating, InviteRequest, \
+    DeveloperRequest
 
 
 class CreateOnlyCurrentUserDefault(serializers.CurrentUserDefault):
@@ -39,7 +40,7 @@ class SimpleModelSerializer(serializers.ModelSerializer):
             if len(data) == 1:
                 rep = self.Meta.model.objects.get(pk=object_id)
             else:
-                #data.pop('id')
+                # data.pop('id')
                 rep = super(SimpleModelSerializer, self).to_internal_value(data)
                 rep['id'] = object_id
             return rep
@@ -134,7 +135,8 @@ class NestedModelSerializer(serializers.ModelSerializer):
                                     fk_keys.append(model_field.name)
                         if type(attribute_value) is list:
                             for single_attribute_value in attribute_value:
-                                nested_data.append((clean_attribute_key, single_attribute_value, serializer_class, fk_keys))
+                                nested_data.append(
+                                    (clean_attribute_key, single_attribute_value, serializer_class, fk_keys))
                         else:
                             nested_data.append((clean_attribute_key, attribute_value, serializer_class, fk_keys))
 
@@ -146,7 +148,8 @@ class NestedModelSerializer(serializers.ModelSerializer):
                 if attribute_value_object_id:
                     serializer_field = self.get_fields().get(clean_attribute_key, None)
                     serializer_class = serializer_field.__class__
-                    validated_data[clean_attribute_key] = serializer_class.Meta.model.objects.get(pk=attribute_value_object_id)
+                    validated_data[clean_attribute_key] = serializer_class.Meta.model.objects.get(
+                        pk=attribute_value_object_id)
 
         is_created = bool(instance)
         if instance:
@@ -195,7 +198,6 @@ class DetailAnnotatedModelSerializer(serializers.ModelSerializer):
 
 
 class SimpleSkillSerializer(SimpleModelSerializer):
-
     class Meta:
         model = Skill
         fields = ('id', 'name', 'slug', 'type')
@@ -367,19 +369,16 @@ class AbstractExperienceSerializer(SimpleAbstractExperienceSerializer):
 
 
 class SimpleWorkSerializer(SimpleAbstractExperienceSerializer):
-
     class Meta(SimpleAbstractExperienceSerializer.Meta):
         model = Work
 
 
 class SimpleEducationSerializer(SimpleAbstractExperienceSerializer):
-
     class Meta(SimpleAbstractExperienceSerializer.Meta):
         model = Education
 
 
 class SimpleConnectionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Connection
         fields = '__all__'
@@ -400,13 +399,13 @@ class SimpleUploadSerializer(serializers.ModelSerializer):
 
     def get_display_size(self, obj):
         filesize = obj.file.size
-        converter = {'KB': 10**3, 'MB': 10**6, 'GB': 10**9, 'TB': 10**12}
+        converter = {'KB': 10 ** 3, 'MB': 10 ** 6, 'GB': 10 ** 9, 'TB': 10 ** 12}
         units = ['TB', 'GB', 'MB', 'KB']
 
         for label in units:
             conversion = converter[label]
             if conversion and filesize > conversion:
-                return '%s %s' % (round(filesize/conversion, 2), label)
+                return '%s %s' % (round(filesize / conversion, 2), label)
         return '%s %s' % (filesize, 'bytes')
 
 
@@ -421,7 +420,6 @@ class UploadSerializer(SimpleUploadSerializer):
 
 
 class ContactRequestSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ContactRequest
         fields = ('fullname', 'email', 'item', 'body')
@@ -463,10 +461,15 @@ class TaskInvoiceSerializer(serializers.ModelSerializer, GetCurrentUserAnnotated
 
 
 class InviteRequestSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InviteRequest
         fields = '__all__'
         extra_kwargs = {
             'cv': {'required': True}
         }
+
+
+class DeveloperRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeveloperRequest
+        fields = '__all__'

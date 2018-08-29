@@ -132,13 +132,14 @@ class Rating(models.Model):
         choices=RATING_CRITERIA_CHOICES, blank=True, null=True,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in RATING_CRITERIA_CHOICES])
     )
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='ratings_created', on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='ratings_created',
+                                   on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         criteria = self.get_criteria_display()
         return '{}{} - {:0,.0f}%'.format(
-            self.content_object, (criteria and ' - {0}'.format(criteria) or ''), self.score*10
+            self.content_object, (criteria and ' - {0}'.format(criteria) or ''), self.score * 10
         )
 
     class Meta:
@@ -183,3 +184,12 @@ class InviteRequest(models.Model):
         if self.cv:
             return '{}{}'.format(not re.match(r'://', self.cv.url) and TUNGA_URL or '', self.cv.url)
         return None
+
+
+class DeveloperRequest(models.Model):
+    developer = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name="developer_request_developer")
+    client = models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name="developer_request_client")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} {}'.format(self.developer, self.client)

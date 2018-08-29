@@ -1,9 +1,9 @@
+import datetime
 import json
 import os
 import re
 from operator import itemgetter
 
-import datetime
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import FileSystemStorage
@@ -17,8 +17,9 @@ from tunga.settings import MEDIA_ROOT, MEDIA_URL
 from tunga_profiles.models import Skill
 from tunga_projects.models import Project, ProgressEvent
 from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
-from tunga_utils.models import ContactRequest, InviteRequest
-from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
+from tunga_utils.models import ContactRequest, InviteRequest, DeveloperRequest
+from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer, \
+    DeveloperRequestSerializer
 
 
 class SkillViewSet(viewsets.ReadOnlyModelViewSet):
@@ -28,7 +29,7 @@ class SkillViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
     permission_classes = [AllowAny]
-    search_fields = ('name', )
+    search_fields = ('name',)
 
 
 class ContactRequestView(generics.CreateAPIView):
@@ -49,6 +50,15 @@ class InviteRequestView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
 
+class DeveloperRequestView(generics.CreateAPIView):
+    """
+    Invite Request Resource
+    """
+    queryset = DeveloperRequest.objects.all()
+    serializer_class = DeveloperRequestSerializer
+    permission_classes = [AllowAny]
+
+
 @api_view(http_method_names=['GET'])
 @permission_classes([AllowAny])
 def get_medium_posts(request):
@@ -66,7 +76,7 @@ def get_medium_posts(request):
                     latestVersion=post['latestVersion']
                 )
                 for key, post in six.iteritems(response['payload']['references']['Post'])
-                ]
+            ]
             # Sort latest first
             posts = sorted(posts, key=itemgetter('created_at'), reverse=True)
         except:
