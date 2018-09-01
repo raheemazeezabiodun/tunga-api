@@ -177,7 +177,7 @@ class InterestPoll(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls', on_delete=models.DO_NOTHING)
     status = models.CharField(
-        max_length=20, choices=REQUEST_STATUS_CHOICES,
+        max_length=20, choices=status_choices,
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in status_choices]),
         default=STATUS_INITIAL
     )
