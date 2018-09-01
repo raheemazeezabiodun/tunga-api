@@ -16,7 +16,8 @@ from tunga_utils.validators import validate_field_schema
 class SimpleProjectSerializer(SimpleModelSerializer):
     class Meta:
         model = Project
-        fields = ('id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived')
+        fields = (
+        'id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived')
 
 
 class NestedProjectSerializer(SimpleModelSerializer):
@@ -103,6 +104,7 @@ class ProjectSerializer(
     progress_events = SimpleProgressEventSerializer(required=False, many=True, source='progressevent_set')
     meta = SimpleProjectMetaSerializer(required=False, many=True, source='projectmeta_set')
     change_log = serializers.JSONField(required=False, write_only=True)
+    margin = serializers.ReadOnlyField()
 
     class Meta:
         model = Project
@@ -153,7 +155,8 @@ class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSeriali
         read_only_fields = ('created_at', 'updated_at')
 
 
-class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
+class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer,
+                              GetCurrentUserAnnotatedSerializerMixin):
     created_by = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     project = SimpleProjectSerializer()
     progress_reports = SimpleProgressReportSerializer(
@@ -172,7 +175,8 @@ class ProgressEventSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSe
                 FieldChangeLog.objects.create(content_object=instance, created_by=self.get_current_user(), **item)
 
 
-class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer, GetCurrentUserAnnotatedSerializerMixin):
+class ProgressReportSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer,
+                               GetCurrentUserAnnotatedSerializerMixin):
     user = SimplestUserSerializer(required=False, read_only=True, default=CreateOnlyCurrentUserDefault())
     event = NestedProgressEventSerializer()
     status_display = serializers.CharField(required=False, read_only=True, source='get_status_display')
