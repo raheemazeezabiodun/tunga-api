@@ -105,6 +105,7 @@ class ProjectSerializer(
     meta = SimpleProjectMetaSerializer(required=False, many=True, source='projectmeta_set')
     change_log = serializers.JSONField(required=False, write_only=True)
     margin = serializers.ReadOnlyField()
+    interest_polls = SimpleInterestPollSerializer(required=False, many=True, source='interestpoll_set')
 
     class Meta:
         model = Project
