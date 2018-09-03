@@ -2,7 +2,7 @@ import requests
 from django.utils import six
 
 from tunga.settings import HUBSPOT_API_KEY, TUNGA_URL, HUBSPOT_DEFAULT_DEAL_STAGE_MEMBER, HUBSPOT_DEFAULT_DEAL_STAGE_NEW_USER
-from tunga_utils.constants import TASK_SOURCE_NEW_USER
+from tunga_utils.constants import TASK_SOURCE_NEW_USER, PROJECT_STAGE_OPPORTUNITY
 
 HUBSPOT_API_BASE_URL = 'https://api.hubapi.com'
 HUBSPOT_ENDPOINT_CREATE_UPDATE_CONTACT = '/contacts/v1/contact/createOrUpdate/email/{contact_email}/'
@@ -128,7 +128,7 @@ def create_hubspot_deal_property(name, label, description, group_name, property_
 def create_or_update_hubspot_deal(task, trials=0, **kwargs):
     if task.archived:
         return None
-    
+
     properties = []
     associatedVids = []
 
@@ -247,6 +247,107 @@ def create_or_update_hubspot_deal(task, trials=0, **kwargs):
         )
         # Try again
         return create_or_update_hubspot_deal(task, trials=trials + 1)
+    return None
+
+
+def create_or_update_project_hubspot_deal(project, trials=0, **kwargs):
+    if project.archived:
+        return None
+
+    properties = []
+    associatedVids = []
+
+    client_vid = get_hubspot_contact_vid(project.owner and project.owner.email or project.user.email)
+    associatedVids.append(client_vid)
+
+    properties.extend(
+        [
+            dict(
+                name=KEY_DEALNAME,
+                value=project.title
+            ),
+            dict(
+                name=KEY_DEALURL,
+                value='{}/projects/{}'.format(TUNGA_URL, project.id)
+            )
+        ]
+    )
+
+    if not project.hubspot_deal_id:
+        properties.extend(
+            [
+                dict(
+                    name=KEY_PIPELINE,
+                    value=KEY_VALUE_DEFAULT
+                ),
+                dict(
+                    name=KEY_DEALTYPE,
+                    value=KEY_VALUE_NEWBUSINESS
+                )
+            ]
+        )
+
+    if KEY_DEALSTAGE in kwargs or not project.hubspot_deal_id:
+        deal_stage = kwargs.get(
+            KEY_DEALSTAGE,
+            project.stage == PROJECT_STAGE_OPPORTUNITY and HUBSPOT_DEFAULT_DEAL_STAGE_NEW_USER or HUBSPOT_DEFAULT_DEAL_STAGE_MEMBER
+        )
+        properties.append(
+            dict(
+                name=KEY_DEALSTAGE,
+                value=deal_stage or KEY_VALUE_APPOINTMENT_SCHEDULED
+            )
+        )
+
+    if project.budget:
+        properties.append(
+            dict(
+                name=KEY_AMOUNT,
+                value=str(project.budget)
+            )
+        )
+    if 'createdate' in kwargs:
+        properties.append(
+            dict(
+                name='createdate',
+                value=kwargs['createdate']
+            )
+        )
+
+    payload = dict(
+        associations=dict(
+            associatedCompanyIds=[],
+            associatedVids=associatedVids
+        ),
+        properties=properties
+    )
+
+    if project.hubspot_deal_id:
+        r = requests.put(
+            get_authed_hubspot_endpoint_url(
+                '{}/{}'.format(HUBSPOT_ENDPOINT_CREATE_DEAL, project.hubspot_deal_id), HUBSPOT_API_KEY
+            ), json=payload, verify=False
+        )
+    else:
+        r = requests.post(
+            get_authed_hubspot_endpoint_url(
+                HUBSPOT_ENDPOINT_CREATE_DEAL, HUBSPOT_API_KEY
+            ), json=payload, verify=False
+        )
+
+    if r.status_code in [200, 201]:
+        response = r.json()
+        project.hubspot_deal_id = response['dealId']
+        project.save()
+        return response
+    elif r.status_code >= 300 and trials < 3:
+        # Create properties
+        create_hubspot_deal_property(
+            name=KEY_DEALURL, label='Deal URL', description='URL of the deal',
+            group_name='dealinformation', property_type='string', field_type='text'
+        )
+        # Try again
+        return create_or_update_project_hubspot_deal(project, trials=trials + 1)
     return None
 
 
