@@ -1,13 +1,16 @@
 from actstream.signals import action
 from django.contrib.admin.options import get_content_type_for_model
 from django.db.models.signals import post_save
-from django.dispatch.dispatcher import receiver
+from django.dispatch.dispatcher import receiver, Signal
 
 from tunga_activity import verbs
 from tunga_messages.models import Channel
 from tunga_tasks.models import Task
 from tunga_utils.models import ContactRequest, Upload, InviteRequest
 from tunga_utils.notifications.generic import notify_new_contact_request, notify_new_invite_request
+
+
+post_nested_save = Signal(providing_args=["instance", "created"])
 
 
 @receiver(post_save, sender=ContactRequest)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict
-from copy import copy
+
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.utils import six
@@ -13,6 +13,7 @@ from tunga_profiles.utils import profile_check
 from tunga_tasks.models import TaskInvoice
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import GenericUpload, ContactRequest, Upload, AbstractExperience, Rating, InviteRequest
+from tunga_utils.signals import post_nested_save
 
 
 class CreateOnlyCurrentUserDefault(serializers.CurrentUserDefault):
@@ -148,7 +149,7 @@ class NestedModelSerializer(serializers.ModelSerializer):
                     serializer_class = serializer_field.__class__
                     validated_data[clean_attribute_key] = serializer_class.Meta.model.objects.get(pk=attribute_value_object_id)
 
-        is_created = bool(instance)
+        is_created = not bool(instance)
         if instance:
             instance = super(NestedModelSerializer, self).update(instance, validated_data)
         else:
@@ -177,6 +178,8 @@ class NestedModelSerializer(serializers.ModelSerializer):
                     serializer.save()
         except:
             pass
+
+        post_nested_save.send(sender=self.__class__.Meta.model, instance=instance, created=is_created)
         return instance
 
 
