@@ -7,6 +7,7 @@ from tunga_projects.models import Project, Participation, Document, ProgressEven
 from tunga_projects.notifications.generic import notify_new_project, notify_new_participant, notify_new_progress_report
 from tunga_projects.notifications.slack import notify_new_progress_report_slack
 from tunga_projects.tasks import sync_hubspot_deal
+from tunga_utils.signals import post_nested_save
 
 
 @receiver(post_save, sender=Project)
@@ -14,10 +15,13 @@ def activity_handler_new_project(sender, instance, created, **kwargs):
     if created:
         action.send(instance.user, verb=verbs.CREATE, action_object=instance)
 
-        if not instance.legacy_id:
+
+@receiver(post_nested_save, sender=Project)
+def activity_handler_new_full_project(sender, instance, created, **kwargs):
+    if not instance.legacy_id:
+        if created:
             notify_new_project.delay(instance.id)
 
-    if instance.legacy_id:
         sync_hubspot_deal.delay(instance.id)
 
 
