@@ -67,6 +67,7 @@ class Project(models.Model):
 
     legacy_id = models.PositiveIntegerField(blank=True, null=True)
     migrated_at = models.DateTimeField(blank=True, null=True)
+    hubspot_deal_id = models.CharField(editable=False, null=True, max_length=12)
 
     activity_objects = GenericRelation(
         Action,
