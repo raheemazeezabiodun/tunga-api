@@ -251,7 +251,8 @@ def create_or_update_hubspot_deal(task, trials=0, **kwargs):
 
 
 def create_or_update_project_hubspot_deal(project, trials=0, **kwargs):
-    if project.archived:
+    if project.archived or project.legacy_id:
+        # Don't sync archived and legacy projects
         return None
 
     properties = []
