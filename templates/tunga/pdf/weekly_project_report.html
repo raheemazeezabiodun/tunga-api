@@ -1,0 +1,77 @@
+{% extends "tunga/pdf/base.html" %}
+{% block pdf_style %}
+    table tr,
+    table tr {
+    border: 1px solid #666;
+    padding: 5px;
+    padding-left: 10px;
+    margin-left: 10px;
+    }
+    {#    table td,#}
+    {#    table td {#}
+    {#    border-right: 1px solid #666;#}
+    {#    }#}
+    table tfoot tr:last-child,
+    table.plan tbody tr:last-child {
+    border-bottom-width: 0;
+    }
+    section {
+    margin-bottom: 10px;
+    }
+    tr:nth-child(odd) {
+    background-color: #f2f2f2
+    }
+{% endblock %}
+
+{% block pdf_content %}
+    <div class="container">
+        <h1>Project updates for week {{ week }}</h1>
+        {% for project in projects %}
+            <h2 style="color: #ed134d">{{ project.title }}</h2>
+            <table border="1" class="table table-striped">
+                <tr>
+                    <td>Project Manager</td>
+                    <td>
+                        {{ project.pm }}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Upcoming milestones</td>
+                    <td>
+                        <ul>
+                            {% for milestone in project.milestones %}
+                                <li>{{ milestone.title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Upcoming payments</td>
+                    <td>
+                        <ul>
+                            <li>List of upcoming payment</li>
+                            {% for payment in project.payments %}
+                                <li>{{ payment.invoice.title }} - {{ payment.created_at }}
+                                    - €{{ payment.amount }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Upcoming Payouts</td>
+                    <td>
+                        <ul>
+                            <li>List of upcoming payouts</li>
+                            {% for payout in project.payouts %}
+                                <li>{{ payout.invoice.title }} - {{ payout.created_at }}
+                                    - €{{ payout.amount }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        {% endfor %}
+
+    </div>
+
+{% endblock %}
