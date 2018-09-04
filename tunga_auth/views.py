@@ -477,6 +477,23 @@ def slack_connect_callback(request):
 
                         meta_info['slack_channels'] = json.dumps(simple_channels)
 
+                groups_response = slack_client.groups.list(exclude_archived=True)
+                if groups_response.successful:
+                    groups = groups_response.body.get(slack_utils.KEY_GROUPS, None)
+
+                    if groups:
+                        simple_groups = []
+
+                        for group in groups:
+                            simple_groups.append(
+                                dict(
+                                    id=group.get('id', None),
+                                    name=group.get('name', None)
+                                )
+                            )
+
+                        meta_info['slack_groups'] = json.dumps(simple_groups)
+
                 for meta_key in token_info:
                     meta_info['slack_{}'.format(meta_key)] = token_info[meta_key]
                 save_project_metadata(project_id, meta_info)
