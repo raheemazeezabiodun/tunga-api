@@ -1,0 +1,34 @@
+{% extends "tunga/pdf/base.html" %}
+{% block pdf_style %}
+    table tr,
+    table tr {
+    border: 1px solid #666;
+    padding: 5px;
+    padding-left: 10px;
+    margin-left: 10px;
+    }
+    table tfoot tr:last-child,
+    table.plan tbody tr:last-child {
+    border-bottom-width: 0;
+    }
+    section {
+    margin-bottom: 10px;
+    }
+    tr:nth-child(odd) {
+    background-color: #f2f2f2
+    }
+{% endblock %}
+
+{% block pdf_content %}
+    <div class="container">
+        <h1>Payment updates for week {{ week }}</h1>
+
+        {% include "tunga/pdf/weekly_payment_include_file.html" with invoices=paid_invoices title="Paid invoices" type_of_date="Payment" %}
+
+        {% include "tunga/pdf/weekly_payment_include_file.html" with invoices=over_due_invoices title="Overdue invoices" type_of_date="Due" %}
+
+        {% include "tunga/pdf/weekly_payment_include_file.html" with invoices=unpaid_invoices title="Unpaid invoices" type_of_date="Due" %}
+
+    </div>
+
+{% endblock %}

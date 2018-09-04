@@ -13,7 +13,7 @@ from tunga_utils.constants import PROGRESS_EVENT_MILESTONE, \
 
 
 @job
-def weekly_report(projects):
+def weekly_project_report(projects):
     active_projects = Project.objects.filter(id__in=projects)
 
     projects_ = []
@@ -58,4 +58,17 @@ def weekly_report(projects):
                           })
     ctx = {"projects": projects_, "week": datetime.datetime.utcnow().isocalendar()[1]}
     rendered_html = render_to_string("tunga/pdf/weekly_project_report.html", context=ctx).encode(encoding="UTF-8")
+    pdf_file = HTML(string=rendered_html, encoding='utf-8').write_pdf()
+
+
+@job
+def weekly_payment_report(paid, unpaid_overdue, unpaid):
+    paid_invoices = Invoice.objects.filter(id__in=paid)
+    over_due_invoices = Invoice.objects.filter(id__in=unpaid_overdue)
+    unpaid_invoices = Invoice.objects.filter(id__in=unpaid)
+    ctx = {"paid_invoices": paid_invoices,
+           "over_due_invoices": over_due_invoices,
+           "unpaid_invoices": unpaid_invoices,
+           "week": datetime.datetime.utcnow().isocalendar()[1]}
+    rendered_html = render_to_string("tunga/pdf/weekly_payment_report.html", context=ctx).encode(encoding="UTF-8")
     pdf_file = HTML(string=rendered_html, encoding='utf-8').write_pdf()

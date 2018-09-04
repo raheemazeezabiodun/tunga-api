@@ -1,0 +1,23 @@
+<h2 style="color: #ed134d">{{ title }}</h2>
+<table border="1" class="table table-striped">
+    <tr>
+        <td>Project/Invoice</td>
+        <td>Sum</td>
+        <td>{{ type_of_date }} date</td>
+    </tr>
+    {% for invoice in invoices %}
+        <tr>
+            <td>{{ invoice.project }}/{{ invoice.title }}</td>
+            <td>{{ invoice.amount }}</td>
+
+            {% if type_of_date == 'Payment' %}
+                <td>{{ invoice.paid_at }}</td>
+            {% elif type_of_date == 'Due' %}
+                <td>{{ invoice.due_at }}</td>
+            {% else %}
+                <td>{{ invoice.due_at }}</td>
+            {% endif %}
+
+        </tr>
+    {% endfor %}
+</table>

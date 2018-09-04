@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 
 from tunga_projects.models import Project
-from tunga_projects.tasks import weekly_report
+from tunga_projects.tasks import weekly_project_report
 from tunga_utils.constants import PROJECT_STAGE_ACTIVE
 
 
@@ -19,4 +19,4 @@ class Command(BaseCommand):
 
         active_projects = list(active_projects)
 
-        weekly_report(projects=active_projects)
+        weekly_project_report(projects=active_projects)
