@@ -1,7 +1,7 @@
 from django.db.models import Q
 from dry_rest_permissions.generics import DRYPermissionFiltersBase
 
-from tunga_utils.constants import STATUS_INITIAL, STATUS_ACCEPTED
+from tunga_utils.constants import STATUS_INITIAL, STATUS_ACCEPTED, STATUS_INTERESTED
 from tunga_utils.filterbackends import dont_filter_staff_or_superuser
 
 
@@ -15,5 +15,9 @@ class ProjectFilterBackend(DRYPermissionFiltersBase):
             (
                 Q(participation__user=request.user) &
                 Q(participation__status__in=[STATUS_INITIAL, STATUS_ACCEPTED])
+            ) |
+            (
+                Q(interestpoll__user=request.user) &
+                Q(interestpoll__status__in=[STATUS_INITIAL, STATUS_INTERESTED])
             )
         ).distinct()
