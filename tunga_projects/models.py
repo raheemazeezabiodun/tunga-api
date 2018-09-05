@@ -195,6 +195,11 @@ class InterestPoll(models.Model):
         help_text=','.join(['%s - %s' % (item[0], item[1]) for item in status_choices]),
         default=STATUS_INITIAL
     )
+    approval_status = models.CharField(
+        max_length=20, choices=REQUEST_STATUS_CHOICES,
+        help_text=','.join(['%s - %s' % (item[0], item[1]) for item in REQUEST_STATUS_CHOICES]),
+        default=STATUS_INITIAL
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='project_interest_polls_created')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
