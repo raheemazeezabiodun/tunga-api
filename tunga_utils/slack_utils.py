@@ -54,6 +54,7 @@ KEY_MEMBERS = 'members'
 KEY_PROFILE = 'profile'
 KEY_EMAIL = 'email'
 KEY_NAME = 'name'
+KEY_GROUPS = 'groups'
 
 
 def get_authorize_url(redirect_uri):

@@ -399,7 +399,8 @@ SLACK_SCOPES = [
     'identify',
     'channels:history', 'channels:read', 'channels:write',
     'chat:write:bot', 'im:write',
-    'users:read', 'users.profile:read', 'users:read.email'
+    'users:read', 'users.profile:read', 'users:read.email',
+    'groups:read'
     # 'bot'
 ]
 
