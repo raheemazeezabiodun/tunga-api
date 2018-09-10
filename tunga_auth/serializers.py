@@ -201,7 +201,7 @@ class TungaRegisterSerializer(RegisterSerializer):
 
 
 class TungaTokenSerializer(TokenSerializer):
-    user = SimpleUserSerializer(read_only=True, required=False)
+    user = UserSerializer(read_only=True, required=False)
 
     class Meta:
         model = TokenSerializer.Meta.model
