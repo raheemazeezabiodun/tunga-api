@@ -7,6 +7,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 
+from tunga.settings import TUNGA_URL
 from tunga_utils.constants import USER_TYPE_DEVELOPER
 from tunga_auth.utils import get_session_user_type, get_session_callback_url
 from tunga_utils.emails import render_mail
@@ -30,6 +31,15 @@ class TungaAccountAdapter(DefaultAccountAdapter):
         # Feed the reset to our custom renderer
 
         return render_mail(subject, template_prefix='{}_message'.format(template_prefix), to_emails=[email], context=context)
+
+    def get_email_confirmation_url(self, request, emailconfirmation):
+        """Constructs the email confirmation (activation) url.
+
+        Note that if you have architected your system such that email
+        confirmations are sent outside of the request context `request`
+        can be `None` here.
+        """
+        return '{}/signup/confirm/{}'.format(TUNGA_URL, emailconfirmation.key)
 
     def send_confirmation_mail(self, request, emailconfirmation, signup):
         current_site = get_current_site(request)
