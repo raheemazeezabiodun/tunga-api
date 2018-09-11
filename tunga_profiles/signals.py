@@ -5,8 +5,8 @@ from django.dispatch.dispatcher import receiver, Signal
 from tunga_activity import verbs
 from tunga_profiles.notifications import send_new_developer_email, send_developer_accepted_email, \
     send_developer_application_received_email, send_new_skill_email, send_developer_invited_email, \
-    notify_user_profile_updated_slack
-from tunga_profiles.models import Connection, DeveloperApplication, Skill, DeveloperInvitation, UserProfile
+    notify_user_profile_updated_slack, notify_user_request_slack
+from tunga_profiles.models import Connection, DeveloperApplication, Skill, DeveloperInvitation, UserProfile, UserRequest
 from tunga_utils.constants import REQUEST_STATUS_ACCEPTED, STATUS_ACCEPTED, STATUS_REJECTED
 
 
@@ -52,5 +52,10 @@ def activity_handler_developer_invitation(sender, instance, created, **kwargs):
 
 @receiver(user_profile_updated, sender=UserProfile)
 def activity_handler_profile_update(sender, profile, **kwargs):
-    notify_user_profile_updated_slack(profile.id)
+    notify_user_profile_updated_slack.delay(profile.id)
 
+
+@receiver(post_save, sender=UserRequest)
+def activity_handler_user_request(sender, instance, created, **kwargs):
+    if created:
+        notify_user_request_slack.delay(instance.id)

@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from django_rq.decorators import job
 
 from tunga.settings import TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS, TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, \
-    SLACK_ATTACHMENT_COLOR_GREEN, SLACK_ATTACHMENT_COLOR_RED, SLACK_STAFF_PROFILES_CHANNEL
-from tunga_profiles.models import DeveloperApplication, Skill, DeveloperInvitation, UserProfile
+    SLACK_ATTACHMENT_COLOR_GREEN, SLACK_ATTACHMENT_COLOR_RED, SLACK_STAFF_PROFILES_CHANNEL, SLACK_STAFF_LEADS_CHANNEL
+from tunga_profiles.models import DeveloperApplication, Skill, DeveloperInvitation, UserProfile, UserRequest
 from tunga_tasks.models import Task
 from tunga_utils import slack_utils
 from tunga_utils.constants import USER_TYPE_DEVELOPER
@@ -155,5 +155,31 @@ def notify_user_profile_updated_slack(instance, edited=None):
             slack_utils.KEY_TEXT: slack_msg,
             slack_utils.KEY_ATTACHMENTS: attachments,
             slack_utils.KEY_CHANNEL: SLACK_STAFF_PROFILES_CHANNEL
+        }
+    )
+
+
+@job
+def notify_user_request_slack(instance):
+    instance = clean_instance(instance, UserRequest)
+
+    if instance.user.type != USER_TYPE_DEVELOPER:
+        # Only send requests for devs
+        return
+
+    requester_url = '{}/network/{}'.format(TUNGA_URL, instance.created_by.username)
+    requestee_url = '{}/network/{}'.format(TUNGA_URL, instance.user.username)
+    slack_msg = "<{}|{}> requested to work with <{}|{}>".format(
+        requester_url,
+        instance.created_by.display_name,
+        requestee_url,
+        instance.user.display_name,
+    )
+
+    slack_utils.send_incoming_webhook(
+        SLACK_STAFF_INCOMING_WEBHOOK,
+        {
+            slack_utils.KEY_TEXT: slack_msg,
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_LEADS_CHANNEL
         }
     )

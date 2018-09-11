@@ -38,7 +38,7 @@ from tunga_auth.models import EmailVisitor, TungaUser
 from tunga_auth.serializers import UserSerializer, AccountInfoSerializer, EmailVisitorSerializer
 from tunga_auth.utils import get_session_task, get_session_visitor_email, create_email_visitor_session, \
     get_session_next_url, get_session_project
-from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration
+from tunga_profiles.models import BTCWallet, UserProfile, AppIntegration, UserRequest
 from tunga_projects.utils import save_project_metadata
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.utils import save_task_integration_meta
@@ -197,6 +197,24 @@ class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.Updat
         http_response = HttpResponse(pdf_file, content_type='application/pdf')
         http_response['Content-Disposition'] = 'filename="developer_profile.pdf"'
         return http_response
+
+    @detail_route(
+        methods=['post'], url_path='request',
+        permission_classes=[IsAuthenticated]
+    )
+    def request(self, request, user_id=None):
+        """
+        Request User Endpoint
+        ---
+        omit_serializer: True
+        omit_parameters:
+            - query
+        """
+        user = get_object_or_404(self.get_queryset(), pk=user_id)
+
+        UserRequest.objects.create(user=user, created_by=request.user)
+
+        return Response({'message': 'Developer request sent'})
 
 
 class EmailVisitorView(generics.CreateAPIView, generics.RetrieveAPIView):

@@ -473,3 +473,13 @@ class Inquirer(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+@python_2_unicode_compatible
+class UserRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='user_requests')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='users_requested')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return '{} requested {}'.format(self.created_by.short_name(), self.user.short_name())
