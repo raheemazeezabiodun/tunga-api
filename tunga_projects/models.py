@@ -204,6 +204,8 @@ class InterestPoll(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     responded_at = models.DateTimeField(blank=True, null=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
+    reminded_at = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return '#{} | {} - {}'.format(self.id, self.user.get_short_name() or self.user.username, self.project.title)

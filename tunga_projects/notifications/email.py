@@ -1,36 +1,17 @@
 import datetime
 
-from django.contrib.auth import get_user_model
 from django_rq import job
 
-from tunga.settings import TUNGA_URL
-from tunga_projects.models import Participation, ProgressReport, ProgressEvent, InterestPoll, Project
+from tunga.settings import TUNGA_URL, MANDRILL_VAR_FIRST_NAME
+from tunga_projects.models import Participation, ProgressReport, ProgressEvent, InterestPoll
 from tunga_settings.slugs import NEW_TASK_PROGRESS_REPORT_EMAIL, TASK_SURVEY_REMINDER_EMAIL
 from tunga_settings.utils import check_switch_setting
+from tunga_utils import mandrill_utils
 from tunga_utils.constants import PROGRESS_EVENT_MILESTONE, \
     PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
-    STATUS_ACCEPTED, USER_TYPE_DEVELOPER, PROJECT_STAGE_OPPORTUNITY
+    STATUS_ACCEPTED
 from tunga_utils.emails import send_mail
 from tunga_utils.helpers import clean_instance
-
-
-@job
-def notify_new_project_email_dev(project):
-    project = clean_instance(project, Project)
-
-    if project.stage != PROJECT_STAGE_OPPORTUNITY:
-        # Only poll dev interest for opportunities
-        return
-
-    a = project.skills.all()
-
-    # TODO: Send email about new project to devs
-    developers = get_user_model().objects.filter(type=USER_TYPE_DEVELOPER, userprofile__skills__in=project.skills.all())
-
-    for developer in developers:
-        InterestPoll.objects.update_or_create(
-            project=project, user=developer, defaults=dict(created_by=project.user)
-        )
 
 
 @job
@@ -148,3 +129,33 @@ def notify_new_progress_report_email_client(progress_report):
     send_mail(
         subject, 'tunga/email/new_progress_report', to, ctx
     )
+
+
+@job
+def notify_interest_poll_email(interest_poll, reminder=False):
+    interest_poll = clean_instance(interest_poll, InterestPoll)
+
+    to = [interest_poll.user.email]
+
+    merge_vars = [
+        mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, interest_poll.user.first_name),
+        mandrill_utils.create_merge_var('opportunity_title', interest_poll.project.title),
+        mandrill_utils.create_merge_var('skills', str(interest_poll.project.skills)),
+        mandrill_utils.create_merge_var('description', interest_poll.project.description),
+        mandrill_utils.create_merge_var('scope', interest_poll.project.get_expected_duration_display()),
+        mandrill_utils.create_merge_var('yes_url', '{}/poll/{}/status/interested'.format(TUNGA_URL, interest_poll.id)),
+        mandrill_utils.create_merge_var('no_url', '{}/poll/{}/status/uninterested'.format(TUNGA_URL, interest_poll.id)),
+    ]
+
+    mandrill_response = mandrill_utils.send_email(
+        reminder and '90-availability-for-project-reminder' or '89-availability-for-project',
+        to, merge_vars=merge_vars
+    )
+    if mandrill_response:
+        if reminder:
+            interest_poll.reminded_at = datetime.datetime.utcnow()
+        else:
+            interest_poll.sent_at = datetime.datetime.utcnow()
+        interest_poll.save()
+
+        mandrill_utils.log_emails.delay(mandrill_response, to)

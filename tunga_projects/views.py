@@ -2,7 +2,10 @@
 from __future__ import unicode_literals
 
 from dry_rest_permissions.generics import DRYObjectPermissions
+from rest_framework.decorators import detail_route
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from tunga_projects.filterbackends import ProjectFilterBackend
@@ -11,6 +14,7 @@ from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationF
 from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport, InterestPoll
 from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
     ProgressEventSerializer, ProgressReportSerializer, InterestPollSerializer
+from tunga_projects.tasks import create_interest_polls
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -24,6 +28,22 @@ class ProjectViewSet(ModelViewSet):
     filter_class = ProjectFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (ProjectFilterBackend,)
     search_fields = ('title',)
+
+    @detail_route(
+        methods=['post'], url_path='remind',
+        permission_classes=[IsAuthenticated]
+    )
+    def remind(self, request, pk=None):
+        """
+        Remind Endpoint
+        ---
+        omit_serializer: True
+        omit_parameters:
+            - query
+        """
+        project = get_object_or_404(self.get_queryset(), pk=pk)
+        create_interest_polls.delay(project.id, remind=True)
+        return Response({'message': 'reminders sent'})
 
 
 class ParticipationViewSet(ModelViewSet):
