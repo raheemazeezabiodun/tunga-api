@@ -125,7 +125,7 @@ class AccountInfoView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data)
 
 
-class UserViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+class UserViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
     """
     User Resource
     """

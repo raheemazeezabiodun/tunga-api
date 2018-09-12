@@ -12,6 +12,7 @@ from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PR
     PROGRESS_EVENT_MILESTONE, PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED
 from tunga_utils.helpers import clean_instance, convert_to_text
 
+
 @job
 def notify_new_project_slack(project):
     notify_new_project_slack_admin.delay(project)
