@@ -137,14 +137,16 @@ def notify_interest_poll_email(interest_poll, reminder=False):
 
     to = [interest_poll.user.email]
 
+    poll_url = '{}/poll/{}/{}'.format(TUNGA_URL, interest_poll.id, interest_poll.token)
+
     merge_vars = [
         mandrill_utils.create_merge_var(MANDRILL_VAR_FIRST_NAME, interest_poll.user.first_name),
         mandrill_utils.create_merge_var('opportunity_title', interest_poll.project.title),
         mandrill_utils.create_merge_var('skills', str(interest_poll.project.skills)),
         mandrill_utils.create_merge_var('description', interest_poll.project.description),
         mandrill_utils.create_merge_var('scope', interest_poll.project.get_expected_duration_display()),
-        mandrill_utils.create_merge_var('yes_url', '{}/poll/{}/status/interested'.format(TUNGA_URL, interest_poll.id)),
-        mandrill_utils.create_merge_var('no_url', '{}/poll/{}/status/uninterested'.format(TUNGA_URL, interest_poll.id)),
+        mandrill_utils.create_merge_var('yes_url', '{}?status=interested'.format(poll_url)),
+        mandrill_utils.create_merge_var('no_url', '{}?status=uninterested'.format(poll_url)),
     ]
 
     mandrill_response = mandrill_utils.send_email(
