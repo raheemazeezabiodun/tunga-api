@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import datetime
 import re
+import uuid
 
 import tagulous.models
 from actstream.models import Action
@@ -206,6 +207,7 @@ class InterestPoll(models.Model):
     responded_at = models.DateTimeField(blank=True, null=True)
     sent_at = models.DateTimeField(blank=True, null=True)
     reminded_at = models.DateTimeField(blank=True, null=True)
+    token = models.UUIDField(default=uuid.uuid4)
 
     def __str__(self):
         return '#{} | {} - {}'.format(self.id, self.user.get_short_name() or self.user.username, self.project.title)
