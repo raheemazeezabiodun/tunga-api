@@ -11,6 +11,7 @@ from tunga_utils.notifications.generic import notify_new_contact_request, notify
 
 
 post_nested_save = Signal(providing_args=["instance", "created"])
+post_field_update = Signal(providing_args=["instance", "field"])
 
 
 @receiver(post_save, sender=ContactRequest)
