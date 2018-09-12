@@ -23,7 +23,11 @@ def activate_project(project):
     for poll in approved_polls:
         Participation.objects.update_or_create(
             project=project, user=poll.user,
-            defaults=dict(status=STATUS_ACCEPTED, responded_at=poll.responded_at)
+            defaults=dict(
+                status=STATUS_ACCEPTED,
+                responded_at=poll.responded_at,
+                created_by=poll.created_by or poll.project.user
+            )
         )
 
 
