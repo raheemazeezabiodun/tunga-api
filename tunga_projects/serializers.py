@@ -4,13 +4,13 @@ from rest_framework.exceptions import ValidationError
 from tunga_activity.models import FieldChangeLog
 from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport, \
     InterestPoll
-from tunga_projects.signals import interest_poll_updated
 from tunga_utils.constants import PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STATUS_STUCK, \
     PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.serializers import ContentTypeAnnotatedModelSerializer, CreateOnlyCurrentUserDefault, \
     NestedModelSerializer, SimplestUserSerializer, SimpleModelSerializer, \
     SimpleSkillSerializer
+from tunga_utils.signals import post_field_update
 from tunga_utils.validators import validate_field_schema
 
 
@@ -18,7 +18,9 @@ class SimpleProjectSerializer(SimpleModelSerializer):
     class Meta:
         model = Project
         fields = (
-        'id', 'title', 'description', 'type', 'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived')
+            'id', 'title', 'description', 'type',
+            'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived'
+        )
 
 
 class NestedProjectSerializer(SimpleModelSerializer):
@@ -155,10 +157,11 @@ class InterestPollSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSer
 
         instance = super(InterestPollSerializer, self).nested_save_override(validated_data, instance=instance)
 
-        if initial_status != instance.status:
-            interest_poll_updated.send(sender=InterestPoll, instance=instance, field='status')
-        if initial_approval_status != instance.approval_status:
-            interest_poll_updated.send(sender=InterestPoll, instance=instance, field='approval_status')
+        if instance:
+            if initial_status != instance.status:
+                post_field_update.send(sender=InterestPoll, instance=instance, field='status')
+            if initial_approval_status != instance.approval_status:
+                post_field_update.send(sender=InterestPoll, instance=instance, field='approval_status')
         return instance
 
 
