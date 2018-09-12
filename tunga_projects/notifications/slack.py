@@ -6,10 +6,10 @@ from tunga.settings import TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_
     SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED, \
     SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_MISSED_UPDATES_CHANNEL, \
     SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_DEVELOPER_OPPORTUNITIES_CHANNEL
-from tunga_projects.models import Project, ProgressReport, ProgressEvent
+from tunga_projects.models import Project, ProgressReport, ProgressEvent, InterestPoll
 from tunga_utils import slack_utils
 from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
-    PROGRESS_EVENT_MILESTONE, PROJECT_STAGE_OPPORTUNITY
+    PROGRESS_EVENT_MILESTONE, PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED
 from tunga_utils.helpers import clean_instance, convert_to_text
 
 @job
@@ -364,3 +364,27 @@ def notify_missed_progress_event_slack(progress_event):
     # Save notification time
     progress_event.missed_notification_at = datetime.datetime.now()
     progress_event.save()
+
+
+@job
+def notify_interest_poll_status_slack(interest_poll):
+    interest_poll = clean_instance(interest_poll, InterestPoll)
+
+    if interest_poll.project.stage != PROJECT_STAGE_OPPORTUNITY or interest_poll.status != STATUS_INTERESTED:
+        # Notify only accepted opportunities
+        return
+
+    slack_msg = '<{}|{}> is interested in <{}|{}>'.format(
+        '{}/network/{}'.format(TUNGA_URL, interest_poll.user.username),
+        interest_poll.user.display_name,
+        '{}/projects/{}'.format(TUNGA_URL, interest_poll.project.id),
+        interest_poll.project.title
+    )
+
+    slack_utils.send_incoming_webhook(
+        SLACK_STAFF_INCOMING_WEBHOOK,
+        {
+            slack_utils.KEY_TEXT: slack_msg,
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_LEADS_CHANNEL
+        }
+    )

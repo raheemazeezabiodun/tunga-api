@@ -1,14 +1,17 @@
 from actstream import action
 from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.dispatch import receiver, Signal
 
 from tunga_activity import verbs
-from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProgressReport
-from tunga_projects.notifications.generic import notify_new_project, notify_new_participant, notify_new_progress_report
+from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProgressReport, InterestPoll
+from tunga_projects.notifications.generic import notify_new_project, notify_new_participant, notify_new_progress_report, \
+    notify_interest_poll_status
 from tunga_projects.notifications.slack import notify_new_progress_report_slack
 from tunga_projects.tasks import sync_hubspot_deal, manage_interest_polls
-from tunga_utils.constants import PROJECT_STAGE_OPPORTUNITY
+from tunga_utils.constants import PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED, STATUS_INITIAL
 from tunga_utils.signals import post_nested_save
+
+interest_poll_updated = Signal(providing_args=["instance", "field"])
 
 
 @receiver(post_save, sender=Project)
@@ -59,3 +62,21 @@ def activity_handler_new_progress_report(sender, instance, created, **kwargs):
         notify_new_progress_report.delay(instance.id)
     elif not instance.legacy_id:
         notify_new_progress_report_slack.delay(instance.id, updated=True)
+
+
+@receiver(interest_poll_updated, sender=InterestPoll)
+def activity_handler_updated_interest_poll(sender, instance, field, **kwargs):
+    if field == 'status' and instance.status != STATUS_INITIAL:
+        action.send(
+            instance.user,
+            verb=instance.status == STATUS_INTERESTED and verbs.ACCEPT or verbs.REJECT,
+            action_object=instance, target=instance.project
+        )
+        notify_interest_poll_status.delay(instance.id)
+
+    if field == 'approval_status' and instance.approval_status != STATUS_INITIAL:
+        action.send(
+            instance.user,
+            verb=instance.status == STATUS_INTERESTED and verbs.APPROVE or verbs.DECLINE,
+            action_object=instance, target=instance.project
+        )

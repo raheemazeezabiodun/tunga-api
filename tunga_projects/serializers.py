@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from tunga_activity.models import FieldChangeLog
 from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProjectMeta, ProgressReport, \
     InterestPoll
+from tunga_projects.signals import interest_poll_updated
 from tunga_utils.constants import PROGRESS_REPORT_STATUS_CHOICES, PROGRESS_REPORT_STATUS_STUCK, \
     PROGRESS_REPORT_STUCK_REASON_CHOICES, PROGRESS_REPORT_STATUS_BEHIND_AND_STUCK
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
@@ -143,6 +144,22 @@ class InterestPollSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSer
         model = InterestPoll
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
+
+    def nested_save_override(self, validated_data, instance=None):
+        initial_status = None
+        initial_approval_status = None
+
+        if instance:
+            initial_status = instance.status
+            initial_approval_status = instance.approval_status
+
+        instance = super(InterestPollSerializer, self).nested_save_override(validated_data, instance=instance)
+
+        if initial_status != instance.status:
+            interest_poll_updated.send(sender=InterestPoll, instance=instance, field='status')
+        if initial_approval_status != instance.approval_status:
+            interest_poll_updated.send(sender=InterestPoll, instance=instance, field='approval_status')
+        return instance
 
 
 class DocumentSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):

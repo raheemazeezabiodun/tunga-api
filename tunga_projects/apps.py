@@ -14,5 +14,6 @@ class TungaProjectsConfig(AppConfig):
 
         registry.register(
             self.get_model('Project'), self.get_model('Participation'), self.get_model('Document'),
-            self.get_model('ProgressEvent'), self.get_model('ProgressReport')
+            self.get_model('ProgressEvent'), self.get_model('ProgressReport'),
+            self.get_model('InterestPoll')
         )

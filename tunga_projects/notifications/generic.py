@@ -3,7 +3,7 @@ from django_rq import job
 from tunga_projects.notifications.email import notify_new_participant_email_dev, \
     notify_new_progress_report_email_client, remind_progress_event_email
 from tunga_projects.notifications.slack import notify_new_progress_report_slack, \
-    notify_missed_progress_event_slack, notify_new_project_slack
+    notify_missed_progress_event_slack, notify_new_project_slack, notify_interest_poll_status_slack
 
 
 @job
@@ -28,5 +28,10 @@ def notify_new_progress_report(progress_report):
 
 
 @job
-def notify_missed_progress_event(instance):
-    notify_missed_progress_event_slack(instance)
+def notify_missed_progress_event(progress_event):
+    notify_missed_progress_event_slack(progress_event)
+
+
+@job
+def notify_interest_poll_status(interest_poll):
+    notify_interest_poll_status_slack(interest_poll)
