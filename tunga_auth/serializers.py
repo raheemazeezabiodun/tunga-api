@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model, login
 from django.core.validators import EmailValidator
 from django.db.models.aggregates import Avg
 from django.db.models.query_utils import Q
+from django.utils import six
 from django.utils.encoding import force_text
 from django.utils.http import urlsafe_base64_decode
 from rest_auth.registration.serializers import RegisterSerializer
@@ -19,14 +20,15 @@ from tunga_auth.forms import TungaPasswordResetForm
 from tunga_auth.models import USER_TYPE_CHOICES, EmailVisitor
 from tunga_profiles.notifications import send_developer_invitation_accepted_email
 from tunga_utils.constants import USER_TYPE_DEVELOPER, STATUS_REJECTED, STATUS_INITIAL, STATUS_ACCEPTED
-from tunga_profiles.models import Connection, DeveloperApplication, UserProfile, DeveloperInvitation
+from tunga_profiles.models import Connection, DeveloperApplication, UserProfile, DeveloperInvitation, Company
 from tunga_utils.mixins import GetCurrentUserAnnotatedSerializerMixin
 from tunga_utils.models import Rating
 from tunga_utils.serializers import SimpleProfileSerializer, SimpleUserSerializer, SimpleWorkSerializer, \
-    SimpleEducationSerializer, SimpleConnectionSerializer, SimpleCompanySerializer
+    SimpleEducationSerializer, SimpleConnectionSerializer, SimpleCompanySerializer, SimplestCompanySerializer, \
+    NestedModelSerializer
 
 
-class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixin):
+class UserSerializer(NestedModelSerializer, SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixin):
     display_name = serializers.CharField(read_only=True, required=False)
     display_type = serializers.CharField(read_only=True, required=False)
     is_developer = serializers.BooleanField(read_only=True, required=False)
@@ -34,7 +36,7 @@ class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixi
     is_project_manager = serializers.BooleanField(read_only=True, required=False)
     is_admin = serializers.BooleanField(read_only=True, required=False)
     profile = SimpleProfileSerializer(read_only=True, required=False)
-    company = SimpleCompanySerializer(read_only=True, required=False)
+    company = SimplestCompanySerializer(required=False)
     work = SimpleWorkSerializer(many=True, source='work_set', read_only=True, required=False)
     education = SimpleEducationSerializer(many=True, source='education_set', read_only=True, required=False)
     can_connect = serializers.SerializerMethodField(read_only=True, required=False)
@@ -55,6 +57,16 @@ class UserSerializer(SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixi
             # 'username', 'email',
             'date_joined', 'last_login', 'is_staff', 'payoneer_signup_url', 'payoneer_status'
         )
+
+    def save_nested_company(self, data, instance, created=False):
+        if data:
+            company = instance.company
+            if not company:
+                company = Company(user=instance)
+
+            for key, value in six.iteritems(data):
+                setattr(company, key, value)
+            company.save()
 
     def get_can_connect(self, obj):
         current_user = self.get_current_user()

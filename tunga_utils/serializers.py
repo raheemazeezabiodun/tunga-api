@@ -235,6 +235,19 @@ class SkillsDetailsSerializer(serializers.Serializer):
         return json
 
 
+class SimplestCompanySerializer(serializers.ModelSerializer):
+    city = serializers.CharField(required=False)
+    skills = SkillSerializer(many=True, required=False)
+    country = CountryField(required=False)
+    country_name = serializers.CharField(required=False)
+    location = serializers.CharField(read_only=True)
+    skills_details = SkillsDetailsSerializer(read_only=True)
+
+    class Meta:
+        model = Company
+        exclude = ('user',)
+
+
 class SimpleCompanySerializer(serializers.ModelSerializer):
     city = serializers.CharField()
     skills = SkillSerializer(many=True)
