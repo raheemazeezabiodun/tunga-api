@@ -7,7 +7,21 @@ from tunga_utils.helpers import clean_instance
 
 
 @job
-def send_new_user_email(instance):
+def send_new_user_password_email(instance):
+    instance = clean_instance(instance, get_user_model())
+    subject = "You have been invited to become a Tunga {}".format(
+        instance.get_type_display().lower()
+    )
+    to = [instance.email]
+    ctx = {
+        'invite': instance,
+        'invite_url': '{}/password/{}/{}'.format(TUNGA_URL, instance.uid, instance.generate_reset_token())
+    }
+    send_mail(subject, 'tunga/email/user_invitation_password', to, ctx)
+
+
+@job
+def send_new_user_joined_email(instance):
     instance = clean_instance(instance, get_user_model())
     subject = "{} joined Tunga".format(instance.display_name)
     to = TUNGA_STAFF_UPDATE_EMAIL_RECIPIENTS
