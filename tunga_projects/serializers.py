@@ -115,6 +115,18 @@ class ProjectSerializer(
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at')
 
+    def nested_save_override(self, validated_data, instance=None):
+        initial_stage = None
+
+        if instance:
+            initial_stage = instance.stage
+
+        instance = super(ProjectSerializer, self).nested_save_override(validated_data, instance=instance)
+
+        if instance and initial_stage != instance.stage:
+            post_field_update.send(sender=Project, instance=instance, field='stage')
+        return instance
+
     def save_nested_skills(self, data, instance, created=False):
         if data is not None:
             instance.skills = ', '.join([skill.get('name', '') for skill in data])

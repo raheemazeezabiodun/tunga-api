@@ -7,11 +7,9 @@ from tunga_projects.models import Project, Participation, Document, ProgressEven
 from tunga_projects.notifications.generic import notify_new_project, notify_new_participant, notify_new_progress_report, \
     notify_interest_poll_status
 from tunga_projects.notifications.slack import notify_new_progress_report_slack
-from tunga_projects.tasks import sync_hubspot_deal, manage_interest_polls
-from tunga_utils.constants import PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED, STATUS_INITIAL
-from tunga_utils.signals import post_nested_save
-
-interest_poll_updated = Signal(providing_args=["instance", "field"])
+from tunga_projects.tasks import sync_hubspot_deal, manage_interest_polls, activate_project
+from tunga_utils.constants import PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED, STATUS_INITIAL, PROJECT_STAGE_ACTIVE
+from tunga_utils.signals import post_nested_save, post_field_update
 
 
 @receiver(post_save, sender=Project)
@@ -30,6 +28,13 @@ def activity_handler_new_full_project(sender, instance, created, **kwargs):
                 manage_interest_polls(instance.id, remind=False)
 
         sync_hubspot_deal.delay(instance.id)
+
+
+@receiver(post_field_update, sender=Project)
+def activity_handler_updated_project_field(sender, instance, field, **kwargs):
+    if field == 'stage' and instance.stage == PROJECT_STAGE_ACTIVE:
+        action.send(instance.user, verb=verbs.ACTIVATE, action_object=instance)
+        activate_project.delay(instance.id)
 
 
 @receiver(post_save, sender=Participation)
@@ -64,8 +69,8 @@ def activity_handler_new_progress_report(sender, instance, created, **kwargs):
         notify_new_progress_report_slack.delay(instance.id, updated=True)
 
 
-@receiver(interest_poll_updated, sender=InterestPoll)
-def activity_handler_updated_interest_poll(sender, instance, field, **kwargs):
+@receiver(post_field_update, sender=InterestPoll)
+def activity_handler_updated_interest_poll_field(sender, instance, field, **kwargs):
     if field == 'status' and instance.status != STATUS_INITIAL:
         action.send(
             instance.user,
