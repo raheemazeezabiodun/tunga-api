@@ -57,6 +57,19 @@ def create_project_slack_message(project, to_developer=False, reminder=False):
         attachments.append({
             slack_utils.KEY_TEXT: extra_details,
             slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+            slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_BLUE
+        })
+
+    if to_developer:
+        attachments.append({
+            slack_utils.KEY_FALLBACK: 'Show interest at {}'.format(project_url),
+            slack_utils.KEY_ACTIONS: [
+                {
+                    slack_utils.KEY_TYPE: slack_utils.VALUE_TYPE_BUTTON,
+                    slack_utils.KEY_TEXT: "I'm interested",
+                    slack_utils.KEY_URL: project_url
+                }
+            ],
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
         })
 

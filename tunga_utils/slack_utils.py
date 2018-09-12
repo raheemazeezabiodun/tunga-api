@@ -46,6 +46,9 @@ KEY_MRKDWN = 'mrkdwn'
 KEY_MRKDWN_IN = 'mrkdwn_in'
 KEY_COMMAND = 'command'
 KEY_LINK_NAMES = 'link_names'
+KEY_ACTIONS = 'actions'
+KEY_TYPE = 'type'
+KEY_URL = 'url'
 
 KEY_ID = 'id'
 KEY_CHANNELS = 'channels'
@@ -55,6 +58,8 @@ KEY_PROFILE = 'profile'
 KEY_EMAIL = 'email'
 KEY_NAME = 'name'
 KEY_GROUPS = 'groups'
+
+VALUE_TYPE_BUTTON = 'button'
 
 
 def get_authorize_url(redirect_uri):
