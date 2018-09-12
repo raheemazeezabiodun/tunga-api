@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from dry_rest_permissions.generics import DRYObjectPermissions
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -63,7 +63,7 @@ class InterestPollViewSet(ModelViewSet):
     """
     queryset = InterestPoll.objects.all()
     serializer_class = InterestPollSerializer
-    permission_classes = [IsAuthenticated, DRYObjectPermissions]
+    permission_classes = [AllowAny]
     filter_class = InterestPollFilter
     filter_backends = DEFAULT_FILTER_BACKENDS
 

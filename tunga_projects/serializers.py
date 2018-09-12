@@ -15,11 +15,13 @@ from tunga_utils.validators import validate_field_schema
 
 
 class SimpleProjectSerializer(SimpleModelSerializer):
+    skills = SimpleSkillSerializer(required=False, many=True)
+
     class Meta:
         model = Project
         fields = (
             'id', 'title', 'description', 'type',
-            'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived'
+            'budget', 'currency', 'closed', 'start_date', 'deadline', 'archived', 'skills'
         )
 
 
