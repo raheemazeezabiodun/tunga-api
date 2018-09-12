@@ -14,7 +14,7 @@ from tunga_projects.filters import ProjectFilter, DocumentFilter, ParticipationF
 from tunga_projects.models import Project, Document, Participation, ProgressEvent, ProgressReport, InterestPoll
 from tunga_projects.serializers import ProjectSerializer, DocumentSerializer, ParticipationSerializer, \
     ProgressEventSerializer, ProgressReportSerializer, InterestPollSerializer
-from tunga_projects.tasks import create_interest_polls
+from tunga_projects.tasks import manage_interest_polls
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -42,7 +42,7 @@ class ProjectViewSet(ModelViewSet):
             - query
         """
         project = get_object_or_404(self.get_queryset(), pk=pk)
-        create_interest_polls.delay(project.id, remind=True)
+        manage_interest_polls.delay(project.id, remind=True)
         return Response({'message': 'reminders sent'})
 
 

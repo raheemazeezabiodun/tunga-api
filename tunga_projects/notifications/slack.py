@@ -4,25 +4,28 @@ from django_rq import job
 
 from tunga.settings import TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_LEADS_CHANNEL, \
     SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED, \
-    SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_MISSED_UPDATES_CHANNEL
+    SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_MISSED_UPDATES_CHANNEL, \
+    SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_DEVELOPER_OPPORTUNITIES_CHANNEL
 from tunga_projects.models import Project, ProgressReport, ProgressEvent
 from tunga_utils import slack_utils
 from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
-    PROGRESS_EVENT_MILESTONE
+    PROGRESS_EVENT_MILESTONE, PROJECT_STAGE_OPPORTUNITY
 from tunga_utils.helpers import clean_instance, convert_to_text
 
 @job
 def notify_new_project_slack(project):
-    notify_new_project_slack_admin(project)
-    # TODO: Notify devs about new project if stage is opportunity
+    notify_new_project_slack_admin.delay(project)
+    notify_project_slack_dev.delay(project)
 
 
-@job
-def notify_new_project_slack_admin(project):
-    project = clean_instance(project, Project)
+def create_project_slack_message(project, to_developer=False, reminder=False):
     project_url = '{}/projects/{}/'.format(TUNGA_URL, project.id)
 
-    summary = "New project created by {} | <{}|View on Tunga>".format(
+    is_opportunity = project.stage == PROJECT_STAGE_OPPORTUNITY
+
+    summary = "{} {} created by {} | <{}|View on Tunga>".format(
+        reminder and 'Reminder for' or 'New',
+        is_opportunity and 'opportunity' or 'project',
         project.user.display_name.encode('utf-8'),
         project_url
     )
@@ -38,16 +41,17 @@ def notify_new_project_slack_admin(project):
     ]
 
     extra_details = ''
-    if project.type:
+    if project.type and not is_opportunity:
         extra_details += '*Type*: {}\n'.format(project.get_type_display())
     if project.expected_duration:
         extra_details += '*Expected duration*: {}\n'.format(project.get_expected_duration_display())
     if project.skills:
         extra_details += '*Skills*: {}\n'.format(str(project.skills))
-    if project.deadline:
-        extra_details += '*Deadline*: {}\n'.format(project.deadline.strftime("%d %b, %Y"))
-    if project.budget:
-        extra_details += '*Fee*: EUR {}\n'.format(floatformat(project.budget, arg=-2))
+    if not is_opportunity and not to_developer:
+        if project.deadline:
+            extra_details += '*Deadline*: {}\n'.format(project.deadline.strftime("%d %b, %Y"))
+        if project.budget:
+            extra_details += '*Fee*: EUR {}\n'.format(floatformat(project.budget, arg=-2))
 
     if extra_details:
         attachments.append({
@@ -56,9 +60,33 @@ def notify_new_project_slack_admin(project):
             slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
         })
 
+    return summary, attachments
+
+
+@job
+def notify_new_project_slack_admin(project):
+    project = clean_instance(project, Project)
+
+    summary, attachments = create_project_slack_message(project)
     slack_utils.send_incoming_webhook(SLACK_STAFF_INCOMING_WEBHOOK, {
         slack_utils.KEY_TEXT: summary,
         slack_utils.KEY_CHANNEL: SLACK_STAFF_LEADS_CHANNEL,
+        slack_utils.KEY_ATTACHMENTS: attachments
+    })
+
+
+@job
+def notify_project_slack_dev(project, reminder=False):
+    project = clean_instance(project, Project)
+
+    if project.stage != PROJECT_STAGE_OPPORTUNITY:
+        # Only notify devs about opportunities
+        return
+
+    summary, attachments = create_project_slack_message(project, to_developer=True, reminder=reminder)
+    slack_utils.send_incoming_webhook(SLACK_DEVELOPER_INCOMING_WEBHOOK, {
+        slack_utils.KEY_TEXT: summary,
+        slack_utils.KEY_CHANNEL: SLACK_DEVELOPER_OPPORTUNITIES_CHANNEL,
         slack_utils.KEY_ATTACHMENTS: attachments
     })
 

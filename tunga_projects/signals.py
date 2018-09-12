@@ -6,7 +6,7 @@ from tunga_activity import verbs
 from tunga_projects.models import Project, Participation, Document, ProgressEvent, ProgressReport
 from tunga_projects.notifications.generic import notify_new_project, notify_new_participant, notify_new_progress_report
 from tunga_projects.notifications.slack import notify_new_progress_report_slack
-from tunga_projects.tasks import sync_hubspot_deal, create_interest_polls
+from tunga_projects.tasks import sync_hubspot_deal, manage_interest_polls
 from tunga_utils.constants import PROJECT_STAGE_OPPORTUNITY
 from tunga_utils.signals import post_nested_save
 
@@ -24,7 +24,7 @@ def activity_handler_new_full_project(sender, instance, created, **kwargs):
             notify_new_project.delay(instance.id)
 
             if instance.stage == PROJECT_STAGE_OPPORTUNITY:
-                create_interest_polls(instance.id, remind=False)
+                manage_interest_polls(instance.id, remind=False)
 
         sync_hubspot_deal.delay(instance.id)
 
