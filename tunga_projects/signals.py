@@ -34,7 +34,7 @@ def activity_handler_new_full_project(sender, instance, created, **kwargs):
 def activity_handler_updated_project_field(sender, instance, field, **kwargs):
     if field == 'stage' and instance.stage == PROJECT_STAGE_ACTIVE:
         action.send(instance.user, verb=verbs.ACTIVATE, action_object=instance)
-        activate_project.delay(instance.id)
+        activate_project(instance.id)
 
 
 @receiver(post_save, sender=Participation)
