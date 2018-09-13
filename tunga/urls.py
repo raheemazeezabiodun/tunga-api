@@ -44,7 +44,7 @@ from tunga_tasks.views import TimeEntryViewSet, \
     TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file, \
-    find_by_legacy_id, InviteRequestView
+    find_by_legacy_id, InviteRequestView, weekly_report
 
 api_schema_view = get_swagger_view(title='Tunga API')
 
@@ -154,6 +154,7 @@ urlpatterns = [
     url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         password_reset_confirm, name='password_reset_confirm'),
     url(r'^api/migrate/(?P<model>\w+)/(?P<pk>\d+)/$', find_by_legacy_id, name="migrate"),
+    url(r'^api/weekly-report/(?P<subject>\w+)/$', weekly_report, name="weekly-report"),
     url(r'^$', router.get_api_root_view(), name='backend-root'),
     url(r'^api/sitemap\.xml$', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
 ]

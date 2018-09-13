@@ -7,16 +7,20 @@ import datetime
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import FileSystemStorage
+from django.http import HttpResponse
 from django.utils import six
 from rest_framework import viewsets, generics, status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes, renderer_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 
 from tunga.settings import MEDIA_ROOT, MEDIA_URL
 from tunga_profiles.models import Skill
 from tunga_projects.models import Project, ProgressEvent
 from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
+from tunga_projects.tasks import weekly_project_report, weekly_payment_report
+from tunga_tasks.renderers import PDFRenderer
 from tunga_utils.models import ContactRequest, InviteRequest
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
 
@@ -117,3 +121,23 @@ def find_by_legacy_id(request, model, pk):
     if response:
         return Response(response)
     return Response(dict(message='{} #{} replacement found'.format(model, pk)), status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(http_method_names=['GET'])
+@permission_classes([IsAdminUser])
+@renderer_classes([PDFRenderer, StaticHTMLRenderer])
+def weekly_report(request, subject):
+    if subject == 'payments':
+        if request.accepted_renderer.format == 'html':
+            return HttpResponse(weekly_payment_report(render_format='html'))
+        else:
+            http_response = HttpResponse(weekly_payment_report(render_format='pdf'), content_type='application/pdf')
+            http_response['Content-Disposition'] = 'filename="weekly_project_report.pdf"'
+            return http_response
+    else:
+        if request.accepted_renderer.format == 'html':
+            return HttpResponse(weekly_project_report(render_format='html'))
+        else:
+            http_response = HttpResponse(weekly_project_report(render_format='pdf'), content_type='application/pdf')
+            http_response['Content-Disposition'] = 'filename="weekly_project_report.pdf"'
+            return http_response

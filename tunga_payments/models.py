@@ -162,10 +162,10 @@ class Invoice(models.Model):
 
     @property
     def due_at(self):
-        if self.issued_at:
+        if self.type == INVOICE_TYPE_SALE and self.issued_at:
             return (self.issued_at + relativedelta(days=14)).replace(
                 hour=23, minute=59, second=59, microsecond=999999)
-        return None
+        return self.issued_at
 
     @property
     def is_overdue(self):

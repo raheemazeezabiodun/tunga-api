@@ -1,0 +1,93 @@
+{% extends "tunga/pdf/base.html" %}
+{% block pdf_style %}
+    table {
+        border: 1px solid #ddd;
+        margin-top: 0;
+    }
+    table tr {
+        border: 1px solid #ddd;
+    }
+    table tr:nth-child(odd) {
+        background-color: #f3f3f3;
+    }
+    table td {
+        padding: 5px 10px;
+    }
+    table td + td {
+        width: 120px;
+    }
+    h1 {
+        margin-bottom: 10px;
+    }
+    h2 {
+        color: #ee1f54;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+{% endblock %}
+{% block pdf_content %}
+    <div class="container">
+        <h1>Payment updates for week {{ week_number }}</h1>
+        <div style="color: #888;">{{ week_start | date:"D, jS F, Y" }} - {{ week_end | date:"D, jS F, Y" }}</div>
+
+        <h2>Paid invoices last week</h2>
+        <table>
+            <tr>
+                <td>Client/Project/Invoice</td>
+                <td>Sum</td>
+                <td>Payment date</td>
+            </tr>
+            {% for payment in paid.items %}
+                <tr>
+                    <td>{{ payment.project.owner.display_name }}/<a href="{{ payment.project.url }}">{{ payment.project.title }}</a>/{{ payment.title }}</td>
+                    <td>&euro;{{ payment.amount | floatformat:2 }}</td>
+                    <td>{{ payment.paid_at | date:"d/M/Y" }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td>Total</td>
+                <td colspan="2">&euro;{{ paid.total | floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <h2>Overdue invoices</h2>
+        <table>
+            <tr>
+                <td>Client/Project/Invoice</td>
+                <td>Sum</td>
+                <td>Due date</td>
+            </tr>
+            {% for payment in overdue.items %}
+                <tr>
+                    <td>{{ payment.project.owner.display_name }}/<a href="{{ payment.project.url }}">{{ payment.project.title }}</a>/{{ payment.title }}</td>
+                    <td>&euro;{{ payment.amount | floatformat:2 }}</td>
+                    <td>{{ payment.due_at | date:"d/M/Y" }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td>Total</td>
+                <td colspan="2">&euro;{{ overdue.total | floatformat:2 }}</td>
+            </tr>
+        </table>
+
+        <h2>Upcoming payment this week</h2>
+        <table>
+            <tr>
+                <td>Client/Project/Invoice</td>
+                <td>Sum</td>
+                <td>Due date</td>
+            </tr>
+            {% for payment in upcoming.items %}
+                <tr>
+                    <td>{{ payment.project.owner.display_name }}/<a href="{{ payment.project.url }}">{{ payment.project.title }}</a>/{{ payment.title }}</td>
+                    <td>&euro;{{ payment.amount | floatformat:2 }}</td>
+                    <td>{{ payment.due_at | date:"d/M/Y" }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td>Total</td>
+                <td colspan="2">&euro;{{ upcoming.total | floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+{% endblock %}

@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
 # Create your views here.
 import json
 import uuid
-
-import datetime
 from decimal import Decimal
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
-
-from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
+from dry_rest_permissions.generics import DRYPermissions
 from rest_framework import status
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied

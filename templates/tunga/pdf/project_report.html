@@ -1,0 +1,75 @@
+{% extends "tunga/pdf/base.html" %}
+{% block pdf_style %}
+    table {
+        border: 1px solid #ddd;
+        margin-top: 0;
+    }
+    table tr {
+        border: 1px solid #ddd;
+    }
+    table tr:nth-child(odd) {
+        background-color: #f3f3f3;
+    }
+    table td {
+        padding: 5px 10px;
+    }
+    table td:first-child {
+        width: 210px;
+    }
+    h1 {
+        margin-bottom: 10px;
+    }
+    h2 {
+        color: #ee1f54;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+{% endblock %}
+{% block pdf_content %}
+    <div class="container">
+        <h1>Project updates for week {{ week_number }}</h1>
+        <div style="color: #888;">{{ week_start | date:"D, jS F, Y" }} - {{ week_end | date:"D, jS F, Y" }}</div>
+        {% for item in projects %}
+            {% with project=item.project milestones=item.milestones payments=item.payments payouts=item.payouts %}
+                <h2>{{ project.title }}</h2>
+                <table>
+                    <tr>
+                        <td>Project manager</td>
+                        <td>{{ project.pm }}</td>
+                    </tr>
+                    <tr>
+                        <td>Upcoming milestones</td>
+                        <td>
+                            <ul>
+                                {% for milestone in milestones %}
+                                    <li>{{ milestone.title }} - {{ milestone.due_at | date:"d/M/Y" }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Upcoming payments</td>
+                        <td>
+                            <ul>
+                                {% for payment in payments %}
+                                    <li>{{ payment.title }} - {{ payment.due_at | date:"d/M/Y" }} - &euro;{{ payment.amount | floatformat:2 }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Upcoming payouts</td>
+                        <td>
+                            <ul>
+                                {% for payment in payouts %}
+                                    <li>{{ payment.title }} - {{ payment.issued_at | date:"d/M/Y" }} - &euro;{{ payment.amount | floatformat:2 }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                </table>
+
+            {% endwith %}
+        {% endfor %}
+    </div>
+{% endblock %}
