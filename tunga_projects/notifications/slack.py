@@ -1,12 +1,16 @@
 import datetime
+import os
+
 from django.template.defaultfilters import floatformat
 from django_rq import job
 
 from tunga.settings import TUNGA_URL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_LEADS_CHANNEL, \
     SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACHMENT_COLOR_GREEN, SLACK_STAFF_UPDATES_CHANNEL, SLACK_ATTACHMENT_COLOR_RED, \
     SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_MISSED_UPDATES_CHANNEL, \
-    SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_DEVELOPER_OPPORTUNITIES_CHANNEL
+    SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_DEVELOPER_OPPORTUNITIES_CHANNEL, MEDIA_ROOT, SLACK_STAFF_TOKEN, \
+    SLACK_STAFF_REPORTS_CHANNEL
 from tunga_projects.models import Project, ProgressReport, ProgressEvent, InterestPoll
+from tunga_projects.utils import weekly_project_report, weekly_payment_report
 from tunga_utils import slack_utils
 from tunga_utils.constants import PROGRESS_EVENT_PM, PROGRESS_EVENT_INTERNAL, PROGRESS_EVENT_CLIENT, \
     PROGRESS_EVENT_MILESTONE, PROJECT_STAGE_OPPORTUNITY, STATUS_INTERESTED
@@ -401,4 +405,56 @@ def notify_interest_poll_status_slack(interest_poll):
             slack_utils.KEY_TEXT: slack_msg,
             slack_utils.KEY_CHANNEL: SLACK_STAFF_LEADS_CHANNEL
         }
+    )
+
+
+@job
+def notify_weekly_project_report_slack():
+    pdf_contents = weekly_project_report(render_format='pdf')
+
+    today = datetime.datetime.utcnow()
+    filename = 'weekly_project_report_{}_{}__{}.pdf'.format(
+        today.isocalendar()[1], today.year, today.strftime('%d%b%y')
+    )
+
+    reports_dir = os.path.join(MEDIA_ROOT, 'reports')
+
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
+
+    filepath = os.path.join(reports_dir, filename)
+
+    pdf_file = open(filepath, 'w')
+    pdf_file.write(pdf_contents)
+    pdf_file.close()
+
+    slack_utils.upload_file(
+        SLACK_STAFF_TOKEN, SLACK_STAFF_REPORTS_CHANNEL, filepath, filename=filename,
+        initial_comment='<!channel> *Project updates* for *week {}*'.format(today.isocalendar()[1])
+    )
+
+
+@job
+def notify_weekly_payment_report_slack():
+    pdf_contents = weekly_payment_report(render_format='pdf')
+
+    today = datetime.datetime.utcnow()
+    filename = 'weekly_payment_report_{}_{}__{}.pdf'.format(
+        today.isocalendar()[1], today.year, today.strftime('%d%b%y')
+    )
+
+    reports_dir = os.path.join(MEDIA_ROOT, 'reports')
+
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
+
+    filepath = os.path.join(reports_dir, filename)
+
+    pdf_file = open(filepath, 'w')
+    pdf_file.write(pdf_contents)
+    pdf_file.close()
+
+    slack_utils.upload_file(
+        SLACK_STAFF_TOKEN, SLACK_STAFF_REPORTS_CHANNEL, filepath, filename=filename,
+        initial_comment='<!channel> *Payment updates* for *week {}*'.format(today.isocalendar()[1])
     )

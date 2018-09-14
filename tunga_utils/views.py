@@ -19,7 +19,7 @@ from tunga.settings import MEDIA_ROOT, MEDIA_URL
 from tunga_profiles.models import Skill
 from tunga_projects.models import Project, ProgressEvent
 from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
-from tunga_projects.tasks import weekly_project_report, weekly_payment_report
+from tunga_projects.utils import weekly_project_report, weekly_payment_report
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils.models import ContactRequest, InviteRequest
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer

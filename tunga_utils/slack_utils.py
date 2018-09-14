@@ -163,6 +163,14 @@ def send_slack_message(token, channel, message=None, attachments=None, author_na
     )
 
 
+def upload_file(token, channel, upload, content=None, filetype=None, filename=None, title=None, initial_comment=None):
+    slack_client = Slacker(token)
+    slack_client.files.upload(
+        upload, channels=[channel],
+        content=content, filetype=filetype, filename=filename, title=title, initial_comment=initial_comment
+    )
+
+
 def get_user_id(email, token):
     slack_client = Slacker(token)
     try:
