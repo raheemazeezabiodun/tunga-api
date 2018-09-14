@@ -101,7 +101,7 @@ def weekly_project_report(render_format='pdf', weeks_ago=0):
         week_start=week_start,
         week_end=week_end,
         week_number=week_start.isocalendar()[1],
-        projects=report[13:17]
+        projects=report
     )
 
     html = render_to_string("tunga/pdf/project_report.html", context=ctx).encode(encoding="UTF-8")
