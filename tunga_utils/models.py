@@ -16,7 +16,7 @@ from tunga import settings
 from tunga.settings import TUNGA_URL
 from tunga_utils.constants import RATING_CRITERIA_CODING, RATING_CRITERIA_COMMUNICATION, \
     RATING_CRITERIA_SPEED, MONTHS, CONTACT_REQUEST_ITEM_ONBOARDING, CONTACT_REQUEST_ITEM_PROJECT, \
-    CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF
+    CONTACT_REQUEST_ITEM_ONBOARDING_SPECIAL, CONTACT_REQUEST_ITEM_DO_IT_YOURSELF, EVENT_SOURCE_HUBSPOT
 from tunga_utils.validators import validate_year, validate_file_size, validate_email
 
 
@@ -183,3 +183,24 @@ class InviteRequest(models.Model):
         if self.cv:
             return '{}{}'.format(not re.match(r'://', self.cv.url) and TUNGA_URL or '', self.cv.url)
         return None
+
+
+@python_2_unicode_compatible
+class ExternalEvent(models.Model):
+    source_choices = (
+        (EVENT_SOURCE_HUBSPOT, 'HubSpot'),
+    )
+
+    source = models.CharField(
+        max_length=50, choices=source_choices,
+        help_text=','.join(['%s - %s' % (item[0], item[1]) for item in source_choices])
+    )
+    payload = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    notification_sent_at = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return '{} event'.format(self.get_source_display())
+
+    class Meta:
+        ordering = ['created_at']

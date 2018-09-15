@@ -1,4 +1,4 @@
-from django_rq.decorators import job
+from django_rq import job
 
 from tunga_utils.notifications.email import notify_new_contact_request_email
 from tunga_utils.notifications.slack import notify_new_invite_request_slack

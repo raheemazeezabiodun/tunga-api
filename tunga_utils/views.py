@@ -1,14 +1,15 @@
+import datetime
 import json
 import os
 import re
 from operator import itemgetter
 
-import datetime
 import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse
 from django.utils import six
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, generics, status
 from rest_framework.decorators import api_view, permission_classes, renderer_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -21,7 +22,8 @@ from tunga_projects.models import Project, ProgressEvent
 from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
 from tunga_projects.utils import weekly_project_report, weekly_payment_report
 from tunga_tasks.renderers import PDFRenderer
-from tunga_utils.models import ContactRequest, InviteRequest
+from tunga_utils.constants import EVENT_SOURCE_HUBSPOT
+from tunga_utils.models import ContactRequest, InviteRequest, ExternalEvent
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
 
 
@@ -141,3 +143,16 @@ def weekly_report(request, subject):
             http_response = HttpResponse(weekly_project_report(render_format='pdf'), content_type='application/pdf')
             http_response['Content-Disposition'] = 'filename="weekly_project_report.pdf"'
             return http_response
+
+
+@csrf_exempt
+@api_view(http_method_names=['POST'])
+@permission_classes([AllowAny])
+def hubspot_notification(request):
+    hs_signature = request.META.get('HTTP_X_HUBSPOT_SIGNATURE', None)
+
+    payload = request.data
+    if payload:
+        ExternalEvent.objects.create(source=EVENT_SOURCE_HUBSPOT, payload=payload)
+        return Response('Received')
+    return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)

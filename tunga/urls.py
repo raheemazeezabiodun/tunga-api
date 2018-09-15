@@ -40,11 +40,10 @@ from tunga_settings.views import UserSettingsView
 from tunga_support.views import SupportPageViewSet, SupportSectionViewSet
 from tunga_tasks.views import TimeEntryViewSet, \
     coinbase_notification, bitpesa_notification, EstimateViewSet, QuoteViewSet, MultiTaskPaymentKeyViewSet, \
-    TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, hubspot_notification, \
-    TaskDocumentViewSet, TaskViewSet
+    TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file, \
-    find_by_legacy_id, InviteRequestView, weekly_report
+    find_by_legacy_id, InviteRequestView, weekly_report, hubspot_notification
 
 api_schema_view = get_swagger_view(title='Tunga API')
 

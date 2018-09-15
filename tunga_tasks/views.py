@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from dry_rest_permissions.generics import DRYPermissions, DRYObjectPermissions
 from oauthlib import oauth1
 from oauthlib.oauth1 import SIGNATURE_TYPE_QUERY
-from rest_framework import viewsets, status, views
+from rest_framework import viewsets, status
 from rest_framework.decorators import detail_route, api_view, permission_classes
 from rest_framework.exceptions import ValidationError, NotAuthenticated, PermissionDenied
 from rest_framework.generics import get_object_or_404
@@ -46,7 +46,7 @@ from tunga_tasks.filters import TaskFilter, ApplicationFilter, ParticipationFilt
 from tunga_tasks.models import Task, Application, Participation, TimeEntry, Project, ProgressReport, ProgressEvent, \
     Integration, IntegrationMeta, IntegrationActivity, TaskPayment, TaskInvoice, Estimate, Quote, \
     MultiTaskPaymentKey, ParticipantPayment, SkillsApproval, Sprint, TaskDocument
-from tunga_tasks.notifications.generic import notify_new_task_invoice, notify_hubspot_change
+from tunga_tasks.notifications.generic import notify_new_task_invoice
 from tunga_tasks.renderers import PDFRenderer
 from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, ParticipationSerializer, \
     TimeEntrySerializer, ProjectSerializer, ProgressReportSerializer, ProgressEventSerializer, \
@@ -55,7 +55,7 @@ from tunga_tasks.serializers import TaskSerializer, ApplicationSerializer, Parti
     SimpleProgressReportSerializer, SimpleTaskSerializer, SkillsApprovalSerializer, SprintSerializer, \
     TaskDocumentSerializer
 from tunga_tasks.tasks import complete_bitpesa_payment, \
-    update_multi_tasks, distribute_task_payment_payoneer
+    update_multi_tasks
 from tunga_tasks.utils import save_integration_tokens, get_integration_token
 from tunga_utils import github, coinbase_utils, bitcoin_utils, bitpesa, stripe_utils
 from tunga_utils.constants import PAYMENT_METHOD_BITONIC, STATUS_ACCEPTED, \
@@ -1261,17 +1261,4 @@ def bitpesa_notification(request):
         if transaction and payload.get(bitpesa.KEY_EVENT, None) == bitpesa.EVENT_TRANSACTION_APPROVED:
             if complete_bitpesa_payment(transaction):
                 return Response('Received')
-    return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
-
-
-@csrf_exempt
-@api_view(http_method_names=['POST'])
-@permission_classes([AllowAny])
-def hubspot_notification(request):
-    hs_signature = request.META.get('HTTP_X_HUBSPOT_SIGNATURE', None)
-
-    payload = request.data
-    if payload:
-        notify_hubspot_change.delay(payload)
-        return Response('Received')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)

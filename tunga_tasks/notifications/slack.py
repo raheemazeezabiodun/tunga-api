@@ -9,12 +9,11 @@ from tunga.settings import TUNGA_URL, SLACK_ATTACHMENT_COLOR_TUNGA, SLACK_ATTACH
     SLACK_ATTACHMENT_COLOR_BLUE, SLACK_ATTACHMENT_COLOR_NEUTRAL, SLACK_ATTACHMENT_COLOR_RED, \
     SLACK_STAFF_UPDATES_CHANNEL, SLACK_STAFF_INCOMING_WEBHOOK, SLACK_DEVELOPER_UPDATES_CHANNEL, \
     SLACK_DEVELOPER_INCOMING_WEBHOOK, SLACK_PMS_UPDATES_CHANNEL, SLACK_STAFF_LEADS_CHANNEL, \
-    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL, SLACK_STAFF_MISSED_UPDATES_CHANNEL, \
-    SLACK_STAFF_HUBSPOT_CHANNEL
+    SLACK_STAFF_PROJECT_EXECUTION_CHANNEL, SLACK_STAFF_PAYMENTS_CHANNEL, SLACK_STAFF_MISSED_UPDATES_CHANNEL
 from tunga_tasks import slugs
 from tunga_tasks.models import Task, Participation, Application, ProgressEvent, ProgressReport, TaskInvoice
 from tunga_tasks.utils import get_task_integration
-from tunga_utils import slack_utils, hubspot_utils
+from tunga_utils import slack_utils
 from tunga_utils.constants import TASK_SCOPE_TASK, TASK_SOURCE_NEW_USER, VISIBILITY_DEVELOPER, STATUS_ACCEPTED, \
     APP_INTEGRATION_PROVIDER_SLACK, LEGACY_PROGRESS_EVENT_TYPE_PM, LEGACY_PROGRESS_EVENT_TYPE_CLIENT, PAYMENT_METHOD_BANK, \
     LEGACY_PROGRESS_EVENT_TYPE_MILESTONE_INTERNAL, LEGACY_PROGRESS_EVENT_TYPE_CLIENT_MID_SPRINT
@@ -1027,59 +1026,3 @@ def notify_new_task_invoice_admin_slack(instance):
             slack_utils.KEY_CHANNEL: SLACK_STAFF_PAYMENTS_CHANNEL
         }
     )
-
-
-@job
-def notify_hubspot_change_slack(payload):
-    for event_details in type(payload) is list and payload or [payload]:
-        subscription_type = event_details.get(hubspot_utils.KEY_SUBSCRIPTION_TYPE)
-        if subscription_type in [
-            hubspot_utils.KEY_VALUE_DEAL_CREATED,
-            hubspot_utils.KEY_VALUE_DEAL_DELETION,
-            hubspot_utils.KEY_VALUE_DEAL_PROPERTY_CHANGE
-        ]:
-            deal_id = event_details.get(hubspot_utils.KEY_OBJECT_ID)
-            deal_url = 'https://app.hubspot.com/sales/{}/deal/{}/'.format(
-                event_details.get(hubspot_utils.KEY_PORTAL_ID),
-                deal_id
-            )
-
-            attachments = []
-            deal_details = hubspot_utils.get_deal(deal_id)
-            if deal_details and deal_details.get('properties', None):
-                deal_properties = deal_details['properties']
-                deal_name = deal_properties.get(hubspot_utils.KEY_DEALNAME, {})['value'] or ''
-                if deal_name:
-                    deal_text_suffix = ''
-                    if subscription_type == hubspot_utils.KEY_VALUE_DEAL_PROPERTY_CHANGE:
-                        deal_property_name = event_details.get(hubspot_utils.KEY_PROPERTY_NAME, '')
-                        deal_property_value = event_details.get(hubspot_utils.KEY_PROPERTY_VALUE, '')
-                        if deal_property_name:
-                            deal_text_suffix += '\n*Property name:* {}'.format(deal_property_name)
-                        if deal_property_value:
-                            deal_text_suffix += '\n*Property value:* {}'.format(deal_property_value)
-
-                    attachments.append({
-                        slack_utils.KEY_TITLE: deal_name,
-                        slack_utils.KEY_TITLE_LINK: deal_url,
-                        slack_utils.KEY_TEXT: '*Deal stage:* {}{}'.format(
-                            deal_properties.get(hubspot_utils.KEY_DEALSTAGE, {})['value'] or 'Unknown',
-                            deal_text_suffix
-                        ),
-                        slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
-                        slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
-                    })
-
-            slack_utils.send_incoming_webhook(
-                SLACK_STAFF_INCOMING_WEBHOOK,
-                {
-                    slack_utils.KEY_CHANNEL: SLACK_STAFF_HUBSPOT_CHANNEL,
-                    slack_utils.KEY_TEXT: '{} in HubSpot | <{}|View details>'.format(
-                        subscription_type == hubspot_utils.KEY_VALUE_DEAL_CREATED and 'New deal created' or (
-                            'Deal {}'.format(subscription_type == hubspot_utils.KEY_VALUE_DEAL_DELETION and 'deleted' or 'updated')
-                        ),
-                        deal_url
-                    ),
-                    slack_utils.KEY_ATTACHMENTS: attachments
-                }
-            )
