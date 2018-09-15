@@ -18,4 +18,4 @@ class Command(BaseCommand):
         )
         for invoice in invoices:
             # Make pay out
-            make_payout(invoice)
+            make_payout.delay(invoice)

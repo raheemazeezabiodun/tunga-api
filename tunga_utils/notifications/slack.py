@@ -1,3 +1,4 @@
+import datetime
 from django_rq import job
 from django_rq.decorators import job
 
@@ -5,7 +6,7 @@ from tunga.settings import SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_PROFILES_CH
     SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_HUBSPOT_CHANNEL
 from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.helpers import clean_instance
-from tunga_utils.models import InviteRequest
+from tunga_utils.models import InviteRequest, ExternalEvent
 
 
 @job
@@ -115,3 +116,6 @@ def notify_hubspot_deal_changes_slack(deal_id, changes, event_ids=None):
                 ]
             }
         )
+
+        if event_ids:
+            ExternalEvent.objects.filter(id__in=event_ids).update(notification_sent_at=datetime.datetime.utcnow())

@@ -60,4 +60,4 @@ class Command(BaseCommand):
                     deal_event_changes[deal_id] = existing_deal_event_payloads
 
         for deal_id, changes in six.iteritems(deal_event_changes):
-            notify_hubspot_deal_changes_slack(deal_id, changes, deal_event_ids.get(deal_id, []))
+            notify_hubspot_deal_changes_slack.delay(deal_id, changes, deal_event_ids.get(deal_id, []))
