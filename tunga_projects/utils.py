@@ -91,7 +91,7 @@ def weekly_payment_report(render_format='pdf', weeks_ago=0):
     overdue = Invoice.objects.filter(
         type=INVOICE_TYPE_SALE,
         paid=False,
-        issued_at__lte=week_end - datetime.timedelta(days=14),
+        issued_at__lte=week_start - datetime.timedelta(days=14),
         # Client invoices are due 14 days after the issue date so don't include those due this week
     ).order_by('issued_at')
 
