@@ -36,7 +36,7 @@ from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 class InvoiceViewSet(ModelViewSet):
     serializer_class = InvoiceSerializer
-    queryset = Invoice.objects.all()
+    queryset = Invoice.objects.filter(archived=False)
     permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
@@ -222,10 +222,28 @@ class InvoiceViewSet(ModelViewSet):
             )
             return http_response
 
+    @detail_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
+                  url_path='archive', url_name='archive-unpaid-invoices')
+    def archive_invoice(self, request, pk=None):
+        """
+            Invoice Payment Endpoint
+            ---
+            omit_serializer: true
+            omit_parameters: false
+                - query
+        """
+        invoice = self.get_object()
+        if not invoice.paid:
+            invoice.archived = True
+            invoice.save()
+            return Response(dict(message='Invoice has been archived'), status=status.HTTP_201_CREATED)
+        else:
+            return Response(dict(message='Invoice has been already paid'), status=status.HTTP_200_OK)
+
 
 class PaymentViewSet(ModelViewSet):
     serializer_class = PaymentSerializer
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.filter(invoice__archived=False)
     permission_classes = [IsAuthenticated, DRYPermissions]
     filter_class = PaymentFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (PaymentFilterBackend,)
