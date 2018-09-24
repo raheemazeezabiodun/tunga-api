@@ -153,6 +153,6 @@ def hubspot_notification(request):
 
     payload = request.data
     if payload:
-        ExternalEvent.objects.create(source=EVENT_SOURCE_HUBSPOT, payload=payload)
+        ExternalEvent.objects.create(source=EVENT_SOURCE_HUBSPOT, payload=json.dumps(payload))
         return Response('Received')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
