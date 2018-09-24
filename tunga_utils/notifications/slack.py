@@ -13,7 +13,7 @@ from tunga_utils.models import InviteRequest, ExternalEvent
 def notify_new_invite_request_slack(invite_request):
     invite_request = clean_instance(invite_request, InviteRequest)
 
-    slack_msg = "@domieck {} wants to join Tunga".format(
+    slack_msg = "<!channel> {} wants to join Tunga".format(
         invite_request.name
     )
 
