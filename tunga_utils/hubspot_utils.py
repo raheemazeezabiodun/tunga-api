@@ -1,3 +1,6 @@
+from copy import copy
+
+import datetime
 import requests
 from django.utils import six
 
@@ -14,6 +17,7 @@ HUBSPOT_ENDPOINT_GET_OWNER = '/owners/v2/owners'
 HUBSPOT_ENDPOINT_GET_DEAL = '/deals/v1/deal/{deal_id}'
 HUBSPOT_ENDPOINT_GET_DEAL_PROPERTIES = '/properties/v1/deals/properties/'
 HUBSPOT_ENDPOINT_GET_DEAL_PROPERTY = '/properties/v1/deals/properties/named/{property_name}'
+HUBSPOT_ENDPOINT_GET_PIPELINES = '/deals/v1/pipelines'
 
 KEY_VID = 'vid'
 KEY_NAME = 'name'
@@ -27,6 +31,14 @@ KEY_DEALSTAGE = 'dealstage'
 KEY_DEALTYPE = 'dealtype'
 KEY_PIPELINE = 'pipeline'
 KEY_AMOUNT = 'amount'
+KEY_VALUE = 'value'
+KEY_PIPELINE_ID = 'pipelineId'
+KEY_STAGE_ID = 'stageId'
+KEY_STAGES = 'stages'
+KEY_HUBSPOT_OWNER_ID = 'hubspot_owner_id'
+KEY_OWNERID = 'ownerId'
+KEY_FIRSTNAME = 'firstName'
+KEY_LASTNAME = 'lastName'
 
 KEY_DEALURL = 'dealurl'
 KEY_SCHEDULE_CALL_START = 'schedulecallstart'
@@ -54,10 +66,12 @@ KEY_CHANGE_FLAG = 'changeFlag'
 KEY_OCCURRED_AT = 'occurredAt'
 KEY_PROPERTY_NAME = 'propertyName'
 KEY_PROPERTY_VALUE = 'propertyValue'
+KEY_OPTIONS = 'options'
 
 KEY_VALUE_DEAL_CREATED = 'deal.creation'
 KEY_VALUE_DEAL_DELETION = 'deal.deletion'
 KEY_VALUE_DEAL_PROPERTY_CHANGE = 'deal.propertyChange'
+KEY_VALUE_PROPERTY_TYPE_DATETIME = 'datetime'
 
 HEADER_SIGNATURE = 'HTTP_X_HUBSPOT_SIGNATURE'
 
@@ -369,7 +383,7 @@ def create_hubspot_engagement(from_email, to_emails, subject, body, **kwargs):
     payload = {
         "engagement": {
             "active": True,
-            "type": "EMAIL"
+            KEY_TYPE: "EMAIL"
         },
         "associations": {
             "contactIds": contact_vids,
@@ -379,7 +393,7 @@ def create_hubspot_engagement(from_email, to_emails, subject, body, **kwargs):
         "metadata": {
             "from": {
                 "email": from_email,
-                "firstName": "Tunga"  # , "lastName": "Support"
+                KEY_FIRSTNAME: "Tunga"  # , "lastName": "Support"
             },
             "to": [{"email": email} for email in to_emails],
             "cc": [{"email": email} for email in kwargs.get('cc', []) or []],
@@ -438,3 +452,85 @@ def get_deal_property(property_name):
         response = r.json()
         return response
     return
+
+
+def get_deal_pipelines():
+    r = requests.get(
+        get_authed_hubspot_endpoint_url(
+            HUBSPOT_ENDPOINT_GET_PIPELINES, HUBSPOT_API_KEY
+        ), verify=False
+    )
+
+    if r.status_code in [200, 201]:
+        response = r.json()
+        return response
+    return
+
+
+def get_owners():
+    r = requests.get(
+        get_authed_hubspot_endpoint_url(
+            HUBSPOT_ENDPOINT_GET_OWNER, HUBSPOT_API_KEY
+        ), verify=False
+    )
+
+    if r.status_code in [200, 201]:
+        response = r.json()
+        return response
+    return
+
+
+def clean_property(internal_name, internal_value, deal_details, property_details, pipelines):
+    current_property_details = None
+    if property_details:
+        for item in property_details:
+            if item.get(KEY_NAME) == internal_name:
+                current_property_details = item
+
+    final_name = copy(internal_name)
+    final_value = copy(internal_value)
+
+    if current_property_details:
+        final_name = current_property_details.get(KEY_LABEL, internal_name)
+        value_options = current_property_details.get(KEY_OPTIONS, None)
+
+        if value_options:
+            for item in value_options:
+                if internal_value and str(item.get(KEY_VALUE, '') or '') == str(internal_value or ''):
+                    final_value = item.get(KEY_LABEL)
+        else:
+            if internal_name in [KEY_PIPELINE, KEY_DEALSTAGE] and pipelines:
+                deal_properties = deal_details['properties']
+                pipeline_internal_value = internal_name == KEY_PIPELINE and internal_value or \
+                                          (deal_properties.get(KEY_PIPELINE, {})['value'] or '')
+
+                current_pipeline = dict()
+                for pipeline in pipelines:
+                    if pipeline_internal_value and str(pipeline.get(KEY_PIPELINE_ID, None) or '') == str(pipeline_internal_value or ''):
+                        current_pipeline = pipeline
+
+                if internal_name == KEY_PIPELINE:
+                    final_value = current_pipeline.get(KEY_LABEL, internal_value)
+                elif internal_name == KEY_DEALSTAGE:
+                    stages = current_pipeline.get(KEY_STAGES, [])
+                    if stages:
+                        for stage in stages:
+                            if stage.get(KEY_STAGE_ID, None) == internal_value:
+                                final_value = stage.get(KEY_LABEL, internal_value)
+            else:
+                if internal_name == KEY_AMOUNT:
+                    final_value = 'EUR {}'.format(internal_value)
+                elif internal_name == KEY_HUBSPOT_OWNER_ID:
+                    owners = get_owners()
+                    if owners:
+                        for owner in owners:
+                            if internal_value and str(owner.get(KEY_OWNERID, '') or '') == str(internal_value or ''):
+                                owner_names = []
+                                for name_key in [KEY_FIRSTNAME, KEY_LASTNAME]:
+                                    if owner.get(name_key, None):
+                                        owner_names.append(owner.get(name_key, ''))
+                                final_value = (' '.join(owner_names)).strip() or internal_value
+                elif current_property_details.get(KEY_TYPE, None) == KEY_VALUE_PROPERTY_TYPE_DATETIME:
+                    # Divide by 1000 because HS timestamps are in milliseconds
+                    final_value = datetime.datetime.utcfromtimestamp(int(internal_value)/1000).strftime('%d/%b/%Y')
+    return final_name, final_value

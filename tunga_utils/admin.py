@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tunga_utils.models import ContactRequest, SiteMeta, InviteRequest
+from tunga_utils.models import ContactRequest, SiteMeta, InviteRequest, ExternalEvent
 
 
 class AdminAutoCreatedBy(admin.ModelAdmin):
@@ -59,3 +59,10 @@ class InviteRequestAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'country')
     list_filter = ('country',)
     search_fields = ('name', 'email')
+
+
+@admin.register(ExternalEvent)
+class ExternalEventAdmin(admin.ModelAdmin):
+    list_display = ('source', 'payload', 'created_at', 'notification_sent_at')
+    list_filter = ('source',)
+    search_fields = ('payload',)
