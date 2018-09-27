@@ -62,7 +62,7 @@ class Command(BaseCommand):
                     if not dev_event.last_reminder_at:
                         remind_progress_event.delay(dev_event.id)
 
-                if weekday in [0, 3] and project.pm and not internal_milestones:
+                if weekday in [0, 3] and project.pm and project.pm.is_active and not internal_milestones:
                     # PM Reports on Monday (0) and Thursday (3)
                     pm_defaults = dict(title='PM Report')
                     pm_event, created = ProgressEvent.objects.update_or_create(
@@ -71,7 +71,8 @@ class Command(BaseCommand):
                     if not pm_event.last_reminder_at:
                         remind_progress_event.delay(pm_event.id)
 
-                if weekday == 0 and participants:
+                owner = project.owner or project.user
+                if weekday == 0 and participants and owner and owner.is_active:
                     # Client surveys on Monday (0)
                     client_defaults = dict(title='Client Survey')
                     client_event, created = ProgressEvent.objects.update_or_create(

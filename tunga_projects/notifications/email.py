@@ -54,7 +54,7 @@ def remind_progress_event_email(progress_event):
         'update_url': '%s/projects/%s/events/%s/' % (TUNGA_URL, progress_event.project.id, progress_event.id)
     }
 
-    if is_client_event and owner and check_switch_setting(owner, TASK_SURVEY_REMINDER_EMAIL):
+    if is_client_event and owner and owner.is_active and check_switch_setting(owner, TASK_SURVEY_REMINDER_EMAIL):
         subject = "Progress Survey"
         to = [owner.email]
         if owner.email != progress_event.project.user.email:
@@ -63,7 +63,7 @@ def remind_progress_event_email(progress_event):
         if send_mail(subject, 'tunga/email/client_survey_reminder_v3', to, ctx):
             successful_sends.append('client')
 
-    if is_pm_event and pm:
+    if is_pm_event and pm and pm.is_active:
         subject = "Upcoming progress update"
         to = [pm.email]
 
