@@ -10,7 +10,8 @@ from tunga.settings import EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE, EXACT_DOCUMENT_
     EXACT_JOURNAL_CLIENT_SALES, EXACT_JOURNAL_DEVELOPER_SALES, EXACT_JOURNAL_DEVELOPER_PURCHASE, \
     EXACT_PAYMENT_CONDITION_CODE_14_DAYS, EXACT_VAT_CODE_NL, EXACT_VAT_CODE_WORLD, EXACT_GL_ACCOUNT_CLIENT_FEE, \
     EXACT_GL_ACCOUNT_DEVELOPER_FEE, EXACT_GL_ACCOUNT_TUNGA_FEE, EXACT_VAT_CODE_EUROPE
-from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL, VAT_LOCATION_EUROPE
+from tunga_utils.constants import CURRENCY_EUR, VAT_LOCATION_NL, VAT_LOCATION_EUROPE, INVOICE_TYPE_SALE, \
+    INVOICE_TYPE_PURCHASE
 from tunga_utils.models import SiteMeta
 
 
@@ -210,6 +211,163 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
                         AmountFC=amount,
                         Description=invoice_number,
                         GLAccount=EXACT_GL_ACCOUNT_TUNGA_FEE
+                    )
+                ]
+            )
+        ))
+
+
+def get_invoice_account_guid_v3(invoice, exact_api=None):
+    if not exact_api:
+        exact_api = get_api()
+
+    exact_user_id = None
+    try:
+        exact_user_id = exact_api.relations.get(relation_code=invoice.user.exact_code)['ID']
+    except (ObjectDoesNotExist, TypeError):
+        pass
+
+    user = invoice.user
+
+    profile_source = user.is_project_owner and user.company or user.profile
+
+    relation_dict = dict(
+        Code=user.exact_code,
+        Name=user.display_name,
+        Email=user.email,
+        City=profile_source.city_name or '',
+        Country=profile_source.country.code or '',
+    )
+
+    if invoice.type in INVOICE_TYPE_SALE:
+        relation_dict['Status'] = 'C'  # Is customer with no status
+
+    relation_dict['IsSales'] = False
+    relation_dict['IsSupplier'] = bool(invoice.type != INVOICE_TYPE_SALE)
+
+    if exact_user_id:
+        exact_api.relations.update(exact_user_id, relation_dict)
+    else:
+        exact_user = exact_api.relations.create(relation_dict)
+        exact_user_id = exact_user['ID']
+    return exact_user_id
+
+
+def get_entry_v3(invoice, exact_user_id, exact_api=None):
+    if not exact_api:
+        exact_api = get_api()
+
+    existing_invoice_refs = None
+    select_param = "EntryID,EntryNumber,EntryDate,Created,Modified,YourRef," \
+                   "AmountDC,VATAmountDC,DueDate,Description,Journal,ReportingYear"
+
+    if invoice.type == INVOICE_TYPE_SALE:
+        existing_invoice_refs = exact_api.restv1(GET(
+            "salesentry/SalesEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}' and Customer eq guid'{}'".format(invoice.number, exact_user_id),
+                '$select': '{},SalesEntryLines,Customer'.format(select_param)
+            }))
+        ))
+    elif invoice.type == INVOICE_TYPE_PURCHASE:
+        existing_invoice_refs = exact_api.restv1(GET(
+            "purchaseentry/PurchaseEntries?{}".format(urlencode({
+                '$filter': "YourRef eq '{}' and Supplier eq guid'{}'".format(invoice.number, exact_user_id),
+                '$select': '{},PurchaseEntryLines,Supplier'.format(select_param)
+            }))
+        ))
+    return existing_invoice_refs
+
+
+def upload_invoice_v3(invoice):
+    """
+    :param invoice:
+    :return:
+    """
+    exact_api = get_api()
+
+    if invoice.legacy_id or invoice.user.email in ['david@tunga.io', 'bart@tunga.io', 'domieck@tunga.io']:
+        # Don't sync legacy and admin invoices
+        return
+
+    exact_user_id = get_invoice_account_guid_v3(invoice, exact_api=exact_api)
+
+    existing_invoice_refs = get_entry_v3(invoice, exact_user_id, exact_api=exact_api)
+
+    if existing_invoice_refs:
+        # Stop if entries with invoice ref already exist
+        return
+
+    exact_document = exact_api.restv1(POST(
+        'documents/Documents',
+        dict(
+            Type=invoice.type == INVOICE_TYPE_PURCHASE and EXACT_DOCUMENT_TYPE_PURCHASE_INVOICE or EXACT_DOCUMENT_TYPE_SALES_INVOICE,
+            Subject='{} - {}'.format(
+                invoice.full_title,
+                invoice.number
+            ),
+            Account=exact_user_id,
+        )
+    ))
+
+    exact_api.restv1(POST(
+        'documents/DocumentAttachments',
+        dict(
+            Attachment=base64.b64encode(invoice.pdf),
+            Document=exact_document['ID'],
+            FileName='{} - {}.pdf'.format(invoice.full_title, invoice.number).replace(':', '__')
+        )
+    ))
+
+    if invoice.type == INVOICE_TYPE_SALE:
+        vat_location = invoice.tax_location
+        vat_code = EXACT_VAT_CODE_WORLD
+        if vat_location == VAT_LOCATION_NL:
+            vat_code = EXACT_VAT_CODE_NL
+        elif vat_location == VAT_LOCATION_EUROPE:
+            vat_code = EXACT_VAT_CODE_EUROPE
+
+        exact_api.restv1(POST(
+            'salesentry/SalesEntries',
+            dict(
+                Currency=CURRENCY_EUR,
+                Customer=exact_user_id,
+                Description=invoice.full_title,
+                Document=exact_document['ID'],
+                EntryDate=invoice.issued_at.isoformat(),
+                Journal=EXACT_JOURNAL_CLIENT_SALES,
+                ReportingPeriod=invoice.issued_at.month,
+                ReportingYear=invoice.issued_at.year,
+                YourRef=invoice.number,
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS,
+                SalesEntryLines=[
+                    dict(
+                        AmountFC=float(invoice.subtotal),
+                        Description=invoice.number,
+                        GLAccount=EXACT_GL_ACCOUNT_CLIENT_FEE,
+                        VATCode=vat_code
+                    )
+                ]
+            )
+        ))
+    elif invoice.type == INVOICE_TYPE_PURCHASE:
+        exact_api.restv1(POST(
+            'purchaseentry/PurchaseEntries',
+            dict(
+                Currency=CURRENCY_EUR,
+                Supplier=exact_user_id,
+                Description=invoice.full_title,
+                Document=exact_document['ID'],
+                EntryDate=invoice.issued_at.isoformat(),
+                Journal=EXACT_JOURNAL_DEVELOPER_PURCHASE,
+                ReportingPeriod=invoice.issued_at.month,
+                ReportingYear=invoice.issued_at.year,
+                YourRef=invoice.number,
+                PaymentCondition=EXACT_PAYMENT_CONDITION_CODE_14_DAYS,
+                PurchaseEntryLines=[
+                    dict(
+                        AmountFC=float(invoice.subtotal),
+                        Description=invoice.number,
+                        GLAccount=EXACT_GL_ACCOUNT_DEVELOPER_FEE
                     )
                 ]
             )
