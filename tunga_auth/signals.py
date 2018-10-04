@@ -12,19 +12,17 @@ from tunga_utils.constants import USER_TYPE_PROJECT_OWNER, USER_SOURCE_MANUAL
 
 @receiver(post_save, sender=get_user_model())
 def activity_handler_new_user(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.source == USER_SOURCE_MANUAL:
         if not EmailAddress.objects.filter(email=instance.email).count():
             email_address = EmailAddress.objects.add_email(
                 None, instance, instance.email
             )
 
-            if instance.is_admin:
-                email_address.verified = True
-                email_address.primary = True
-                email_address.save()
+            email_address.verified = True
+            email_address.primary = True
+            email_address.save()
 
-        if instance.source == USER_SOURCE_MANUAL:
-            send_new_user_password_email.delay(instance.id)
+        send_new_user_password_email.delay(instance.id)
 
 
 @receiver(user_signed_up)
