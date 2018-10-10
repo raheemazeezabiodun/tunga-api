@@ -8,6 +8,11 @@ from tunga.settings import UPLOAD_SIZE_LIMIT_MBS
 from tunga_utils.bitcoin_utils import is_valid_btc_address
 
 
+def validate_username(value):
+    if get_user_model().objects.filter(username__iexact=value).count():
+        raise ValidationError('This username is already associated with a Tunga account')
+
+
 def validate_email(value):
     if get_user_model().objects.filter(email__iexact=value).count():
         raise ValidationError('This email is already associated with a Tunga account')

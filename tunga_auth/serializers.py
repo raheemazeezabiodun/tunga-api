@@ -26,6 +26,7 @@ from tunga_utils.models import Rating
 from tunga_utils.serializers import SimpleProfileSerializer, SimpleUserSerializer, SimpleWorkSerializer, \
     SimpleEducationSerializer, SimpleConnectionSerializer, SimpleCompanySerializer, SimplestCompanySerializer, \
     NestedModelSerializer
+from tunga_utils.validators import validate_email, validate_username
 
 
 class UserSerializer(NestedModelSerializer, SimpleUserSerializer, GetCurrentUserAnnotatedSerializerMixin):
@@ -57,6 +58,21 @@ class UserSerializer(NestedModelSerializer, SimpleUserSerializer, GetCurrentUser
             # 'username', 'email',
             'date_joined', 'last_login', 'is_staff', 'payoneer_signup_url', 'payoneer_status'
         )
+
+    def validate_username(self, attrs):
+        if self.context and self.context.get('request', None):
+            request = self.context.get('request', None)
+            if request.method == 'POST':
+                validate_username(attrs)
+        return attrs
+
+    def validate_email(self, attrs):
+        if self.context and self.context.get('request', None):
+            request = self.context.get('request', None)
+            if request.method == 'POST':
+                validate_email(attrs)
+                pass
+        return attrs
 
     def save_nested_company(self, data, instance, created=False):
         if data:

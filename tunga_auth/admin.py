@@ -31,7 +31,7 @@ class TungaUserAdmin(UserAdmin):
 
     list_display = (
         'username', 'email', 'first_name', 'last_name',
-        'is_staff', 'is_internal', 'type', 'source', 'pending', 'verified'
+        'is_staff', 'is_internal', 'type', 'source', 'pending', 'verified', 'date_joined'
     )
     list_filter = ('date_joined', 'type', 'pending', 'is_staff', 'is_superuser', 'is_internal', 'payoneer_status')
     list_max_show_all = 1000
