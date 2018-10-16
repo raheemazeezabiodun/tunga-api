@@ -85,6 +85,8 @@ class TungaPayoneer(object):
 
         for key in ['payee_id', 'first_name', 'last_name', 'phone_number', 'email']:
             data[key] = data.get(key, '')
+            if type(data[key]) in [str, unicode]:
+                data[key] = data[key].encode('utf-8')
 
         try:
             return xml.format(**data)
