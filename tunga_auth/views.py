@@ -45,7 +45,7 @@ from tunga_tasks.utils import save_task_integration_meta
 from tunga_utils import coinbase_utils, slack_utils, exact_utils, payoneer_utils
 from tunga_utils.constants import BTC_WALLET_PROVIDER_COINBASE, PAYMENT_METHOD_BTC_WALLET, USER_TYPE_DEVELOPER, \
     USER_TYPE_PROJECT_OWNER, APP_INTEGRATION_PROVIDER_SLACK, APP_INTEGRATION_PROVIDER_HARVEST, STATUS_APPROVED, \
-    STATUS_DECLINED, STATUS_PENDING
+    STATUS_DECLINED, STATUS_PENDING, STATUS_INITIATED
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 from tunga_utils.helpers import get_social_token
 from tunga_utils.serializers import SimpleUserSerializer
@@ -349,6 +349,7 @@ def payoneer_sign_up(request):
             payoneer_url = response.get("token")
             if payoneer_url:
                 user.payoneer_signup_url = payoneer_url
+                user.payoneer_status = STATUS_INITIATED
                 user.save()
                 return redirect(payoneer_url)
             else:
