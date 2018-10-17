@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from tunga.settings import DEBUG
 from tunga_profiles.models import AppIntegration
-from tunga_utils.constants import STATUS_APPROVED, STATUS_PENDING
+from tunga_utils.constants import STATUS_APPROVED, STATUS_PENDING, STATUS_INITIATED
 from tunga_utils.helpers import clean_instance
 
 
@@ -12,7 +12,7 @@ def profile_check(user):
     if not user.first_name or not user.last_name or not user.email or not data_source:
         return False
 
-    if user.is_developer and user.payoneer_status not in [STATUS_APPROVED, STATUS_PENDING] and not DEBUG:
+    if user.is_developer and user.payoneer_status not in [STATUS_APPROVED, STATUS_PENDING, STATUS_INITIATED] and not DEBUG:
         return False
 
     required = ['country', 'city', 'street', 'plot_number', 'postal_code']
