@@ -7,10 +7,17 @@ from tunga_profiles.notifications import send_new_developer_email, send_develope
     send_developer_application_received_email, send_new_skill_email, send_developer_invited_email, \
     notify_user_profile_updated_slack, notify_user_request_slack
 from tunga_profiles.models import Connection, DeveloperApplication, Skill, DeveloperInvitation, UserProfile, UserRequest
+from tunga_utils import algolia_utils
 from tunga_utils.constants import REQUEST_STATUS_ACCEPTED, STATUS_ACCEPTED, STATUS_REJECTED
-
+from tunga_utils.serializers import SearchUserSerializer
 
 user_profile_updated = Signal(providing_args=["profile"])
+
+
+@receiver(post_save, sender=UserProfile)
+def activity_handler_new_profile(sender, instance, created, **kwargs):
+    if instance.user and instance.user.is_developer:
+        algolia_utils.add_objects([SearchUserSerializer(instance.user).data])
 
 
 @receiver(post_save, sender=Connection)
@@ -53,6 +60,9 @@ def activity_handler_developer_invitation(sender, instance, created, **kwargs):
 @receiver(user_profile_updated, sender=UserProfile)
 def activity_handler_profile_update(sender, profile, **kwargs):
     notify_user_profile_updated_slack.delay(profile.id)
+
+    if profile.user and profile.user.is_developer:
+        algolia_utils.add_objects([SearchUserSerializer(profile.user).data])
 
 
 @receiver(post_save, sender=UserRequest)

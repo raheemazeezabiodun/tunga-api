@@ -466,6 +466,11 @@ EXACT_GL_ACCOUNT_CLIENT_FEE = None
 EXACT_GL_ACCOUNT_DEVELOPER_FEE = None
 EXACT_GL_ACCOUNT_TUNGA_FEE = None
 
+ALGOLIA_APP_ID = None
+ALGOLIA_SEARCH_KEY = None
+ALGOLIA_ADMIN_KEY = None
+ALGOLIA_INDEX = None
+
 RAVEN_CONFIG = {
     'dsn': '',  # Raven URL here
     # 'release': raven.fetch_git_sha(os.path.dirname(os.pardir)),

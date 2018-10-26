@@ -261,6 +261,28 @@ class SimpleCompanySerializer(serializers.ModelSerializer):
         exclude = ('user',)
 
 
+class SearchProfileSerializer(serializers.ModelSerializer):
+
+    skills = SkillSerializer(many=True)
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            'id', 'city', 'country', 'country_name', 'location', 'skills'
+        )
+
+
+class SearchUserSerializer(serializers.ModelSerializer):
+
+    profile = SearchProfileSerializer(required=False, read_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = (
+            'id', 'username', 'first_name', 'last_name', 'display_name', 'type', 'profile'
+        )
+
+
 class SimplestUserSerializer(SimpleModelSerializer):
     company = serializers.SerializerMethodField(required=False, read_only=True)
     can_contribute = serializers.SerializerMethodField(required=False, read_only=True)
