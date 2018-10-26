@@ -279,7 +279,8 @@ class SearchUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = (
-            'id', 'username', 'first_name', 'last_name', 'display_name', 'type', 'profile'
+            'id', 'username', 'first_name', 'last_name', 'display_name', 'type',
+            'profile', 'avatar_url'
         )
 
 
