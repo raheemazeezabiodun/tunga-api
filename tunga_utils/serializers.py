@@ -268,7 +268,7 @@ class SearchProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = (
-            'id', 'city', 'country', 'country_name', 'location', 'skills'
+            'id', 'bio', 'city', 'country', 'country_name', 'location', 'skills'
         )
 
 
