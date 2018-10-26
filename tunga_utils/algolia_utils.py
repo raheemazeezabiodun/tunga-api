@@ -2,7 +2,7 @@ from algoliasearch import algoliasearch
 
 from tunga.settings import ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY, ALGOLIA_INDEX
 
-CHUNK_SIZE = 10
+CHUNK_SIZE = 100
 
 
 def get_index():
