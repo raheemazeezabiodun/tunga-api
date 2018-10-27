@@ -240,8 +240,8 @@ def get_account_guid_v3(user, invoice_type=None, exact_api=None):
         Code=user.exact_code,
         Name=account_name,
         Email=user.email,
-        City=profile_source.city_name or '',
-        Country=profile_source.country.code or '',
+        City=profile_source and profile_source.city_name or '',
+        Country=profile_source and profile_source.country.code or '',
     )
 
     if invoice_type in INVOICE_TYPE_SALE:
