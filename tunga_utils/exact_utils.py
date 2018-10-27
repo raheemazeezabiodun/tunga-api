@@ -217,33 +217,38 @@ def upload_invoice(task, user, invoice_type, invoice_file, amount, vat_location=
         ))
 
 
-def get_invoice_account_guid_v3(invoice, exact_api=None):
+def get_account_guid_v3(user, invoice_type=None, exact_api=None):
     if not exact_api:
         exact_api = get_api()
 
     exact_user_id = None
     try:
-        exact_user_id = exact_api.relations.get(relation_code=invoice.user.exact_code)['ID']
+        exact_user_id = exact_api.relations.get(relation_code=user.exact_code)['ID']
     except (ObjectDoesNotExist, TypeError):
         pass
 
-    user = invoice.user
-
     profile_source = user.is_project_owner and user.company or user.profile
+    account_name = user.display_name
+
+    if user.is_project_owner:
+        if user.company and user.company.name:
+            account_name = user.company.name
+        elif user.profile and user.profile.company:
+            account_name = user.profile.company
 
     relation_dict = dict(
         Code=user.exact_code,
-        Name=user.display_name,
+        Name=account_name,
         Email=user.email,
         City=profile_source.city_name or '',
         Country=profile_source.country.code or '',
     )
 
-    if invoice.type in INVOICE_TYPE_SALE:
+    if invoice_type in INVOICE_TYPE_SALE:
         relation_dict['Status'] = 'C'  # Is customer with no status
 
     relation_dict['IsSales'] = False
-    relation_dict['IsSupplier'] = bool(invoice.type != INVOICE_TYPE_SALE)
+    relation_dict['IsSupplier'] = bool(invoice_type != INVOICE_TYPE_SALE)
 
     if exact_user_id:
         exact_api.relations.update(exact_user_id, relation_dict)
@@ -289,7 +294,7 @@ def upload_invoice_v3(invoice):
         # Don't sync legacy and admin invoices
         return
 
-    exact_user_id = get_invoice_account_guid_v3(invoice, exact_api=exact_api)
+    exact_user_id = get_account_guid_v3(invoice.user, invoice_type=invoice.type, exact_api=exact_api)
 
     existing_invoice_refs = get_entry_v3(invoice, exact_user_id, exact_api=exact_api)
 
