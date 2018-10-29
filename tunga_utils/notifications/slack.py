@@ -1,5 +1,6 @@
 import datetime
 from django_rq import job
+from dateutil.parser import parse
 
 from tunga.settings import SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_PROFILES_CHANNEL, SLACK_ATTACHMENT_COLOR_GREEN, \
     SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_HUBSPOT_CHANNEL, SLACK_STAFF_LEADS_CHANNEL
@@ -140,7 +141,7 @@ def notify_hubspot_deal_changes_slack(deal_id, changes, event_ids=None):
 @job
 def notify_new_calendly_event(data):
     event_details = data.get('event', None)
-    start_time = event_details.get('start_time', None)
+    start_time = parse(event_details.get('start_time', None))
 
     invitee_details = data.get('invitee', dict())
     invitee_name = invitee_details.get('name')
@@ -161,7 +162,10 @@ def notify_new_calendly_event(data):
                          [
                              ['Name', invitee_name],
                              ['Email', invitee_details.get('email')],
-                             ['Start Time', start_time]
+                             ['Start Time', '*{}* at *{} UTC*'.format(
+                                 start_time.strftime("%a, %d %b, %Y"),
+                                 start_time.strftime("%I:%M %p")
+                             )]
                          ]]),
                     slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
                     slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
