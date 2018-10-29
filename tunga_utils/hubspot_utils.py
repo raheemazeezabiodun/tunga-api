@@ -111,8 +111,8 @@ def create_hubspot_contact(email=None, **kwargs):
     return None
 
 
-def get_hubspot_contact_vid(email):
-    response = create_hubspot_contact(email)
+def get_hubspot_contact_vid(email, **kwargs):
+    response = create_hubspot_contact(email, **kwargs)
     if response and 'vid' in response:
         return response['vid']
     return
@@ -534,3 +534,16 @@ def clean_property(internal_name, internal_value, deal_details, property_details
                     # Divide by 1000 because HS timestamps are in milliseconds
                     final_value = datetime.datetime.utcfromtimestamp(int(internal_value)/1000).strftime('%d/%b/%Y')
     return final_name, final_value
+
+
+def create_custom_hubspot_engagement(payload):
+    r = requests.post(
+        get_authed_hubspot_endpoint_url(
+            HUBSPOT_ENDPOINT_CREATE_ENGAGEMENT, HUBSPOT_API_KEY
+        ), json=payload, verify=False
+    )
+
+    if r.status_code in [200, 201]:
+        response = r.json()
+        return response
+    return

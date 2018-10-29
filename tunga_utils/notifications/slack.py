@@ -162,7 +162,7 @@ def notify_new_calendly_event(data):
                          [
                              ['Name', invitee_name],
                              ['Email', invitee_details.get('email')],
-                             ['Start Time', '*{}* at *{} UTC*'.format(
+                             ['Start Time', '{} at {} UTC'.format(
                                  start_time.strftime("%a, %d %b, %Y"),
                                  start_time.strftime("%I:%M %p")
                              )]
@@ -171,7 +171,9 @@ def notify_new_calendly_event(data):
                     slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
                 },
                 {
-                    slack_utils.KEY_TEXT: '\n'.join(['*{}:*\n{}'.format(item.get('question'), item.get('answer')) for item in questions_and_answers]),
+                    slack_utils.KEY_TEXT: '\n'.join(
+                        ['*{}:*\n{}'.format(item.get('question'), item.get('answer')) for item in questions_and_answers]
+                    ),
                     slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
                     slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
                 }

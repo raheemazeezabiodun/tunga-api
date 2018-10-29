@@ -26,6 +26,7 @@ from tunga_utils.constants import EVENT_SOURCE_HUBSPOT
 from tunga_utils.models import ContactRequest, InviteRequest, ExternalEvent
 from tunga_utils.notifications.slack import notify_new_calendly_event
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
+from tunga_utils.tasks import log_calendly_event_hubspot
 
 
 class SkillViewSet(viewsets.ReadOnlyModelViewSet):
@@ -171,6 +172,6 @@ def calendly_notification(request):
 
             if data:
                 notify_new_calendly_event.delay(data)
-
+                log_calendly_event_hubspot.delay(data)
         return Response('Received')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
