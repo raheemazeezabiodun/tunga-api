@@ -43,7 +43,7 @@ from tunga_tasks.views import TimeEntryViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file, \
-    find_by_legacy_id, InviteRequestView, weekly_report, hubspot_notification
+    find_by_legacy_id, InviteRequestView, weekly_report, hubspot_notification, calendly_notification
 
 api_schema_view = get_swagger_view(title='Tunga API')
 
@@ -139,6 +139,7 @@ urlpatterns = [
     url(r'^api/hook/bitpesa/$', bitpesa_notification, name="bitpesa-notification"),
     url(r'^api/hook/slack/customer/$', slack_customer_notification, name="slack-customer-notification"),
     url(r'^api/hook/hubspot/$', hubspot_notification, name="hubspot-notification"),
+    url(r'^api/hook/calendly/$', calendly_notification, name="calendly-notification"),
     url(r'^api/auth/', include('rest_auth.urls')),
     url(r'api/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^api/countries/', CountryListView.as_view(), name='countries'),

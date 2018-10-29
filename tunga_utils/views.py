@@ -24,6 +24,7 @@ from tunga_projects.utils import weekly_project_report, weekly_payment_report
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils.constants import EVENT_SOURCE_HUBSPOT
 from tunga_utils.models import ContactRequest, InviteRequest, ExternalEvent
+from tunga_utils.notifications.slack import notify_new_calendly_event
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
 
 
@@ -154,5 +155,22 @@ def hubspot_notification(request):
     payload = request.data
     if payload:
         ExternalEvent.objects.create(source=EVENT_SOURCE_HUBSPOT, payload=json.dumps(payload))
+        return Response('Received')
+    return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(http_method_names=['POST'])
+@permission_classes([AllowAny])
+def calendly_notification(request):
+    payload = request.data
+    if payload:
+        event_type = payload.get('event', None)
+        if event_type == 'invitee.created':
+            data = payload.get('payload', None)
+
+            if data:
+                notify_new_calendly_event.delay(data)
+
         return Response('Received')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)

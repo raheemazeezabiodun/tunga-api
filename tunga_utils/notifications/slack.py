@@ -2,7 +2,7 @@ import datetime
 from django_rq import job
 
 from tunga.settings import SLACK_STAFF_INCOMING_WEBHOOK, SLACK_STAFF_PROFILES_CHANNEL, SLACK_ATTACHMENT_COLOR_GREEN, \
-    SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_HUBSPOT_CHANNEL
+    SLACK_ATTACHMENT_COLOR_BLUE, SLACK_STAFF_HUBSPOT_CHANNEL, SLACK_STAFF_LEADS_CHANNEL
 from tunga_utils import slack_utils, hubspot_utils
 from tunga_utils.helpers import clean_instance
 from tunga_utils.models import InviteRequest, ExternalEvent
@@ -135,3 +135,42 @@ def notify_hubspot_deal_changes_slack(deal_id, changes, event_ids=None):
 
             if event_ids:
                 ExternalEvent.objects.filter(id__in=event_ids).update(notification_sent_at=datetime.datetime.utcnow())
+
+
+@job
+def notify_new_calendly_event(data):
+    event_details = data.get('event', None)
+    start_time = event_details.get('start_time', None)
+
+    invitee_details = data.get('invitee', dict())
+    invitee_name = invitee_details.get('name')
+
+    questions_and_answers = data.get('questions_and_answers', [])
+
+    slack_utils.send_incoming_webhook(
+        SLACK_STAFF_INCOMING_WEBHOOK,
+        {
+            slack_utils.KEY_CHANNEL: SLACK_STAFF_LEADS_CHANNEL,
+            slack_utils.KEY_TEXT: '*{}* scheduled a call with Calendly'.format(
+                invitee_name
+            ),
+            slack_utils.KEY_ATTACHMENTS: [
+                {
+                    slack_utils.KEY_TEXT: '\n'.join(
+                        ['*{}:* {}'.format(item[0], item[1]) for item in
+                         [
+                             ['Name', invitee_name],
+                             ['Email', invitee_details.get('email')],
+                             ['Start Time', start_time]
+                         ]]),
+                    slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+                    slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
+                },
+                {
+                    slack_utils.KEY_TEXT: '\n'.join(['*{}:*\n{}'.format(item.get('question'), item.get('answer')) for item in questions_and_answers]),
+                    slack_utils.KEY_MRKDWN_IN: [slack_utils.KEY_TEXT],
+                    slack_utils.KEY_COLOR: SLACK_ATTACHMENT_COLOR_GREEN
+                }
+            ]
+        }
+    )
