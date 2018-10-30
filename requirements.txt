@@ -14,7 +14,7 @@ certifi==2018.10.15       # via requests
 cffi==1.7.0               # via argon2-cffi, cairocffi, weasyprint
 chardet==3.0.4            # via requests
 click==6.6                # via rq
-coinbase==2.0.6
+coinbase==2.1.0
 configparser==3.5.0       # via flake8
 contextlib2==0.5.5        # via raven
 coreapi==2.3.0            # via django-rest-swagger, openapi-codec
@@ -35,7 +35,7 @@ django-rest-auth==0.9.1
 django-rest-swagger==2.1.2
 django-rq==0.9.5
 django-tagulous==0.12.0
-Django==1.11.17           # via django-allauth, django-hashers-passlib, django-oauth-toolkit, django-rest-auth, django-rq
+Django==1.11.16           # via django-allauth, django-hashers-passlib, django-oauth-toolkit, django-rest-auth, django-rq
 djangorestframework-jwt==1.8.0
 djangorestframework==3.6.2
 docopt==0.4.0             # via mandrill
@@ -66,7 +66,7 @@ Pillow==3.3.0
 premailer==3.0.1
 pycodestyle==2.3.1        # via flake8
 pycparser==2.14           # via cffi
-pycrypto==2.6.1
+pycryptodome==3.7.0
 pyflakes==1.6.0           # via flake8
 PyJWT==1.4.0              # via djangorestframework-jwt
 Pyphen==0.9.4             # via weasyprint
