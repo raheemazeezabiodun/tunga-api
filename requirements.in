@@ -22,7 +22,7 @@ oauthlib==2.*
 Pillow==3.3.*
 pycrypto==2.6.*
 python-dateutil==2.5.*
-requests==2.10.*
+requests==2.20.*
 rest-framework-generic-relations==1.1.*
 WeasyPrint==0.42.3
 premailer==3.0.*
