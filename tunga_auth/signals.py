@@ -26,8 +26,8 @@ def activity_handler_new_user(sender, instance, created, **kwargs):
 
         send_new_user_password_email.delay(instance.id)
 
-    if instance.is_developer:
-        algolia_utils.add_objects([SearchUserSerializer(instance).data])
+        if instance.is_developer:
+            algolia_utils.add_objects([SearchUserSerializer(instance).data])
 
 
 @receiver(user_signed_up)
