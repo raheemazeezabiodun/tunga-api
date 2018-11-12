@@ -43,7 +43,7 @@ from tunga_tasks.views import TimeEntryViewSet, \
     TaskPaymentViewSet, ParticipantPaymentViewSet, SkillsApprovalViewSet, SprintViewSet, TaskDocumentViewSet, TaskViewSet
 from tunga_uploads.views import UploadViewSet
 from tunga_utils.views import SkillViewSet, ContactRequestView, get_medium_posts, get_oembed_details, upload_file, \
-    find_by_legacy_id, InviteRequestView, weekly_report, hubspot_notification, calendly_notification
+    find_by_legacy_id, InviteRequestView, weekly_report, hubspot_notification, calendly_notification, search_logger
 
 api_schema_view = get_swagger_view(title='Tunga API')
 
@@ -146,6 +146,7 @@ urlpatterns = [
     url(r'^api/contact-request/', ContactRequestView.as_view(), name='contact-request'),
     url(r'^api/invite-request/', InviteRequestView.as_view(), name='invite-request'),
     url(r'^api/medium/', get_medium_posts, name='medium-posts'),
+    url(r'^api/log/search/$', search_logger, name="search-logger"),
     url(r'^api/oembed/', get_oembed_details, name='oembed-details'),
     url(r'^api/upload/', upload_file, name='upload-file'),
     url(r'^api/docs/', api_schema_view),

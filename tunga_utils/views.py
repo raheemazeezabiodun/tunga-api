@@ -17,13 +17,14 @@ from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 
 from tunga.settings import MEDIA_ROOT, MEDIA_URL
+from tunga_auth.utils import get_session_visitor_email
 from tunga_profiles.models import Skill
 from tunga_projects.models import Project, ProgressEvent
 from tunga_projects.serializers import SimpleProjectSerializer, SimpleProgressEventSerializer
 from tunga_projects.utils import weekly_project_report, weekly_payment_report
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils.constants import EVENT_SOURCE_HUBSPOT
-from tunga_utils.models import ContactRequest, InviteRequest, ExternalEvent
+from tunga_utils.models import ContactRequest, InviteRequest, ExternalEvent, SearchEvent
 from tunga_utils.notifications.slack import notify_new_calendly_event
 from tunga_utils.serializers import SkillSerializer, ContactRequestSerializer, InviteRequestSerializer
 from tunga_utils.tasks import log_calendly_event_hubspot
@@ -174,4 +175,19 @@ def calendly_notification(request):
                 notify_new_calendly_event.delay(data)
                 log_calendly_event_hubspot.delay(data)
         return Response('Received')
+    return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(http_method_names=['POST'])
+@permission_classes([AllowAny])
+def search_logger(request):
+    payload = request.data
+    if payload and payload.get('search', None):
+        user = None
+        email = get_session_visitor_email(request)
+        if request.user.is_authenticated:
+            user = request.user
+        SearchEvent.objects.create(user=user, email=email, query=payload.get('search', None))
+        return Response('Logged')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)

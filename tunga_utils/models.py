@@ -204,3 +204,20 @@ class ExternalEvent(models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+
+@python_2_unicode_compatible
+class SearchEvent(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, blank=True, null=True, related_name='searches', on_delete=models.CASCADE
+    )
+    email = models.EmailField(validators=[validate_email], blank=True, null=True)
+    query = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.query
+
+    class Meta:
+        ordering = ['-created_at']
