@@ -229,6 +229,7 @@ class TungaUser(AbstractUser):
 @python_2_unicode_compatible
 class EmailVisitor(models.Model):
     email = models.EmailField(unique=True)
+    via_search = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login_at = models.DateTimeField(auto_now=True)
