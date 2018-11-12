@@ -275,12 +275,13 @@ class SearchProfileSerializer(serializers.ModelSerializer):
 class SearchUserSerializer(serializers.ModelSerializer):
     objectID = serializers.IntegerField(source='id')
     profile = SearchProfileSerializer(required=False, read_only=True)
+    profile_rank = serializers.FloatField(required=False, read_only=True)
 
     class Meta:
         model = get_user_model()
         fields = (
             'objectID', 'id', 'username', 'first_name', 'last_name', 'display_name', 'type',
-            'profile', 'avatar_url'
+            'profile', 'avatar_url', 'profile_rank'
         )
 
 

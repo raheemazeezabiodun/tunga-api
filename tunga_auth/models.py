@@ -225,6 +225,23 @@ class TungaUser(AbstractUser):
         else:
             return 'world'
 
+    @property
+    def profile_rank(self):
+        total_score = 0
+        total_score += sum([item.status == STATUS_APPROVED and 0.3 or 0.15 for item in
+                            self.project_participation.filter(status__in=[STATUS_INITIAL, STATUS_APPROVED])])
+        total_score += sum([getattr(self, k, None) and 0.1 or 0 for k in ['first_name', 'last_name', 'email']])
+        if self.profile:
+            total_score += sum([(getattr(self.profile, k, None)) and 0.1 or 0 for k in
+                                ['country', 'city', 'street', 'plot_number', 'postal_code', 'id_document']])
+        work_count = self.work_set.all().count()
+        if work_count > 3:
+            total_score += (3 * 0.2) + ((work_count - 3) * 0.02)
+        else:
+            total_score += (work_count * 0.02)
+        total_score += self.education_set.all().count() * 0.04
+        return total_score
+
 
 @python_2_unicode_compatible
 class EmailVisitor(models.Model):
