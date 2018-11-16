@@ -213,6 +213,7 @@ class SearchEvent(models.Model):
     )
     email = models.EmailField(blank=True, null=True)
     query = models.TextField()
+    pagination = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
