@@ -62,13 +62,13 @@ class InviteRequestAdmin(admin.ModelAdmin):
 
 
 @admin.register(ExternalEvent)
-class ExternalEventAdmin(admin.ModelAdmin):
+class ExternalEventAdmin(ReadOnlyModelAdmin):
     list_display = ('source', 'payload', 'created_at', 'notification_sent_at')
     list_filter = ('source',)
     search_fields = ('payload',)
 
 
 @admin.register(SearchEvent)
-class SearchEventAdmin(admin.ModelAdmin):
-    list_display = ('user', 'email', 'query', 'created_at', 'updated_at')
+class SearchEventAdmin(ReadOnlyModelAdmin):
+    list_display = ('user', 'email', 'query', 'pagination', 'created_at', 'updated_at')
     search_fields = ('query', 'email', 'user__email')
