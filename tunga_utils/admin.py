@@ -70,5 +70,5 @@ class ExternalEventAdmin(ReadOnlyModelAdmin):
 
 @admin.register(SearchEvent)
 class SearchEventAdmin(ReadOnlyModelAdmin):
-    list_display = ('user', 'email', 'query', 'pagination', 'created_at', 'updated_at')
+    list_display = ('user', 'email', 'query', 'page', 'created_at', 'updated_at')
     search_fields = ('query', 'email', 'user__email')

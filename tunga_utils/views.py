@@ -188,6 +188,9 @@ def search_logger(request):
         email = get_session_visitor_email(request)
         if request.user.is_authenticated:
             user = request.user
-        SearchEvent.objects.create(user=user, email=email, query=payload.get('search', None))
+        SearchEvent.objects.create(
+            user=user, email=email, query=payload.get('search', None),
+            page=payload.get('page', 1) or 1
+        )
         return Response('Logged')
     return Response('Failed to process', status=status.HTTP_400_BAD_REQUEST)
