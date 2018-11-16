@@ -211,6 +211,9 @@ class InvoiceViewSet(ModelViewSet):
             except PermissionDenied:
                 return HttpResponse("You do not have permission to access this invoice")
 
+            if not (invoice.is_due or request.user.is_admin or request.user.is_project_manager or request.user.is_developer):
+                return HttpResponse("You do not have permission to access this invoice")
+
         if request.accepted_renderer.format == 'html':
             return HttpResponse(invoice.html)
         else:

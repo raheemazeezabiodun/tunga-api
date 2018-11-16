@@ -174,6 +174,13 @@ class Invoice(models.Model):
             return datetime.datetime.utcnow() > self.due_at
         return False
 
+    @property
+    def is_due(self):
+        today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+        if self.issued_at:
+            return self.issued_at <= today_end
+        return False
+
     @staticmethod
     @allow_staff_or_superuser
     def has_read_permission(request):

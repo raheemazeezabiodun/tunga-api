@@ -236,7 +236,10 @@ class NotificationView(views.APIView):
             ), archived=False
         ).distinct()
 
-        unpaid_invoices = Invoice.objects.filter(user=request.user, paid=False, ).order_by('issued_at')[:5]
+        today_end = datetime.datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+        unpaid_invoices = Invoice.objects.filter(
+            user=request.user, paid=False, issued_at__lte=today_end
+        ).order_by('issued_at')[:5]
 
         upcoming_progress_events = ProgressEvent.objects.filter(
             (
@@ -260,7 +263,7 @@ class NotificationView(views.APIView):
             event__type__in=[PROGRESS_EVENT_DEVELOPER, PROGRESS_EVENT_MILESTONE]
         ).distinct()[:4]
 
-        activities = Action.objects.filter(
+        raw_activities = Action.objects.filter(
             ~Q(id__in=[int(item.notification_id) for item in NotificationReadLog.objects.filter(user=user, type=NOTIFICATION_TYPE_ACTIVITY)]) &
             (
                 Q(projects__in=running_projects) | Q(progress_events__project__in=running_projects)
@@ -268,7 +271,16 @@ class NotificationView(views.APIView):
             action_object_content_type__in=[
                 ContentType.objects.get_for_model(model) for model in [Document, Participation, Invoice, FieldChangeLog]
             ],
-        )[:15]
+        )
+
+        invoice_type = ContentType.objects.get_for_model(Invoice)
+
+        cleaned_activities = []
+        is_client = not (user.is_admin or user.is_project_manager or user.is_developer)
+        for activity in raw_activities:
+            if (not is_client) or activity.action_object_content_type != invoice_type or activity.action_object.is_due:
+                cleaned_activities.append(activity)
+        cleaned_activities = cleaned_activities[:15]
 
         cleared_notifications = [
             item.notification_id for item in NotificationReadLog.objects.filter(
@@ -330,7 +342,7 @@ class NotificationView(views.APIView):
                         title=report.event.project.title
                     ),
                 ) for report in progress_reports],
-                'activities': ActivitySerializer(instance=activities, many=True, context=dict(request=request)).data
+                'activities': ActivitySerializer(instance=cleaned_activities, many=True, context=dict(request=request)).data
             },
             status=status.HTTP_200_OK
         )
