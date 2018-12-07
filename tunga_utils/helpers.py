@@ -9,6 +9,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponseRedirect
 from django.template.defaultfilters import urlizetrunc, safe, striptags
 from django.utils import six
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 from tunga_utils.constants import HEADER_EDIT_TOKEN
 
@@ -149,3 +151,22 @@ def clean_meta_value(meta_value):
 
 def get_edit_token_header(request):
     return request.META.get(HEADER_EDIT_TOKEN, None)
+
+
+def save_to_google_sheet(url, index, data):
+    """
+    This saves to google sheet
+    url: str -> url of the google sheet file
+    index: number -> position where the data should be saved
+    data: array -> post data
+    """
+    # use creds to create a client to interact with the Google Drive API
+    scope = ['https://spreadsheets.google.com/feeds',
+            'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    client = gspread.authorize(creds)
+
+    # Make sure you use the right name here.
+    sheet = client.open_by_url(url).sheet1
+    sheet.insert_row(data, index)
+    return sheet
