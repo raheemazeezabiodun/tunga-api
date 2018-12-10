@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 
 from tunga.settings import UPLOAD_SIZE_LIMIT_MBS
 from tunga_utils.bitcoin_utils import is_valid_btc_address
+from tunga.free_emails import FREE_EMAILS
 
 
 def validate_username(value):
@@ -93,3 +94,12 @@ def validate_field_schema(required_fields_schema, data, raise_exception=True):
     if errors and raise_exception:
         raise ValidationError(errors)
     return errors
+
+
+def is_business_email(email):
+    domain = re.search("@[\w.]+", email)
+    try:
+        domain_str = domain.group()[1:]
+        return not domain_str in FREE_EMAILS
+    except:
+        return False

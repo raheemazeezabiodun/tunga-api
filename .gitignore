@@ -1,6 +1,6 @@
 ### Tunga Specific ###
 .idea
-.vs_code
+.vs_code/
 static/
 media/
 tunga/env/local*.py

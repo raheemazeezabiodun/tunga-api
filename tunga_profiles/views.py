@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.query_utils import Q
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from django_countries.fields import CountryField
 from dry_rest_permissions.generics import DRYObjectPermissions, DRYPermissions
 from rest_framework import viewsets, generics, views, status
@@ -25,7 +26,7 @@ from tunga_profiles.filters import EducationFilter, WorkFilter, ConnectionFilter
 from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation, \
     Company
 from tunga_profiles.serializers import ProfileSerializer, EducationSerializer, WorkSerializer, ConnectionSerializer, \
-    DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer
+    DeveloperApplicationSerializer, DeveloperInvitationSerializer, CompanySerializer, WhitePaperVisitorsSerializer
 from tunga_projects.models import Project, ProgressReport, ProgressEvent, Participation, Document
 from tunga_tasks.utils import get_integration_token
 from tunga_utils import github, slack_utils
@@ -427,3 +428,19 @@ class SlackIntegrationView(views.APIView):
             return Response({'status': 'Failed'}, status.HTTP_400_BAD_REQUEST)
 
         return Response({'status': 'Not implemented'}, status.HTTP_501_NOT_IMPLEMENTED)
+
+
+class WhitePaperVisitorsView(views.APIView):
+    """
+    Visitors Email View
+    """
+    serializer_class = WhitePaperVisitorsSerializer
+    permission_classes = []
+    
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'download_url': settings.WHITE_PAPER_DOWNLOAD_URL}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -3,14 +3,14 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from tunga_profiles.models import UserProfile, Education, Work, Connection, DeveloperApplication, DeveloperInvitation, \
-    Skill, Company
+    Skill, Company, WhitePaperUser
 from tunga_profiles.notifications import send_developer_invited_email
 from tunga_profiles.signals import user_profile_updated
 from tunga_utils.constants import SKILL_TYPE_OTHER
 from tunga_utils.serializers import CreateOnlyCurrentUserDefault, AbstractExperienceSerializer, \
     SkillsDetailsSerializer, SimplestUserSerializer, \
     SimpleSkillSerializer, NestedModelSerializer, ContentTypeAnnotatedModelSerializer
-
+from tunga_utils.validators import is_business_email
 
 class ProfileSerializer(NestedModelSerializer, ContentTypeAnnotatedModelSerializer):
     user = SimplestUserSerializer(required=False)
@@ -172,3 +172,15 @@ class DeveloperInvitationSerializer(serializers.ModelSerializer):
             return self.instance
         return super(DeveloperInvitationSerializer, self).create(validated_data)
 
+
+class WhitePaperVisitorsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhitePaperUser
+        fields = ('first_name', 'last_name', 'company', 'phone_number', 'country', 'email')
+
+
+    def validate_emaill(self, email):
+        if is_business_email(email):
+            return email
+        else:
+            return serializers.ValidationError(detail='You need to specify a business email')
