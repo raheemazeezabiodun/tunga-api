@@ -10,7 +10,6 @@ from tunga_tasks.models import Task
 from tunga_utils.models import ContactRequest, Upload, InviteRequest
 from tunga_utils.notifications.generic import notify_new_contact_request, notify_new_invite_request
 from tunga_profiles.models import WhitePaperUser
-from tunga_utils.helpers import 
 
 
 post_nested_save = Signal(providing_args=["instance", "created"])
