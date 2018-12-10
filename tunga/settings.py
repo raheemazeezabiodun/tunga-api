@@ -509,4 +509,4 @@ if 'test' in sys.argv[1:]:
     MIGRATION_MODULES = DisableMigrations()
 
 WHITE_PAPER_DOWNLOAD_URL = 'https://tunga.io/files/BestAfricanCountriesForSourcingSoftwareDevelopersIn2019_Tunga.pdf'
-WHITE_PAPER_SHEET_ID = None
+WHITE_PAPER_SHEET_URL = None
