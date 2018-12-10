@@ -23,7 +23,6 @@ from tunga_utils.helpers import get_serialized_id
 from tunga_utils.models import AbstractExperience
 from tunga_utils.validators import validate_btc_address
 
-
 SKILL_TYPE_CHOICES = (
     (SKILL_TYPE_LANGUAGE, 'Language'),
     (SKILL_TYPE_FRAMEWORK, 'Framework'),
@@ -329,7 +328,7 @@ CONNECTION_STATUS_CHOICES = (
 @python_2_unicode_compatible
 class Connection(models.Model):
     from_user = models.ForeignKey(
-            settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='connections_initiated')
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='connections_initiated')
     to_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='connection_requests')
     accepted = models.BooleanField(default=False)
     responded = models.BooleanField(default=False)
@@ -393,6 +392,7 @@ class DeveloperApplication(models.Model):
     @property
     def country_name(self):
         return self.country.name
+
     country_name.fget.short_description = 'country'
 
 
@@ -478,7 +478,8 @@ class Inquirer(models.Model):
 @python_2_unicode_compatible
 class UserRequest(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='user_requests')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, related_name='users_requested')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING,
+                                   related_name='users_requested')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -495,5 +496,5 @@ class WhitePaperUser(models.Model):
     country = CountryField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-     def __str__(self):
+    def __str__(self):
         return '{} {} - {}'.format(self.first_name, self.email, self.company)
