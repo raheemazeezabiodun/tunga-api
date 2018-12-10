@@ -163,7 +163,7 @@ def save_to_google_sheet(url, index, data):
     # use creds to create a client to interact with the Google Drive API
     scope = ['https://spreadsheets.google.com/feeds',
             'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('../credentials.json', scope)
     client = gspread.authorize(creds)
 
     # Make sure you use the right name here.
