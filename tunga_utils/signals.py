@@ -10,6 +10,7 @@ from tunga_tasks.models import Task
 from tunga_utils.models import ContactRequest, Upload, InviteRequest
 from tunga_utils.notifications.generic import notify_new_contact_request, notify_new_invite_request
 from tunga_profiles.models import WhitePaperUser
+from tunga_utils.helpers import save_to_google_sheet
 
 
 post_nested_save = Signal(providing_args=["instance", "created"])
@@ -38,4 +39,4 @@ def activity_save_to_google_sheet(sender, instance, created, **kwargs):
     if created:
         sheet_data = [instance.first_name, instance.last_name, instance.company, instance.email,
                 instance.phone_number, instance.country, str(instance.created_at)]
-        save_to_google_sheet(settings.WHITE_PAPER_SHEET_ID, 1, sheet_data)
+        save_to_google_sheet(settings.WHITE_PAPER_SHEET_URL, 1, sheet_data)
