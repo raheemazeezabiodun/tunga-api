@@ -478,6 +478,9 @@ RAVEN_CONFIG = {
 
 UPLOAD_SIZE_LIMIT_MBS = 5 * 1024 * 1024  # 5 MB
 
+WHITE_PAPER_DOWNLOAD_URL = 'https://tunga.io/files/BestAfricanCountriesForSourcingSoftwareDevelopersIn2019_Tunga.pdf'
+WHITE_PAPER_SHEET_ID = None
+
 try:
     from .env.local import *
 except ImportError:
@@ -507,6 +510,3 @@ if 'test' in sys.argv[1:]:
     TEMPLATE_DEBUG = False
     TESTS_IN_PROGRESS = True
     MIGRATION_MODULES = DisableMigrations()
-
-WHITE_PAPER_DOWNLOAD_URL = 'https://tunga.io/files/BestAfricanCountriesForSourcingSoftwareDevelopersIn2019_Tunga.pdf'
-WHITE_PAPER_SHEET_URL = None

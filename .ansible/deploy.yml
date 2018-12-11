@@ -17,6 +17,8 @@
         chdir: '{{ checkout_path }}'
     - name: copy local settings
       shell: 'cp ~/deploy/local_{{ target_environment }}.py {{ server_root }}tunga/env/local.py'
+    - name: copy credentials
+      shell: 'cp ~/deploy/credentials_{{ target_environment }}.json {{ server_root }}tunga/env/credentials.json'
     - name: copy files to server root
       shell: 'rsync -av -R * {{ server_root }}'
       args:

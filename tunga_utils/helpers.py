@@ -13,6 +13,7 @@ from django.utils import six
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+from tunga import settings
 from tunga_utils.constants import HEADER_EDIT_TOKEN
 
 
@@ -154,7 +155,7 @@ def get_edit_token_header(request):
     return request.META.get(HEADER_EDIT_TOKEN, None)
 
 
-def save_to_google_sheet(url, index, data):
+def save_to_google_sheet(sheet_id, data, index=1):
     """
     This saves to google sheet
     url: str -> url of the google sheet file
@@ -162,13 +163,17 @@ def save_to_google_sheet(url, index, data):
     data: array -> post data
     """
     # use creds to create a client to interact with the Google Drive API
-    scope = ['https://spreadsheets.google.com/feeds',
-            'https://www.googleapis.com/auth/drive']
-            
-    creds = ServiceAccountCredentials.from_json_keyfile_name(os.path.join(settings.BASE_DIR, 'credentials.json'), scope)
-    client = gspread.authorize(creds)
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/drive'
+    ]
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        os.path.join(settings.BASE_DIR, 'tunga', 'env', 'credentials.json'), scope
+    )
+    client = gspread.authorize(credentials)
 
     # Make sure you use the right name here.
-    sheet = client.open_by_url(url).sheet1
+    sheet = client.open_by_key(sheet_id).sheet1
     sheet.insert_row(data, index)
     return sheet
