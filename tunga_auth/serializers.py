@@ -50,6 +50,7 @@ class UserSerializer(NestedModelSerializer, SimpleUserSerializer, GetCurrentUser
     avatar_url = serializers.URLField(read_only=True, required=False)
     exact_code = serializers.CharField(read_only=True, required=False)
     tax_location = serializers.CharField(read_only=True, required=False)
+    is_pay_admin = serializers.BooleanField(read_only=True, required=False)
 
     class Meta:
         model = get_user_model()
