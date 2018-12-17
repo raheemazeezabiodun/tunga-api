@@ -21,11 +21,11 @@ class TungaUserAdmin(UserAdmin):
     search_fields = ('first_name', 'last_name', 'email')
 
     fieldsets = UserAdmin.fieldsets + (
-        (_('Profile'), {'fields': ('type', 'image', 'is_internal', 'verified', 'pending')}),
+        (_('Profile'), {'fields': ('type', 'image', 'is_internal', 'can_pay', 'verified', 'pending')}),
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (_('Account Type'), {'fields': ('is_superuser', 'is_staff', 'can_pay', 'type', 'source')}),
+        (_('Account Type'), {'fields': ('is_superuser', 'is_staff', 'type', 'source')}),
         (_('Profile'), {'fields': ('email', 'first_name', 'last_name')})
     )
 
