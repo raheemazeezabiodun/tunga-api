@@ -293,7 +293,7 @@ class SimplestUserSerializer(SimpleModelSerializer):
         model = get_user_model()
         fields = (
             'id', 'username', 'first_name', 'last_name', 'image', 'display_name', 'short_name', 'type',
-            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin',
+            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin', 'is_pay_admin',
             'verified', 'company', 'avatar_url', 'can_contribute', 'tax_location'
         )
         extra_kwargs = {
@@ -321,7 +321,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 'display_name', 'short_name', 'type', 'image',
-            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin',
+            'is_developer', 'is_project_owner', 'is_project_manager', 'is_staff', 'is_admin', 'is_pay_admin',
             'verified', 'company', 'avatar_url',
             'can_contribute', 'date_joined', 'agree_version', 'agreed_at', 'disagree_version', 'disagreed_at',
             'payoneer_signup_url', 'payoneer_status', 'exact_code', 'tax_location'
@@ -385,7 +385,8 @@ class InvoiceUserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 'display_name', 'type',
-            'is_developer', 'is_project_owner', 'is_staff', 'is_admin', 'verified', 'profile'
+            'is_developer', 'is_project_owner', 'is_staff', 'is_admin', 'is_pay_admin',
+            'verified', 'profile'
         )
 
 

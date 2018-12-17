@@ -57,6 +57,7 @@ class TungaUser(AbstractUser):
         default=STATUS_INITIAL
     )
     invoice_email = models.EmailField(blank=True, null=True)
+    can_pay = models.BooleanField(default=False)
 
     class Meta(AbstractUser.Meta):
         unique_together = ('email',)
@@ -109,6 +110,10 @@ class TungaUser(AbstractUser):
     @property
     def is_admin(self):
         return self.is_staff or self.is_superuser
+
+    @property
+    def is_pay_admin(self):
+        return self.is_admin and self.can_pay
 
     @property
     def is_developer(self):
