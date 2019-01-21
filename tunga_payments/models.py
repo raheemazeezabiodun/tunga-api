@@ -40,6 +40,8 @@ class Invoice(models.Model):
     title = models.CharField(max_length=200, null=True, blank=True)
     type = models.CharField(max_length=50, choices=INVOICE_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=17, decimal_places=2)
+    credit_note_amount = models.DecimalField(max_digits=17, decimal_places=2, null=True)
+    send_credit_note = models.BooleanField(default=False)
     currency = models.CharField(max_length=15, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     issued_at = models.DateTimeField(default=datetime.datetime.utcnow)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
@@ -106,7 +108,8 @@ class Invoice(models.Model):
 
     @property
     def full_title(self):
-        return '{}{}{}'.format(self.project.title, self.project.title != self.title and ': ' or '', self.project.title != self.title and self.title or '')
+        return '{}{}{}'.format(self.project.title, self.project.title != self.title and ': ' or '',
+                               self.project.title != self.title and self.title or '')
 
     @property
     def tax_amount(self):
@@ -144,7 +147,7 @@ class Invoice(models.Model):
                 'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'EL', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU',
                 'HU', 'MT', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'UK'
                 # European Free Trade Association (EFTA)
-                'IS', 'LI', 'NO', 'CH'
+                                                                            'IS', 'LI', 'NO', 'CH'
             ]:
                 return VAT_LOCATION_EUROPE
         return VAT_LOCATION_WORLD
@@ -156,6 +159,14 @@ class Invoice(models.Model):
     @property
     def pdf(self):
         return HTML(string=self.html, encoding='utf-8').write_pdf()
+
+    @property
+    def credit_note_html(self):
+        return render_to_string("tunga/pdf/credit_note.html", context=dict(invoice=self)).encode(encoding="UTF-8")
+
+    @property
+    def credit_note_pdf(self):
+        return HTML(string=self.credit_note_html, encoding='utf-8').write_pdf()
 
     @property
     def download_url(self):

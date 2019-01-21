@@ -25,7 +25,7 @@ from stripe import InvalidRequestError
 from tunga_payments.filterbackends import InvoiceFilterBackend, PaymentFilterBackend
 from tunga_payments.filters import InvoiceFilter, PaymentFilter
 from tunga_payments.models import Invoice, Payment
-from tunga_payments.notifications.generic import notify_paid_invoice
+from tunga_payments.notifications.generic import notify_paid_invoice, notify_invoice
 from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, StripePaymentSerializer, \
     BulkInvoiceSerializer
 from tunga_tasks.renderers import PDFRenderer
@@ -41,6 +41,20 @@ class InvoiceViewSet(ModelViewSet):
     filter_class = InvoiceFilter
     filter_backends = DEFAULT_FILTER_BACKENDS + (InvoiceFilterBackend,)
     search_fields = ('title', '^project__title')
+
+    def update(self, request, *args, **kwargs):
+        print request.data
+        if 'amount' in request.data:
+            invoice_id = kwargs.get('pk', None)
+            invoice = Invoice.objects.filter(id=invoice_id).first()
+            amount = request.data['amount']
+            if Decimal(amount) < invoice.amount:
+                invoice_difference = invoice.amount - Decimal(amount)
+                invoice.credit_note_amount = invoice_difference
+                invoice.send_credit_note = True
+                invoice.save()
+                notify_invoice.delay(invoice.id, updated=True)
+        return super(InvoiceViewSet, self).update(request, *args, **kwargs)
 
     @list_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
                 url_path='bulk', url_name='bulk-create-invoices')
@@ -211,7 +225,8 @@ class InvoiceViewSet(ModelViewSet):
             except PermissionDenied:
                 return HttpResponse("You do not have permission to access this invoice")
 
-            if not (invoice.is_due or request.user.is_admin or request.user.is_project_manager or request.user.is_developer):
+            if not (
+                invoice.is_due or request.user.is_admin or request.user.is_project_manager or request.user.is_developer):
                 return HttpResponse("You do not have permission to access this invoice")
 
         if request.accepted_renderer.format == 'html':
