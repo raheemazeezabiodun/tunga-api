@@ -1,19 +1,20 @@
 from googleapiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 from httplib2 import Http
+from django.conf import settings
 
 # Email of the Service Account
-SERVICE_ACCOUNT_EMAIL = 'tunga-email@tunga-emails-226113.iam.gserviceaccount.com'
+SERVICE_ACCOUNT_EMAIL = settings.SERVICE_ACCOUNT_EMAIL
 
 # Path to the Service Account's Private Key file
-SERVICE_ACCOUNT_PKCS12_FILE_PATH = '/Users/azeezraheem/Downloads/tunga-emails-226113-057a6ea3d2dc.p12'
+SERVICE_ACCOUNT_PKCS12_FILE_PATH = settings.SERVICE_ACCOUNT_PKCS12_FILE_PATH
 
 def list_users(user_email):
     """Build and returns an Admin SDK Directory service object authorized with the service accounts
     that act on behalf of the given user.
 
-    Args:
-      user_email: The email of the user. Needs permissions to access the Admin APIs.
+    params:
+      user_email: The email of the user. Needs permissions to access the Admin APIs. (ADMIN)
     Returns:
       Admin SDK directory service object.
     """
@@ -22,11 +23,8 @@ def list_users(user_email):
         SERVICE_ACCOUNT_EMAIL,
         SERVICE_ACCOUNT_PKCS12_FILE_PATH,
         'notasecret',
-        scopes=['https://www.googleapis.com/auth/admin.directory.user'])
+        scopes=[settings.GOOGLE_ADMIN_USER_DIRECTORY_ENDPOINT])
 
-    #credentials = credentials.create_delegated(user_email)
-
-    #return build('admin', 'directory_v1', credentials=credentials)
     delegated_credentials = credentials.create_delegated(user_email)
     http_auth = delegated_credentials.authorize(Http())
     service = build('admin', 'directory_v1', http=http_auth)
@@ -38,7 +36,7 @@ def subscribe_to_new_users(user_email):
         SERVICE_ACCOUNT_EMAIL,
         SERVICE_ACCOUNT_PKCS12_FILE_PATH,
         'notasecret',
-        scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly, https://www.googleapis.com/auth/admin.directory.user'])
+        scopes=[settings.GOOGLE_ADMIN_USER_DIRECTORY_READONLY, settings.GOOGLE_ADMIN_USER_DIRECTORY_ENDPOINT])
     delegated_credentials = credentials.create_delegated(user_email)
     http_auth = delegated_credentials.authorize(Http())
     service = build('admin', 'directory_v1', http=http_auth)

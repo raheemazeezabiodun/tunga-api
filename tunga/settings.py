@@ -513,3 +513,9 @@ if 'test' in sys.argv[1:]:
     TEMPLATE_DEBUG = False
     TESTS_IN_PROGRESS = True
     MIGRATION_MODULES = DisableMigrations()
+
+# G-SUITE SETTINGS
+SERVICE_ACCOUNT_EMAIL = 'tunga-email@tunga-emails-226113.iam.gserviceaccount.com'
+SERVICE_ACCOUNT_PKCS12_FILE_PATH = os.path.join(BASE_DIR, 'google_admin_p12')
+GOOGLE_ADMIN_USER_DIRECTORY_ENDPOINT = 'https://www.googleapis.com/auth/admin.directory.user'
+GOOGLE_ADMIN_USER_DIRECTORY_READONLY = 'https://www.googleapis.com/auth/admin.directory.user.readonly'
