@@ -517,5 +517,6 @@ if 'test' in sys.argv[1:]:
 # G-SUITE SETTINGS
 SERVICE_ACCOUNT_EMAIL = None
 SERVICE_ACCOUNT_PKCS12_FILE_PATH = os.path.join(BASE_DIR, 'google_admin_p12')
+GOOGLE_ADMIN_DOMAIN = 'getcava.com'
 GOOGLE_ADMIN_USER_DIRECTORY_ENDPOINT = 'https://www.googleapis.com/auth/admin.directory.user'
 GOOGLE_ADMIN_USER_DIRECTORY_READONLY = 'https://www.googleapis.com/auth/admin.directory.user.readonly'

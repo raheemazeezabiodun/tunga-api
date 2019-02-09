@@ -28,7 +28,7 @@ def list_users(user_email):
     delegated_credentials = credentials.create_delegated(user_email)
     http_auth = delegated_credentials.authorize(Http())
     service = build('admin', 'directory_v1', http=http_auth)
-    return service.users().list(customer='my_customer', maxResults=10, orderBy='email', domain='getcava.com').execute()
+    return service.users().list(customer='my_customer', maxResults=10, orderBy='email', domain=settings.GOOGLE_ADMIN_DOMAIN).execute()
 
 
 def subscribe_to_new_users(user_email):
