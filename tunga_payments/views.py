@@ -258,6 +258,30 @@ class InvoiceViewSet(ModelViewSet):
         else:
             return Response(dict(message='Invoice has been already paid'), status=status.HTTP_200_OK)
 
+    @detail_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
+                  url_path='generate', url_name='generate-invoice')
+    def generate_invoice(self, request, pk=None):
+        """
+            Invoice Generate Endpoint
+            ---
+            omit_serializer: true
+            omit_parameters: false
+                - query
+        """
+        invoice = self.get_object()
+        if not invoice.finalized:
+            invoice.finalized = True
+            invoice.save()
+            if not invoice.number:
+                # generate and save invoice number
+                invoice_number = invoice.generate_invoice_number()
+                invoice.number = invoice_number
+                Invoice.objects.filter(id=invoice.id).update(number=invoice_number)
+                notify_invoice.delay(invoice.id, updated=False)
+            return Response(dict(message='Invoice has been generated'), status=status.HTTP_201_CREATED)
+        else:
+            return Response(dict(message='Invoice was already generated'), status=status.HTTP_200_OK)
+
 
 class PaymentViewSet(ModelViewSet):
     serializer_class = PaymentSerializer

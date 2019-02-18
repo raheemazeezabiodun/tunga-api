@@ -49,6 +49,7 @@ class Invoice(models.Model):
     processing_fee = models.DecimalField(max_digits=17, decimal_places=2, default=0)
     status = models.CharField(max_length=50, choices=status_choices, null=True, blank=True)
     paid = models.BooleanField(default=False)
+    finalized = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True, blank=True)
     batch_ref = models.UUIDField(default=uuid.uuid4)
