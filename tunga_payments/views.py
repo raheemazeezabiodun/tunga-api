@@ -30,7 +30,7 @@ from tunga_payments.serializers import InvoiceSerializer, PaymentSerializer, Str
     BulkInvoiceSerializer
 from tunga_tasks.renderers import PDFRenderer
 from tunga_utils import stripe_utils
-from tunga_utils.constants import PAYMENT_METHOD_STRIPE, CURRENCY_EUR, STATUS_COMPLETED
+from tunga_utils.constants import PAYMENT_METHOD_STRIPE, CURRENCY_EUR, STATUS_COMPLETED, INVOICE_TYPE_CREDIT_NOTA
 from tunga_utils.filterbackends import DEFAULT_FILTER_BACKENDS
 
 
@@ -230,15 +230,26 @@ class InvoiceViewSet(ModelViewSet):
                 return HttpResponse("You do not have permission to access this invoice")
 
         if request.accepted_renderer.format == 'html':
+            if invoice.type == INVOICE_TYPE_CREDIT_NOTA:
+                return HttpResponse(invoice.credit_note_html)
             return HttpResponse(invoice.html)
         else:
-            http_response = HttpResponse(invoice.pdf, content_type='application/pdf')
-            http_response['Content-Disposition'] = 'filename="Invoice_{}_{}_{}.pdf"'.format(
-                invoice and invoice.number or pk,
-                invoice and invoice.project and invoice.project.title or pk,
-                invoice and invoice.title or pk
-            )
-            return http_response
+            if invoice.type == INVOICE_TYPE_CREDIT_NOTA:
+                http_response = HttpResponse(invoice.credit_note_pdf, content_type='application/pdf')
+                http_response['Content-Disposition'] = 'filename="Invoice_{}_{}_{}.pdf"'.format(
+                    invoice and invoice.number or pk,
+                    invoice and invoice.project and invoice.project.title or pk,
+                    invoice and invoice.title or pk
+                )
+                return http_response
+            else:
+                http_response = HttpResponse(invoice.pdf, content_type='application/pdf')
+                http_response['Content-Disposition'] = 'filename="Invoice_{}_{}_{}.pdf"'.format(
+                    invoice and invoice.number or pk,
+                    invoice and invoice.project and invoice.project.title or pk,
+                    invoice and invoice.title or pk
+                )
+                return http_response
 
     @detail_route(methods=['post'], permission_classes=[IsAuthenticated, DRYPermissions],
                   url_path='archive', url_name='archive-unpaid-invoices')

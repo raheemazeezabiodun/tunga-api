@@ -40,8 +40,6 @@ class Invoice(models.Model):
     title = models.CharField(max_length=200, null=True, blank=True)
     type = models.CharField(max_length=50, choices=INVOICE_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=17, decimal_places=2)
-    credit_note_amount = models.DecimalField(max_digits=17, decimal_places=2, null=True)
-    send_credit_note = models.BooleanField(default=False)
     currency = models.CharField(max_length=15, choices=CURRENCY_CHOICES_EUR_ONLY, default=CURRENCY_EUR)
     issued_at = models.DateTimeField(default=datetime.datetime.utcnow)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
